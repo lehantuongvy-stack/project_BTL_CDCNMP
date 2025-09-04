@@ -1,19 +1,19 @@
 /**
- * Children Routes
- * Định nghĩa các routes cho children management
+ * User Routes
+ * Định nghĩa các routes cho user management
  */
 
 const url = require('url');
 const querystring = require('querystring');
 
-class ChildrenRoutes {
-    constructor(childController, authController) {
-        this.childController = childController;
+class UserRoutes {
+    constructor(userController, authController) {
+        this.userController = userController;
         this.authController = authController;
     }
 
-    // Xử lý các children routes
-    async handleChildrenRoutes(req, res, path, method) {
+    // Xử lý các user routes
+    async handleUserRoutes(req, res, path, method) {
         try {
             // Apply authentication middleware
             const isAuthenticated = await this.applyAuthMiddleware(req, res, this.authController);
@@ -26,82 +26,78 @@ class ChildrenRoutes {
 
             // Parse URL parameters
             const pathParts = path.split('/').filter(Boolean);
-            const childId = pathParts[0];
+            const userId = pathParts[0];
 
             // Route mapping
             switch (true) {
-                // GET /api/children - Lấy danh sách children
+                // GET /api/users - Lấy danh sách users
                 case path === '' || path === '/' && method === 'GET':
-                    await this.childController.getChildren(req, res);
+                    await this.userController.getUsers(req, res);
                     break;
 
-                // POST /api/children - Tạo child mới
-                case path === '' || path === '/' && method === 'POST':
-                    await this.childController.createChild(req, res);
-                    break;
-
-                // GET /api/children/allergies - Lấy children có dị ứng
-                case path === '/allergies' && method === 'GET':
-                    await this.childController.getChildrenWithAllergies(req, res);
-                    break;
-
-                // GET /api/children/stats - Thống kê children theo class
+                // GET /api/users/stats - Lấy thống kê users
                 case path === '/stats' && method === 'GET':
-                    await this.childController.getChildrenStatsByClass(req, res);
+                    if (!['admin'].includes(req.user.role)) {
+                        this.sendResponse(res, 403, {
+                            success: false,
+                            message: 'Chỉ admin mới có thể xem thống kê'
+                        });
+                        return;
+                    }
+                    await this.userController.getUserStats(req, res);
                     break;
 
-                // GET /api/children/birthdays - Sinh nhật trong tháng
-                case path === '/birthdays' && method === 'GET':
-                    await this.childController.getBirthdaysInMonth(req, res);
-                    break;
-
-                // GET /api/children/search - Tìm kiếm children
+                // GET /api/users/search - Tìm kiếm users
                 case path === '/search' && method === 'GET':
-                    await this.childController.searchChildren(req, res);
+                    if (!['admin', 'teacher'].includes(req.user.role)) {
+                        this.sendResponse(res, 403, {
+                            success: false,
+                            message: 'Không có quyền tìm kiếm users'
+                        });
+                        return;
+                    }
+                    await this.userController.searchUsers(req, res);
                     break;
 
-                // GET /api/children/:id - Lấy child theo ID
-                case childId && !isNaN(childId) && method === 'GET':
-                    req.params = { id: childId };
-                    await this.childController.getChildById(req, res);
+                // GET /api/users/:id - Lấy user theo ID
+                case userId && !isNaN(userId) && method === 'GET':
+                    req.params = { id: userId };
+                    await this.userController.getUserById(req, res);
                     break;
 
-                // PUT /api/children/:id - Cập nhật child
-                case childId && !isNaN(childId) && method === 'PUT':
-                    req.params = { id: childId };
-                    await this.childController.updateChild(req, res);
+                // PUT /api/users/:id - Cập nhật user
+                case userId && !isNaN(userId) && method === 'PUT':
+                    req.params = { id: userId };
+                    await this.userController.updateUser(req, res);
                     break;
 
-                // DELETE /api/children/:id - Xóa child
-                case childId && !isNaN(childId) && method === 'DELETE':
-                    req.params = { id: childId };
-                    await this.childController.deleteChild(req, res);
+                // DELETE /api/users/:id - Xóa user
+                case userId && !isNaN(userId) && method === 'DELETE':
+                    req.params = { id: userId };
+                    await this.userController.deleteUser(req, res);
                     break;
 
                 default:
                     this.sendResponse(res, 404, {
                         success: false,
-                        message: 'Children route not found',
+                        message: 'User route not found',
                         available_routes: [
-                            'GET /api/children - Lấy danh sách children',
-                            'POST /api/children - Tạo child mới',
-                            'GET /api/children/allergies - Children có dị ứng',
-                            'GET /api/children/stats - Thống kê theo class',
-                            'GET /api/children/birthdays?month=1 - Sinh nhật trong tháng',
-                            'GET /api/children/search?q=keyword - Tìm kiếm children',
-                            'GET /api/children/:id - Lấy child theo ID',
-                            'PUT /api/children/:id - Cập nhật child',
-                            'DELETE /api/children/:id - Xóa child'
+                            'GET /api/users - Lấy danh sách users',
+                            'GET /api/users/stats - Thống kê users (Admin)',
+                            'GET /api/users/search?q=keyword - Tìm kiếm users',
+                            'GET /api/users/:id - Lấy user theo ID',
+                            'PUT /api/users/:id - Cập nhật user',
+                            'DELETE /api/users/:id - Xóa user (Admin)'
                         ]
                     });
                     break;
             }
 
         } catch (error) {
-            console.error('Children routes error:', error);
+            console.error('User routes error:', error);
             this.sendResponse(res, 500, {
                 success: false,
-                message: 'Lỗi server trong children routes',
+                message: 'Lỗi server trong user routes',
                 error: error.message
             });
         }
@@ -176,4 +172,4 @@ class ChildrenRoutes {
     }
 }
 
-module.exports = ChildrenRoutes;
+module.exports = UserRoutes;
