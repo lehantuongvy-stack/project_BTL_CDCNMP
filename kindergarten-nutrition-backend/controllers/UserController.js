@@ -3,10 +3,12 @@
  * Xử lý logic quản lý users
  */
 
+const BaseController = require('./BaseController');
 const User = require('../models/User');
 
-class UserController {
+class UserController extends BaseController {
     constructor(db) {
+        super();
         this.db = db;
         this.userModel = new User(db);
     }
@@ -24,7 +26,7 @@ class UserController {
                 users = await this.userModel.findAll(parseInt(limit), offset);
             }
 
-            res.status(200).json({
+            this.sendResponse(res, 200, {
                 success: true,
                 data: {
                     users,
@@ -38,7 +40,7 @@ class UserController {
 
         } catch (error) {
             console.error('Get users error:', error);
-            res.status(500).json({
+            this.sendResponse(res, 500, {
                 success: false,
                 message: 'Lỗi server khi lấy danh sách users',
                 error: error.message
@@ -53,20 +55,20 @@ class UserController {
 
             const user = await this.userModel.findById(id);
             if (!user) {
-                return res.status(404).json({
+                return this.sendResponse(res, 404, {
                     success: false,
                     message: 'Không tìm thấy user'
                 });
             }
 
-            res.status(200).json({
+            this.sendResponse(res, 200, {
                 success: true,
                 data: { user }
             });
 
         } catch (error) {
             console.error('Get user by ID error:', error);
-            res.status(500).json({
+            this.sendResponse(res, 500, {
                 success: false,
                 message: 'Lỗi server khi lấy thông tin user',
                 error: error.message
@@ -82,7 +84,7 @@ class UserController {
 
             // Kiểm tra quyền
             if (req.user.role !== 'admin' && req.user.id !== parseInt(id)) {
-                return res.status(403).json({
+                return this.sendResponse(res, 403, {
                     success: false,
                     message: 'Không có quyền cập nhật user này'
                 });
@@ -91,7 +93,7 @@ class UserController {
             // Kiểm tra user tồn tại
             const existingUser = await this.userModel.findById(id);
             if (!existingUser) {
-                return res.status(404).json({
+                return this.sendResponse(res, 404, {
                     success: false,
                     message: 'Không tìm thấy user'
                 });
@@ -101,7 +103,7 @@ class UserController {
             if (updateData.email) {
                 const emailExists = await this.userModel.isEmailExists(updateData.email, id);
                 if (emailExists) {
-                    return res.status(400).json({
+                    return this.sendResponse(res, 400, {
                         success: false,
                         message: 'Email đã tồn tại'
                     });
@@ -115,7 +117,7 @@ class UserController {
 
             const updatedUser = await this.userModel.updateById(id, updateData);
 
-            res.status(200).json({
+            this.sendResponse(res, 200, {
                 success: true,
                 message: 'Cập nhật user thành công',
                 data: { user: updatedUser }
@@ -123,7 +125,7 @@ class UserController {
 
         } catch (error) {
             console.error('Update user error:', error);
-            res.status(500).json({
+            this.sendResponse(res, 500, {
                 success: false,
                 message: 'Lỗi server khi cập nhật user',
                 error: error.message
@@ -138,7 +140,7 @@ class UserController {
 
             // Chỉ admin mới được xóa user
             if (req.user.role !== 'admin') {
-                return res.status(403).json({
+                return this.sendResponse(res, 403, {
                     success: false,
                     message: 'Chỉ admin mới có thể xóa user'
                 });
@@ -146,7 +148,7 @@ class UserController {
 
             // Không cho phép xóa chính mình
             if (req.user.id === parseInt(id)) {
-                return res.status(400).json({
+                return this.sendResponse(res, 400, {
                     success: false,
                     message: 'Không thể xóa chính mình'
                 });
@@ -155,7 +157,7 @@ class UserController {
             // Kiểm tra user tồn tại
             const existingUser = await this.userModel.findById(id);
             if (!existingUser) {
-                return res.status(404).json({
+                return this.sendResponse(res, 404, {
                     success: false,
                     message: 'Không tìm thấy user'
                 });
@@ -163,14 +165,14 @@ class UserController {
 
             await this.userModel.deleteById(id);
 
-            res.status(200).json({
+            this.sendResponse(res, 200, {
                 success: true,
                 message: 'Xóa user thành công'
             });
 
         } catch (error) {
             console.error('Delete user error:', error);
-            res.status(500).json({
+            this.sendResponse(res, 500, {
                 success: false,
                 message: 'Lỗi server khi xóa user',
                 error: error.message
@@ -183,14 +185,14 @@ class UserController {
         try {
             const stats = await this.userModel.getStatsByRole();
 
-            res.status(200).json({
+            this.sendResponse(res, 200, {
                 success: true,
                 data: { stats }
             });
 
         } catch (error) {
             console.error('Get user stats error:', error);
-            res.status(500).json({
+            this.sendResponse(res, 500, {
                 success: false,
                 message: 'Lỗi server khi lấy thống kê users',
                 error: error.message
@@ -204,7 +206,7 @@ class UserController {
             const { q, role } = req.query;
 
             if (!q) {
-                return res.status(400).json({
+                return this.sendResponse(res, 400, {
                     success: false,
                     message: 'Query parameter "q" is required'
                 });
@@ -225,7 +227,7 @@ class UserController {
                 return matchesSearch && matchesRole;
             });
 
-            res.status(200).json({
+            this.sendResponse(res, 200, {
                 success: true,
                 data: {
                     users,
@@ -235,7 +237,7 @@ class UserController {
 
         } catch (error) {
             console.error('Search users error:', error);
-            res.status(500).json({
+            this.sendResponse(res, 500, {
                 success: false,
                 message: 'Lỗi server khi tìm kiếm users',
                 error: error.message

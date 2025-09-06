@@ -2,10 +2,12 @@
  * Meal Controller - Business logic cho quản lý bữa ăn và thực đơn
  */
 
+const BaseController = require('./BaseController');
 const Meal = require('../models/Meal');
 
-class MealController {
+class MealController extends BaseController {
     constructor(db) {
+        super();
         this.db = db;
         this.mealModel = new Meal(db);
     }

@@ -27,22 +27,22 @@ class AuthRoutes {
 
                 case path === '/register' && method === 'POST':
                     // Apply authentication middleware
-                    const authResult = await this.authController.authenticate()(req, res, () => {});
-                    if (authResult === false) return; // Authentication failed
+                    const isAuthenticated = await this.applyAuthMiddleware(req, res, this.authController);
+                    if (!isAuthenticated) return; // Authentication failed
                     await this.authController.register(req, res);
                     break;
 
                 case path === '/me' && method === 'GET':
                     // Apply authentication middleware
-                    const authResultMe = await this.authController.authenticate()(req, res, () => {});
-                    if (authResultMe === false) return; // Authentication failed
+                    const authResultMe = await this.applyAuthMiddleware(req, res, this.authController);
+                    if (!authResultMe) return; // Authentication failed
                     await this.authController.getCurrentUser(req, res);
                     break;
 
                 case path === '/change-password' && method === 'POST':
                     // Apply authentication middleware
-                    const authResultPassword = await this.authController.authenticate()(req, res, () => {});
-                    if (authResultPassword === false) return; // Authentication failed
+                    const authResultPassword = await this.applyAuthMiddleware(req, res, this.authController);
+                    if (!authResultPassword) return; // Authentication failed
                     await this.authController.changePassword(req, res);
                     break;
 
@@ -112,8 +112,10 @@ class AuthRoutes {
     async applyAuthMiddleware(req, res, controller) {
         try {
             const authHeader = req.headers.authorization;
+            console.log('🔍 Auth Header:', authHeader);
             
             if (!authHeader || !authHeader.startsWith('Bearer ')) {
+                console.log('❌ No Bearer token found');
                 this.sendResponse(res, 401, {
                     success: false,
                     message: 'Access token is required'
@@ -122,9 +124,13 @@ class AuthRoutes {
             }
 
             const token = authHeader.substring(7);
+            console.log('🎫 Extracted token (first 50 chars):', token.substring(0, 50));
+            
             const user = await controller.verifyToken(token);
+            console.log('👤 User from token:', user);
 
             if (!user) {
+                console.log('❌ Token verification failed');
                 this.sendResponse(res, 401, {
                     success: false,
                     message: 'Invalid or expired token'

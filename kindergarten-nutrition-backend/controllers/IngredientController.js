@@ -3,10 +3,12 @@
  * Xử lý logic quản lý nguyên liệu
  */
 
+const BaseController = require('./BaseController');
 const Ingredient = require('../models/Ingredient');
 
-class IngredientController {
+class IngredientController extends BaseController {
     constructor(db) {
+        super();
         this.db = db;
         this.ingredientModel = new Ingredient(db);
     }
@@ -30,7 +32,7 @@ class IngredientController {
                 ingredients = await this.ingredientModel.findAll(parseInt(limit), offset);
             }
 
-            res.status(200).json({
+            this.sendResponse(res, 200, {
                 success: true,
                 data: {
                     ingredients,
@@ -44,7 +46,7 @@ class IngredientController {
 
         } catch (error) {
             console.error('Get ingredients error:', error);
-            res.status(500).json({
+            this.sendResponse(res, 500, {
                 success: false,
                 message: 'Lỗi server khi lấy danh sách nguyên liệu',
                 error: error.message
@@ -59,20 +61,20 @@ class IngredientController {
 
             const ingredient = await this.ingredientModel.findById(id);
             if (!ingredient) {
-                return res.status(404).json({
+                return this.sendResponse(res, 404, {
                     success: false,
                     message: 'Không tìm thấy nguyên liệu'
                 });
             }
 
-            res.status(200).json({
+            this.sendResponse(res, 200, {
                 success: true,
                 data: { ingredient }
             });
 
         } catch (error) {
             console.error('Get ingredient by ID error:', error);
-            res.status(500).json({
+            this.sendResponse(res, 500, {
                 success: false,
                 message: 'Lỗi server khi lấy thông tin nguyên liệu',
                 error: error.message
@@ -89,7 +91,7 @@ class IngredientController {
             const requiredFields = ['ten_nguyen_lieu', 'loai_nguyen_lieu', 'don_vi_tinh'];
             for (const field of requiredFields) {
                 if (!ingredientData[field]) {
-                    return res.status(400).json({
+                    return this.sendResponse(res, 400, {
                         success: false,
                         message: `Trường ${field} là bắt buộc`
                     });
@@ -98,7 +100,7 @@ class IngredientController {
 
             const newIngredient = await this.ingredientModel.create(ingredientData);
 
-            res.status(201).json({
+            this.sendResponse(res, 201, {
                 success: true,
                 message: 'Tạo nguyên liệu thành công',
                 data: { ingredient: newIngredient }
@@ -106,7 +108,7 @@ class IngredientController {
 
         } catch (error) {
             console.error('Create ingredient error:', error);
-            res.status(500).json({
+            this.sendResponse(res, 500, {
                 success: false,
                 message: 'Lỗi server khi tạo nguyên liệu',
                 error: error.message
@@ -123,7 +125,7 @@ class IngredientController {
             // Kiểm tra nguyên liệu tồn tại
             const existingIngredient = await this.ingredientModel.findById(id);
             if (!existingIngredient) {
-                return res.status(404).json({
+                return this.sendResponse(res, 404, {
                     success: false,
                     message: 'Không tìm thấy nguyên liệu'
                 });
@@ -131,7 +133,7 @@ class IngredientController {
 
             const updatedIngredient = await this.ingredientModel.updateById(id, updateData);
 
-            res.status(200).json({
+            this.sendResponse(res, 200, {
                 success: true,
                 message: 'Cập nhật nguyên liệu thành công',
                 data: { ingredient: updatedIngredient }
@@ -139,7 +141,7 @@ class IngredientController {
 
         } catch (error) {
             console.error('Update ingredient error:', error);
-            res.status(500).json({
+            this.sendResponse(res, 500, {
                 success: false,
                 message: 'Lỗi server khi cập nhật nguyên liệu',
                 error: error.message
@@ -154,7 +156,7 @@ class IngredientController {
             const { quantity, operation = 'set' } = req.body;
 
             if (quantity === undefined || quantity === null) {
-                return res.status(400).json({
+                return this.sendResponse(res, 400, {
                     success: false,
                     message: 'Quantity là bắt buộc'
                 });
@@ -163,7 +165,7 @@ class IngredientController {
             // Kiểm tra nguyên liệu tồn tại
             const existingIngredient = await this.ingredientModel.findById(id);
             if (!existingIngredient) {
-                return res.status(404).json({
+                return this.sendResponse(res, 404, {
                     success: false,
                     message: 'Không tìm thấy nguyên liệu'
                 });
@@ -171,7 +173,7 @@ class IngredientController {
 
             const updatedIngredient = await this.ingredientModel.updateStock(id, quantity, operation);
 
-            res.status(200).json({
+            this.sendResponse(res, 200, {
                 success: true,
                 message: 'Cập nhật tồn kho thành công',
                 data: { ingredient: updatedIngredient }
@@ -179,7 +181,7 @@ class IngredientController {
 
         } catch (error) {
             console.error('Update stock error:', error);
-            res.status(500).json({
+            this.sendResponse(res, 500, {
                 success: false,
                 message: 'Lỗi server khi cập nhật tồn kho',
                 error: error.message
@@ -195,7 +197,7 @@ class IngredientController {
             // Kiểm tra nguyên liệu tồn tại
             const existingIngredient = await this.ingredientModel.findById(id);
             if (!existingIngredient) {
-                return res.status(404).json({
+                return this.sendResponse(res, 404, {
                     success: false,
                     message: 'Không tìm thấy nguyên liệu'
                 });
@@ -203,14 +205,14 @@ class IngredientController {
 
             await this.ingredientModel.deleteById(id);
 
-            res.status(200).json({
+            this.sendResponse(res, 200, {
                 success: true,
                 message: 'Xóa nguyên liệu thành công'
             });
 
         } catch (error) {
             console.error('Delete ingredient error:', error);
-            res.status(500).json({
+            this.sendResponse(res, 500, {
                 success: false,
                 message: 'Lỗi server khi xóa nguyên liệu',
                 error: error.message
@@ -224,7 +226,7 @@ class IngredientController {
             const { q } = req.query;
 
             if (!q) {
-                return res.status(400).json({
+                return this.sendResponse(res, 400, {
                     success: false,
                     message: 'Query parameter "q" is required'
                 });
@@ -232,7 +234,7 @@ class IngredientController {
 
             const ingredients = await this.ingredientModel.findByName(q);
 
-            res.status(200).json({
+            this.sendResponse(res, 200, {
                 success: true,
                 data: {
                     ingredients,
@@ -242,7 +244,7 @@ class IngredientController {
 
         } catch (error) {
             console.error('Search ingredients error:', error);
-            res.status(500).json({
+            this.sendResponse(res, 500, {
                 success: false,
                 message: 'Lỗi server khi tìm kiếm nguyên liệu',
                 error: error.message
@@ -255,14 +257,14 @@ class IngredientController {
         try {
             const categories = await this.ingredientModel.getCategories();
 
-            res.status(200).json({
+            this.sendResponse(res, 200, {
                 success: true,
                 data: { categories }
             });
 
         } catch (error) {
             console.error('Get categories error:', error);
-            res.status(500).json({
+            this.sendResponse(res, 500, {
                 success: false,
                 message: 'Lỗi server khi lấy danh sách categories',
                 error: error.message
@@ -275,14 +277,14 @@ class IngredientController {
         try {
             const suppliers = await this.ingredientModel.getSuppliers();
 
-            res.status(200).json({
+            this.sendResponse(res, 200, {
                 success: true,
                 data: { suppliers }
             });
 
         } catch (error) {
             console.error('Get suppliers error:', error);
-            res.status(500).json({
+            this.sendResponse(res, 500, {
                 success: false,
                 message: 'Lỗi server khi lấy danh sách suppliers',
                 error: error.message
@@ -296,7 +298,7 @@ class IngredientController {
             const { threshold = 10 } = req.query;
             const ingredients = await this.ingredientModel.findLowStock(parseInt(threshold));
 
-            res.status(200).json({
+            this.sendResponse(res, 200, {
                 success: true,
                 data: {
                     ingredients,
@@ -307,7 +309,7 @@ class IngredientController {
 
         } catch (error) {
             console.error('Get low stock ingredients error:', error);
-            res.status(500).json({
+            this.sendResponse(res, 500, {
                 success: false,
                 message: 'Lỗi server khi lấy nguyên liệu tồn kho thấp',
                 error: error.message
@@ -321,7 +323,7 @@ class IngredientController {
             const { days = 7 } = req.query;
             const ingredients = await this.ingredientModel.findExpiringSoon(parseInt(days));
 
-            res.status(200).json({
+            this.sendResponse(res, 200, {
                 success: true,
                 data: {
                     ingredients,
@@ -332,7 +334,7 @@ class IngredientController {
 
         } catch (error) {
             console.error('Get expiring ingredients error:', error);
-            res.status(500).json({
+            this.sendResponse(res, 500, {
                 success: false,
                 message: 'Lỗi server khi lấy nguyên liệu sắp hết hạn',
                 error: error.message
@@ -345,14 +347,14 @@ class IngredientController {
         try {
             const stats = await this.ingredientModel.getStatistics();
 
-            res.status(200).json({
+            this.sendResponse(res, 200, {
                 success: true,
                 data: { stats }
             });
 
         } catch (error) {
             console.error('Get ingredient stats error:', error);
-            res.status(500).json({
+            this.sendResponse(res, 500, {
                 success: false,
                 message: 'Lỗi server khi lấy thống kê nguyên liệu',
                 error: error.message

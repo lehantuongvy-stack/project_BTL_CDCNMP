@@ -2,10 +2,10 @@
   "name": "kindergarten-nutrition-backend",
   "version": "1.0.0",
   "description": "Backend API for Kindergarten Nutrition Management System - Pure Node.js with MySQL",
-  "main": "server.js",
+  "main": "server-mvc.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js",
+    "start": "node server-mvc.js",
+    "dev": "node server-mvc.js",
     "test": "node test-database.js",
     "cleanup": "powershell -ExecutionPolicy Bypass -File cleanup-project.ps1"
   },

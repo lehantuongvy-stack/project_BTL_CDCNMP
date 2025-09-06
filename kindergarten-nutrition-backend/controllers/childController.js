@@ -3,10 +3,12 @@
  * Xử lý logic quản lý children
  */
 
+const BaseController = require('./BaseController');
 const Child = require('../models/Child');
 
-class ChildController {
+class ChildController extends BaseController {
     constructor(db) {
+        super();
         this.db = db;
         this.childModel = new Child(db);
     }
@@ -24,7 +26,7 @@ class ChildController {
             } else if (parent_id) {
                 // Kiểm tra quyền: chỉ parent hoặc admin/teacher mới xem được children theo parent_id
                 if (req.user.role === 'parent' && req.user.id !== parseInt(parent_id)) {
-                    return res.status(403).json({
+                    return this.sendResponse(res, 403, {
                         success: false,
                         message: 'Không có quyền xem thông tin này'
                     });
@@ -39,7 +41,7 @@ class ChildController {
                 }
             }
 
-            res.status(200).json({
+            this.sendResponse(res, 200, {
                 success: true,
                 data: {
                     children,
@@ -53,7 +55,7 @@ class ChildController {
 
         } catch (error) {
             console.error('Get children error:', error);
-            res.status(500).json({
+            this.sendResponse(res, 500, {
                 success: false,
                 message: 'Lỗi server khi lấy danh sách children',
                 error: error.message
@@ -68,7 +70,7 @@ class ChildController {
 
             const child = await this.childModel.findById(id);
             if (!child) {
-                return res.status(404).json({
+                return this.sendResponse(res, 404, {
                     success: false,
                     message: 'Không tìm thấy child'
                 });
@@ -76,20 +78,20 @@ class ChildController {
 
             // Kiểm tra quyền: parent chỉ xem được children của mình
             if (req.user.role === 'parent' && child.parent_id !== req.user.id) {
-                return res.status(403).json({
+                return this.sendResponse(res, 403, {
                     success: false,
                     message: 'Không có quyền xem thông tin này'
                 });
             }
 
-            res.status(200).json({
+            this.sendResponse(res, 200, {
                 success: true,
                 data: { child }
             });
 
         } catch (error) {
             console.error('Get child by ID error:', error);
-            res.status(500).json({
+            this.sendResponse(res, 500, {
                 success: false,
                 message: 'Lỗi server khi lấy thông tin child',
                 error: error.message
@@ -106,7 +108,7 @@ class ChildController {
             const requiredFields = ['full_name', 'date_of_birth', 'gender'];
             for (const field of requiredFields) {
                 if (!childData[field]) {
-                    return res.status(400).json({
+                    return this.sendResponse(res, 400, {
                         success: false,
                         message: `Trường ${field} là bắt buộc`
                     });
@@ -119,13 +121,13 @@ class ChildController {
             } else if (req.user.role === 'admin' || req.user.role === 'teacher') {
                 // Admin/teacher có thể tạo child cho parent khác
                 if (!childData.parent_id) {
-                    return res.status(400).json({
+                    return this.sendResponse(res, 400, {
                         success: false,
                         message: 'parent_id là bắt buộc'
                     });
                 }
             } else {
-                return res.status(403).json({
+                return this.sendResponse(res, 403, {
                     success: false,
                     message: 'Không có quyền tạo child'
                 });
@@ -133,7 +135,7 @@ class ChildController {
 
             const newChild = await this.childModel.create(childData);
 
-            res.status(201).json({
+            this.sendResponse(res, 201, {
                 success: true,
                 message: 'Tạo child thành công',
                 data: { child: newChild }
@@ -141,7 +143,7 @@ class ChildController {
 
         } catch (error) {
             console.error('Create child error:', error);
-            res.status(500).json({
+            this.sendResponse(res, 500, {
                 success: false,
                 message: 'Lỗi server khi tạo child',
                 error: error.message
@@ -158,7 +160,7 @@ class ChildController {
             // Kiểm tra child tồn tại
             const existingChild = await this.childModel.findById(id);
             if (!existingChild) {
-                return res.status(404).json({
+                return this.sendResponse(res, 404, {
                     success: false,
                     message: 'Không tìm thấy child'
                 });
@@ -166,7 +168,7 @@ class ChildController {
 
             // Kiểm tra quyền
             if (req.user.role === 'parent' && existingChild.parent_id !== req.user.id) {
-                return res.status(403).json({
+                return this.sendResponse(res, 403, {
                     success: false,
                     message: 'Không có quyền cập nhật child này'
                 });
@@ -179,7 +181,7 @@ class ChildController {
 
             const updatedChild = await this.childModel.updateById(id, updateData);
 
-            res.status(200).json({
+            this.sendResponse(res, 200, {
                 success: true,
                 message: 'Cập nhật child thành công',
                 data: { child: updatedChild }
@@ -187,7 +189,7 @@ class ChildController {
 
         } catch (error) {
             console.error('Update child error:', error);
-            res.status(500).json({
+            this.sendResponse(res, 500, {
                 success: false,
                 message: 'Lỗi server khi cập nhật child',
                 error: error.message
@@ -203,7 +205,7 @@ class ChildController {
             // Kiểm tra child tồn tại
             const existingChild = await this.childModel.findById(id);
             if (!existingChild) {
-                return res.status(404).json({
+                return this.sendResponse(res, 404, {
                     success: false,
                     message: 'Không tìm thấy child'
                 });
@@ -211,7 +213,7 @@ class ChildController {
 
             // Chỉ admin hoặc teacher mới được xóa child
             if (!['admin', 'teacher'].includes(req.user.role)) {
-                return res.status(403).json({
+                return this.sendResponse(res, 403, {
                     success: false,
                     message: 'Không có quyền xóa child'
                 });
@@ -219,14 +221,14 @@ class ChildController {
 
             await this.childModel.deleteById(id);
 
-            res.status(200).json({
+            this.sendResponse(res, 200, {
                 success: true,
                 message: 'Xóa child thành công'
             });
 
         } catch (error) {
             console.error('Delete child error:', error);
-            res.status(500).json({
+            this.sendResponse(res, 500, {
                 success: false,
                 message: 'Lỗi server khi xóa child',
                 error: error.message
@@ -240,7 +242,7 @@ class ChildController {
             const { q } = req.query;
 
             if (!q) {
-                return res.status(400).json({
+                return this.sendResponse(res, 400, {
                     success: false,
                     message: 'Query parameter "q" is required'
                 });
@@ -253,7 +255,7 @@ class ChildController {
                 children = children.filter(child => child.parent_id === req.user.id);
             }
 
-            res.status(200).json({
+            this.sendResponse(res, 200, {
                 success: true,
                 data: {
                     children,
@@ -263,7 +265,7 @@ class ChildController {
 
         } catch (error) {
             console.error('Search children error:', error);
-            res.status(500).json({
+            this.sendResponse(res, 500, {
                 success: false,
                 message: 'Lỗi server khi tìm kiếm children',
                 error: error.message
@@ -276,7 +278,7 @@ class ChildController {
         try {
             // Chỉ admin, teacher, nutritionist mới xem được
             if (!['admin', 'teacher', 'nutritionist'].includes(req.user.role)) {
-                return res.status(403).json({
+                return this.sendResponse(res, 403, {
                     success: false,
                     message: 'Không có quyền xem thông tin này'
                 });
@@ -284,7 +286,7 @@ class ChildController {
 
             const children = await this.childModel.findWithAllergies();
 
-            res.status(200).json({
+            this.sendResponse(res, 200, {
                 success: true,
                 data: {
                     children,
@@ -294,7 +296,7 @@ class ChildController {
 
         } catch (error) {
             console.error('Get children with allergies error:', error);
-            res.status(500).json({
+            this.sendResponse(res, 500, {
                 success: false,
                 message: 'Lỗi server khi lấy danh sách children có dị ứng',
                 error: error.message
@@ -307,7 +309,7 @@ class ChildController {
         try {
             // Chỉ admin, teacher mới xem được thống kê
             if (!['admin', 'teacher'].includes(req.user.role)) {
-                return res.status(403).json({
+                return this.sendResponse(res, 403, {
                     success: false,
                     message: 'Không có quyền xem thống kê'
                 });
@@ -315,14 +317,14 @@ class ChildController {
 
             const stats = await this.childModel.getStatsByClass();
 
-            res.status(200).json({
+            this.sendResponse(res, 200, {
                 success: true,
                 data: { stats }
             });
 
         } catch (error) {
             console.error('Get children stats error:', error);
-            res.status(500).json({
+            this.sendResponse(res, 500, {
                 success: false,
                 message: 'Lỗi server khi lấy thống kê children',
                 error: error.message
@@ -336,7 +338,7 @@ class ChildController {
             const { month, year } = req.query;
 
             if (!month) {
-                return res.status(400).json({
+                return this.sendResponse(res, 400, {
                     success: false,
                     message: 'Month parameter is required'
                 });
@@ -347,7 +349,7 @@ class ChildController {
                 year ? parseInt(year) : null
             );
 
-            res.status(200).json({
+            this.sendResponse(res, 200, {
                 success: true,
                 data: {
                     children,
@@ -359,7 +361,7 @@ class ChildController {
 
         } catch (error) {
             console.error('Get birthdays error:', error);
-            res.status(500).json({
+            this.sendResponse(res, 500, {
                 success: false,
                 message: 'Lỗi server khi lấy danh sách sinh nhật',
                 error: error.message

@@ -35,7 +35,7 @@ class Ingredient {
             so_luong_ton_kho, ngay_het_han, thong_tin_dinh_duong, is_active
         ];
         
-        const result = await this.db.execute(query, values);
+        const result = await this.db.query(query, values);
         
         return {
             id: result.insertId,
@@ -50,7 +50,7 @@ class Ingredient {
             WHERE id = ? AND is_active = 1
         `;
         
-        const [rows] = await this.db.execute(query, [id]);
+        const [rows] = await this.db.query(query, [id]);
         return rows[0] || null;
     }
 
@@ -63,7 +63,7 @@ class Ingredient {
             LIMIT ? OFFSET ?
         `;
         
-        const [rows] = await this.db.execute(query, [limit, offset]);
+        const [rows] = await this.db.query(query, [limit, offset]);
         return rows;
     }
 
@@ -75,7 +75,7 @@ class Ingredient {
             ORDER BY ten_nguyen_lieu
         `;
         
-        const [rows] = await this.db.execute(query, [category]);
+        const [rows] = await this.db.query(query, [category]);
         return rows;
     }
 
@@ -87,7 +87,7 @@ class Ingredient {
             ORDER BY ten_nguyen_lieu
         `;
         
-        const [rows] = await this.db.execute(query, [`%${name}%`]);
+        const [rows] = await this.db.query(query, [`%${name}%`]);
         return rows;
     }
 
@@ -102,7 +102,7 @@ class Ingredient {
             ORDER BY ngay_het_han
         `;
         
-        const [rows] = await this.db.execute(query, [days]);
+        const [rows] = await this.db.query(query, [days]);
         return rows;
     }
 
@@ -114,7 +114,7 @@ class Ingredient {
             ORDER BY so_luong_ton_kho, ten_nguyen_lieu
         `;
         
-        const [rows] = await this.db.execute(query, [threshold]);
+        const [rows] = await this.db.query(query, [threshold]);
         return rows;
     }
 
@@ -147,7 +147,7 @@ class Ingredient {
             WHERE id = ?
         `;
 
-        await this.db.execute(query, values);
+        await this.db.query(query, values);
         return this.findById(id);
     }
 
@@ -179,7 +179,7 @@ class Ingredient {
             values = [quantity, id];
         }
 
-        await this.db.execute(query, values);
+        await this.db.query(query, values);
         return this.findById(id);
     }
 
@@ -191,7 +191,7 @@ class Ingredient {
             WHERE id = ?
         `;
 
-        await this.db.execute(query, [id]);
+        await this.db.query(query, [id]);
         return true;
     }
 
@@ -205,7 +205,7 @@ class Ingredient {
             ORDER BY loai_nguyen_lieu
         `;
 
-        const [rows] = await this.db.execute(query);
+        const [rows] = await this.db.query(query);
         return rows;
     }
 
@@ -219,7 +219,7 @@ class Ingredient {
             ORDER BY nha_cung_cap
         `;
 
-        const [rows] = await this.db.execute(query);
+        const [rows] = await this.db.query(query);
         return rows;
     }
 
@@ -236,7 +236,7 @@ class Ingredient {
             WHERE is_active = 1
         `;
 
-        const [rows] = await this.db.execute(query);
+        const [rows] = await this.db.query(query);
         return rows[0];
     }
 
@@ -290,7 +290,7 @@ class Ingredient {
             values.push(parseInt(filters.limit));
         }
 
-        const [rows] = await this.db.execute(query, values);
+        const [rows] = await this.db.query(query, values);
         return rows;
     }
 }

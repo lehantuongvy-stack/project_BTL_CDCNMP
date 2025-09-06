@@ -28,7 +28,7 @@ class User {
         `;
 
         const values = [username, password_hash, full_name, email, phone_number, role, is_active];
-        const result = await this.db.execute(query, values);
+        const result = await this.db.query(query, values);
         
         return {
             id: result.insertId,
@@ -40,63 +40,63 @@ class User {
     // Tìm user theo ID
     async findById(id) {
         const query = `
-            SELECT id, username, full_name, email, phone_number, role, is_active, created_at, updated_at
+            SELECT id, username, full_name, email, phone, role, is_active, created_at, updated_at
             FROM ${this.tableName} 
             WHERE id = ? AND is_active = 1
         `;
         
-        const [rows] = await this.db.execute(query, [id]);
+        const rows = await this.db.query(query, [id]);
         return rows[0] || null;
     }
 
     // Tìm user theo username
     async findByUsername(username) {
         const query = `
-            SELECT id, username, password_hash, full_name, email, phone_number, role, is_active, created_at, updated_at
+            SELECT id, username, password_hash, full_name, email, phone, role, is_active, created_at, updated_at
             FROM ${this.tableName} 
             WHERE username = ? AND is_active = 1
         `;
         
-        const [rows] = await this.db.execute(query, [username]);
+        const rows = await this.db.query(query, [username]);
         return rows[0] || null;
     }
 
     // Tìm user theo email
     async findByEmail(email) {
         const query = `
-            SELECT id, username, full_name, email, phone_number, role, is_active, created_at, updated_at
+            SELECT id, username, password_hash, full_name, email, phone, role, is_active, created_at, updated_at
             FROM ${this.tableName} 
             WHERE email = ? AND is_active = 1
         `;
         
-        const [rows] = await this.db.execute(query, [email]);
+        const rows = await this.db.query(query, [email]);
         return rows[0] || null;
     }
 
     // Lấy tất cả users
     async findAll(limit = 50, offset = 0) {
         const query = `
-            SELECT id, username, full_name, email, phone_number, role, is_active, created_at, updated_at
+            SELECT id, username, full_name, email, phone, role, is_active, created_at, updated_at
             FROM ${this.tableName} 
             WHERE is_active = 1
             ORDER BY created_at DESC
             LIMIT ? OFFSET ?
         `;
         
-        const [rows] = await this.db.execute(query, [limit, offset]);
+        const rows = await this.db.query(query, [limit, offset]);
         return rows;
     }
 
     // Lấy users theo role
     async findByRole(role) {
         const query = `
-            SELECT id, username, full_name, email, phone_number, role, is_active, created_at, updated_at
+            SELECT id, username, full_name, email, phone, role, is_active, created_at, updated_at
             FROM ${this.tableName} 
             WHERE role = ? AND is_active = 1
             ORDER BY created_at DESC
         `;
         
-        const [rows] = await this.db.execute(query, [role]);
+        const rows = await this.db.query(query, [role]);
         return rows;
     }
 

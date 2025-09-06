@@ -37,7 +37,7 @@ class Child {
             weight, height, allergies, medical_notes, emergency_contact, is_active
         ];
         
-        const result = await this.db.execute(query, values);
+        const result = await this.db.query(query, values);
         
         return {
             id: result.insertId,
@@ -58,7 +58,7 @@ class Child {
             WHERE c.id = ? AND c.is_active = 1
         `;
         
-        const [rows] = await this.db.execute(query, [id]);
+        const [rows] = await this.db.query(query, [id]);
         return rows[0] || null;
     }
 
@@ -77,7 +77,7 @@ class Child {
             LIMIT ? OFFSET ?
         `;
         
-        const [rows] = await this.db.execute(query, [limit, offset]);
+        const [rows] = await this.db.query(query, [limit, offset]);
         return rows;
     }
 
@@ -95,7 +95,7 @@ class Child {
             ORDER BY c.full_name
         `;
         
-        const [rows] = await this.db.execute(query, [classId]);
+        const [rows] = await this.db.query(query, [classId]);
         return rows;
     }
 
@@ -110,7 +110,7 @@ class Child {
             ORDER BY c.full_name
         `;
         
-        const [rows] = await this.db.execute(query, [parentId]);
+        const [rows] = await this.db.query(query, [parentId]);
         return rows;
     }
 
@@ -128,7 +128,7 @@ class Child {
             ORDER BY c.full_name
         `;
         
-        const [rows] = await this.db.execute(query, [`%${name}%`]);
+        const [rows] = await this.db.query(query, [`%${name}%`]);
         return rows;
     }
 
@@ -161,7 +161,7 @@ class Child {
             WHERE id = ?
         `;
 
-        await this.db.execute(query, values);
+        await this.db.query(query, values);
         return this.findById(id);
     }
 
@@ -173,7 +173,7 @@ class Child {
             WHERE id = ?
         `;
 
-        await this.db.execute(query, [id]);
+        await this.db.query(query, [id]);
         return true;
     }
 
@@ -191,7 +191,7 @@ class Child {
             ORDER BY c.full_name
         `;
         
-        const [rows] = await this.db.execute(query);
+        const [rows] = await this.db.query(query);
         return rows;
     }
 
@@ -211,7 +211,7 @@ class Child {
             ORDER BY age, c.full_name
         `;
         
-        const [rows] = await this.db.execute(query, [minAge, maxAge]);
+        const [rows] = await this.db.query(query, [minAge, maxAge]);
         return rows;
     }
 
@@ -227,7 +227,7 @@ class Child {
             ORDER BY cl.ten_lop
         `;
 
-        const [rows] = await this.db.execute(query);
+        const [rows] = await this.db.query(query);
         return rows;
     }
 
@@ -254,7 +254,7 @@ class Child {
         
         query += ' ORDER BY DAY(c.date_of_birth), c.full_name';
         
-        const [rows] = await this.db.execute(query, values);
+        const [rows] = await this.db.query(query, values);
         return rows;
     }
 }

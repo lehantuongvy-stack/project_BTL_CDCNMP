@@ -2,10 +2,12 @@
  * Nutrition Controller - Business logic cho quản lý hồ sơ dinh dưỡng
  */
 
+const BaseController = require('./BaseController');
 const NutritionRecord = require('../models/NutritionRecord');
 
-class NutritionController {
+class NutritionController extends BaseController {
     constructor(db) {
+        super();
         this.db = db;
         this.nutritionModel = new NutritionRecord(db);
     }
