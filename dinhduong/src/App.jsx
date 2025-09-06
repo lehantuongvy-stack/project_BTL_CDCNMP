@@ -1,11 +1,12 @@
 
-import Home from "./pages/Home";
-
+// import Home from "./pages/Home";
+import HealthManager from "./pages/HealthManager";
 function App() {
   return (
     <div>
   
-      <Home />
+      {/* <Home /> */}
+      <HealthManager />
     </div>
   );
 }

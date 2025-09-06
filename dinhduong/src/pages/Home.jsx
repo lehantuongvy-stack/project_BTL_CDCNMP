@@ -1,4 +1,6 @@
-import "./Home.css";
+import '../styles/Home.css';
+import '../styles/background.css';
+
 
 export default function Home() {
   return (
