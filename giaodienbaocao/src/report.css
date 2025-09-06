@@ -1,0 +1,77 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: url("bg.png")  no-repeat center center fixed;
+  background-size: cover;
+  
+}
+
+.container {
+  padding: 20px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+}
+
+.back-btn {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+}
+
+.back-btn svg {
+  transition: transform 0.2s;
+}
+
+.back-btn:hover svg {
+  transform: translateX(-3px); /* hiệu ứng khi hover */
+}
+
+.title-box {
+  background: #e69138;
+  padding: 8px 16px;
+  margin-left: 50px;
+  border-radius: 4px;
+  font-weight: bold;
+  color: #fff;
+}
+
+.form-box {
+  margin-top: 20px;
+  background: #fff;
+  border: 1px solid #ddd;
+  padding: 20px;
+}
+
+.form-box input {
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  padding: 8px 12px;
+  width: 30%;
+  font-size: 14px;
+}
+
+.button-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.btn {
+  background: #f4a6b6;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.btn:hover {
+  background: #f18b9d;
+}

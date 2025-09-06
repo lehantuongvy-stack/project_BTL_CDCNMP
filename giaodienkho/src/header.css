@@ -1,0 +1,34 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: url("bg.png")  no-repeat center center fixed;
+  background-size: cover;
+  
+}
+
+.container {
+  padding: 20px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+}
+
+.back-btn {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+}
+
+.back-btn svg {
+  transition: transform 0.2s;
+}
+
+.back-btn:hover svg {
+  transform: translateX(-3px); /* hiệu ứng khi hover */
+}
