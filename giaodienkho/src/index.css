@@ -1,0 +1,80 @@
+
+.form-box {
+  position: relative;
+  background: transparent; /* để trong suốt */
+  border: 2px solid rgba(255, 255, 255, 0.6); /* viền mờ trắng */
+  border-radius: 20px;
+  padding: 20px 40px;
+  width: 90%;
+  max-width: 1000px;
+  display: grid;
+  grid-template-columns: 200px 1fr 120px;
+  gap: 15px;
+  align-items: center;
+  backdrop-filter: blur(5px); /* làm mờ nền phía sau cho đẹp (glass effect) */
+}
+
+
+/* Tiêu đề */
+.form-box h2 {
+  grid-column: span 3;
+  text-align: center;
+  background: #f68d42;
+  padding: 10px;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+/* Label */
+.form-box label {
+  background: #f5a6a6;
+  padding: 8px 12px;
+  border-radius: 20px;
+  font-weight: bold;
+}
+
+/* Input */
+.form-box input {
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  padding: 8px 12px;
+  width: 100%;
+  font-size: 14px;
+}
+
+/* Button */
+.form-box button {
+  background: #cce0f5;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  transition: background 0.2s;
+  margin-left: 20px;   /* cách input sang phải */
+  margin-top: 4px;     /* cách phía trên một chút */
+  margin-bottom: 4px;  /* cách phía dưới một chút */
+}
+
+.form-box button:hover {
+  background: #99c2eb;
+}
+
+.button-group {
+  grid-column: span 3;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+/* Thông báo */
+.message {
+  grid-column: span 3;
+  text-align: center;
+  color: #00CCFF;
+  font-weight: bold;
+  margin-top: 10px;
+}
