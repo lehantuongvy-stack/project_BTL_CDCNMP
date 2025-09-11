@@ -3,29 +3,37 @@ import "./../styles/HealthManager.css";
 import "../styles/background.css";
 
 const HealthManager = () => {
-    // State để quản lý danh sách dị ứng người nhập
+    // State thông tin bé
+    const [childInfo, setChildInfo] = useState({
+        name: "",
+        dob: "",
+        className: "",
+    });
+
+    // State dị ứng
     const [allergies, setAllergies] = useState([]);
     const [newAllergy, setNewAllergy] = useState("");
 
-    // Gợi ý nhanh (cố định)
-    const quickSuggestions = [
-        "Mè (vừng)",
-        "Trứng",
-        "Hải sản",
-        "Lúa mì",
-        "Đậu nành",
-        "Đậu phộng",
-    ];
+    // State mức độ ăn
+    const [mealPercent, setMealPercent] = useState(0);
 
-    // Xử lý khi bấm nút thêm
+    // Gợi ý nhanh
+    const quickSuggestions = ["Mè (vừng)", "Trứng", "Hải sản", "Lúa mì", "Đậu nành", "Đậu phộng"];
+
+    // Hàm xử lý thay đổi input
+    const handleChildChange = (e) => {
+        const { name, value } = e.target;
+        setChildInfo({ ...childInfo, [name]: value });
+    };
+
+    // Hàm thêm dị ứng
     const handleAddAllergy = () => {
         if (newAllergy.trim() !== "" && !allergies.includes(newAllergy)) {
             setAllergies([...allergies, newAllergy]);
-            setNewAllergy(""); // clear input
+            setNewAllergy("");
         }
     };
 
-    // Xử lý khi bấm Enter trong input
     const handleKeyDown = (e) => {
         if (e.key === "Enter") {
             e.preventDefault();
@@ -39,10 +47,44 @@ const HealthManager = () => {
                 <div className="title-box">QUẢN LÝ SỨC KHỎE</div>
                 <div className="info-box">
                     <p><b>Thông tin bé</b></p>
-                    <p>Họ và tên: </p>
-                    <p>Ngày sinh: </p>
-                    <p>Lớp: </p>
+
+                    <div className="form-row">
+                        <label htmlFor="childName">Họ và tên:</label>
+                        <input
+                            id="childName"
+                            type="text"
+                            name="name"
+                            placeholder="Nhập họ và tên"
+                            value={childInfo.name}
+                            onChange={handleChildChange}
+                        />
+                    </div>
+
+                    <div className="form-row">
+                        <label htmlFor="childDob">Ngày sinh:</label>
+                        <input
+                            id="childDob"
+                            type="date"
+                            name="dob"
+                            value={childInfo.dob}
+                            onChange={handleChildChange}
+                        />
+                    </div>
+
+                    <div className="form-row">
+                        <label htmlFor="childClass">Lớp:</label>
+                        <input
+                            id="childClass"
+                            type="text"
+                            name="className"
+                            placeholder="Nhập lớp"
+                            value={childInfo.className}
+                            onChange={handleChildChange}
+                        />
+                    </div>
                 </div>
+
+
                 <div className="icon-box">🐰</div>
             </div>
 
@@ -74,10 +116,18 @@ const HealthManager = () => {
                     </div>
 
                     <h3>Mức độ ăn (ước lượng % khẩu phần)</h3>
-                    <input type="range" min="0" max="100" step="5" />
+                    <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        step="5"
+                        value={mealPercent}
+                        onChange={(e) => setMealPercent(Number(e.target.value))}
+                    />
+                    <p>👉 Bé đã ăn khoảng <b>{mealPercent}%</b></p>
+
                     <h3>Ghi chú bữa ăn</h3>
                     <textarea placeholder="(vd: ăn hết cơm, uống 120ml sữa)"></textarea>
-                    <button>Lưu số liệu</button>
                 </div>
 
                 {/* Dị ứng */}
@@ -94,7 +144,6 @@ const HealthManager = () => {
                         <button onClick={handleAddAllergy}>+ Thêm</button>
                     </div>
 
-                    {/* Danh sách dị ứng đã thêm */}
                     {allergies.length > 0 && (
                         <>
                             <h3 style={{ marginTop: "15px" }}>Danh sách dị ứng</h3>
@@ -106,8 +155,6 @@ const HealthManager = () => {
                         </>
                     )}
 
-
-                    {/* Gợi ý nhanh */}
                     <h3 style={{ marginTop: "15px" }}>Gợi ý nhanh</h3>
                     <div className="tags">
                         {quickSuggestions.map((item, index) => (
@@ -118,7 +165,7 @@ const HealthManager = () => {
                     <button>Lưu số liệu</button>
                 </div>
             </div>
-        </div >
+        </div>
     );
 };
 

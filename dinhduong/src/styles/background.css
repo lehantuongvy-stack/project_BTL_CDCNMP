@@ -1,12 +1,14 @@
 .home {
   position: relative;
-  min-height: 100vh;   /* cao full màn hình */
+  height: 100vh;   /* cao full màn hình */
   width: 100vw;        /* rộng full màn hình */
-  background: url('/images/background.jpg') no-repeat center center fixed;
+  background: url('/images/background.jpg') no-repeat center center ;
+  /* fixed */
   background-size: cover;
   margin: 0;
   padding: 0;
-  overflow: hidden;    /* chặn tràn trong div này */
+  overflow: hidden;
+   z-index: 0;     /* chặn tràn trong div này */
 }
 
 html, body {
@@ -15,4 +17,5 @@ html, body {
   height: 100%;
   width: 100%;
   overflow-x: hidden;  /* chặn thanh trượt ngang */
-}
+  
+}  

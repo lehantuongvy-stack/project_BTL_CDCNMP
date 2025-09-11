@@ -1,0 +1,162 @@
+.menu-container {
+    padding: 20px;
+    text-align: center;
+    /* background: #f9cfc9; */
+    min-height: 100vh;
+}
+
+.menu-header {
+    display: flex;
+    align-items: center;
+    gap: 50px;
+    /* khoảng cách giữa menu-title và tabs */
+    margin-left: 50px;
+    /* cả cụm lệch trái 50px */
+    margin-bottom: 20px;
+}
+
+.menu-title {
+    
+    display: inline-block;
+    background:#eb9c5c ;
+    color: #fff;
+    font-size: 22px;
+    /* chỉnh cỡ chữ */
+    font-weight: bold;
+    margin-top: 30px;
+
+    padding: 20px 60px;
+    /* tăng padding để ô to ra */
+    border-radius: 6px;
+    position: relative;
+    width: 220px;
+    /* đặt chiều rộng cụ thể */
+    height: 70px;
+    /* đặt chiều cao cụ thể */
+    text-align: center;
+    /* căn chữ giữa */
+    line-height: 30px;
+    /* căn dọc */
+}
+
+
+
+
+/* Tabs có nền */
+.tabs {
+    background: #b7c7f3;
+    margin-top: 20px;
+    padding: 20px;
+    border-radius: 8px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+/* Nút trong tabs */
+.tabs button {
+    padding: 8px 20px;
+    border: none;
+    cursor: pointer;
+    border-radius: 6px;
+    background: #dfeef4;
+    font-weight: bold;
+}
+
+.tabs button.active {
+    background: #2d9cdb;
+    color: #fff;
+}
+
+
+/* Input ngày */
+.date-field {
+    display: flex;
+    align-items: center;
+    /* căn giữa theo trục dọc */
+    gap: 50px;
+    /* khoảng cách giữa label và input */
+    margin: 10px 0 20px;
+    margin-left: 50px;
+    /* cả khối lệch trái 50px giống menu-header */
+}
+
+.date-field input[type="date"] {
+    width: 120px;
+    background-color: #fff;
+    /* trắng */
+    color: #333;
+    /* chữ tối dễ đọc */
+    border: 1px solid #ccc;
+    padding: 6px 10px;
+    border-radius: 6px;
+}
+
+
+.date-field label {
+
+    font-size: 16px;
+    color: black;
+}
+
+
+/* Khối nhóm */
+/* Group Container */
+.group-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px;
+    /* khoảng cách giữa các group-box */
+    margin-left: 50px;
+    /* cách lề trái 50px */
+    margin-top: 50px;
+    /* cách date-field 50px */
+}
+
+/* Group Box */
+.group-box {
+    color: black;
+    background: #f3dfe8;
+    border-radius: 12px;
+    padding: 30px;
+    /* to thêm bên trong */
+    width: 600px;
+    /* to hơn so với 320px */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    text-align: left;
+}
+
+.group-box h3 {
+
+    margin-top: 0;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.meal {
+    margin: 12px 0;
+}
+
+.meal-title {
+    font-weight: bold;
+}
+
+.meal p {
+    margin: 4px 0;
+}
+
+.kcal {
+    display: inline-block;
+    background: #e980f3;
+
+    padding: 2px 10px;
+    border-radius: 20px;
+
+    font-size: 13px;
+}
+
+.divider {
+    height: 2px;
+    background: #dcdcdc;
+    margin: 6px 0;
+}

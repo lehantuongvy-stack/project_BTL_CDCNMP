@@ -1,12 +1,13 @@
-
-// import Home from "./pages/Home";
-import HealthManager from "./pages/HealthManager";
+import React from "react";
+import Home from "./pages/Home";   // file Home.jsx
+import Menu from "./pages/Menu";   // file Menu.jsx
+import HealthManager from "./pages/HealthManager";  
 function App() {
   return (
     <div>
-  
-      {/* <Home /> */}
-      <HealthManager />
+      <Home />
+      {/* <Menu /> */}
+      {/* <HealthManager /> */}
     </div>
   );
 }

@@ -47,7 +47,7 @@
 .icon-box {
     flex: 0 0 auto;
     /* giữ nguyên kích thước */
-    font-size: 40px;
+    font-size: 100px;
 }
 
 .form-sections {
@@ -67,10 +67,31 @@
     margin-bottom: 10px;
 }
 
+.form-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.form-row label {
+    width: 120px;
+    /* chiều rộng cố định cho label */
+    font-weight: bold;
+}
+
+.form-row input {
+    flex: 1;
+    /* input chiếm hết phần còn lại */
+    padding: 5px 8px;
+    /* border: 1px solid #ccc; */
+    border-radius: 6px;
+}
+
+
 input,
 select,
 textarea {
-    width: 100%;
+    width: 90%;
     margin: 6px 0;
     padding: 8px;
     border: none;
@@ -88,8 +109,8 @@ textarea {
     justify-content: space-between;
 }
 
-button {
-    background: #fff;
+.card button {
+    background: #f8b9e3;
     color: black;
     border: none;
     padding: 8px 12px;
