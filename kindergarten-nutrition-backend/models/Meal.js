@@ -14,37 +14,125 @@ class Meal {
      */
     async create(mealData) {
         try {
+            const { v4: uuidv4 } = require('uuid');
+            const mealId = uuidv4();
+            
             const {
-                ngay,
-                buoi_an, // 'sang', 'trua', 'chieu', 'phu' 
-                mon_an_id,
-                lop_hoc_id,
-                so_luong_phuc_vu,
-                ghi_chu,
-                chi_phi_du_kien,
-                created_by
+                ten_thuc_don,
+                ngay_ap_dung,
+                loai_bua_an, // 'breakfast', 'lunch', 'dinner', 'snack'
+                lop_ap_dung,
+                so_tre_du_kien = 30,
+                trang_thai = 'draft',
+                created_by,
+                ghi_chu = ''
             } = mealData;
+
+            // Validation
+            if (!ten_thuc_don || !ngay_ap_dung || !loai_bua_an) {
+                throw new Error('Thiếu thông tin bắt buộc: tên thực đơn, ngày áp dụng, loại bữa ăn');
+            }
 
             const query = `
                 INSERT INTO thuc_don (
-                    ngay, buoi_an, mon_an_id, lop_hoc_id,
-                    so_luong_phuc_vu, ghi_chu, chi_phi_du_kien,
-                    created_by, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
+                    id, ten_thuc_don, ngay_ap_dung, loai_bua_an,
+                    lop_ap_dung, so_tre_du_kien, trang_thai,
+                    created_by, ghi_chu, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
             `;
 
             const values = [
-                ngay, buoi_an, mon_an_id, lop_hoc_id,
-                so_luong_phuc_vu || 30, ghi_chu || '',
-                chi_phi_du_kien || 0, created_by
+                mealId, ten_thuc_don, ngay_ap_dung, loai_bua_an,
+                lop_ap_dung, so_tre_du_kien, trang_thai,
+                created_by, ghi_chu
             ];
 
-            const result = await this.db.query(query, values);
-            return { id: result.insertId, ...mealData };
+            await this.db.query(query, values);
+            return await this.findById(mealId);
 
         } catch (error) {
             console.error('Error creating meal:', error);
             throw new Error('Lỗi khi tạo thực đơn: ' + error.message);
+        }
+    }
+
+    /**
+     * Lấy tất cả thực đơn với pagination
+     */
+    async findAll(limit = 50, offset = 0) {
+        try {
+            const query = `
+                SELECT 
+                    td.*,
+                    GROUP_CONCAT(
+                        CONCAT(ma.ten_mon_an, ' (', ctd.so_khau_phan, ' khẩu phần)')
+                        SEPARATOR ', '
+                    ) as danh_sach_mon_an
+                FROM thuc_don td
+                LEFT JOIN chi_tiet_thuc_don ctd ON td.id = ctd.thuc_don_id
+                LEFT JOIN mon_an ma ON ctd.mon_an_id = ma.id
+                GROUP BY td.id
+                ORDER BY td.ngay_ap_dung DESC, td.loai_bua_an ASC
+                LIMIT ? OFFSET ?
+            `;
+
+            const meals = await this.db.query(query, [limit, offset]);
+            return meals || [];
+
+        } catch (error) {
+            console.error('Error finding all meals:', error);
+            throw new Error('Lỗi khi lấy danh sách thực đơn: ' + error.message);
+        }
+    }
+
+    /**
+     * Lấy thực đơn theo ID
+     */
+    async findById(id) {
+        try {
+            const query = `
+                SELECT 
+                    td.*,
+                    GROUP_CONCAT(
+                        CONCAT(ma.ten_mon_an, ' (', ctd.so_khau_phan, ' khẩu phần)')
+                        SEPARATOR ', '
+                    ) as danh_sach_mon_an
+                FROM thuc_don td
+                LEFT JOIN chi_tiet_thuc_don ctd ON td.id = ctd.thuc_don_id
+                LEFT JOIN mon_an ma ON ctd.mon_an_id = ma.id
+                WHERE td.id = ?
+                GROUP BY td.id
+            `;
+
+            const meals = await this.db.query(query, [id]);
+            return meals && meals.length > 0 ? meals[0] : null;
+
+        } catch (error) {
+            console.error('Error finding meal by ID:', error);
+            throw new Error('Lỗi khi lấy thực đơn theo ID: ' + error.message);
+        }
+    }
+
+    /**
+     * Lấy thực đơn theo ngày
+     */
+    async findByDate(date) {
+        try {
+            const query = `
+                SELECT 
+                    id, ten_thuc_don, ngay_ap_dung, loai_bua_an,
+                    lop_ap_dung, so_tre_du_kien, trang_thai,
+                    created_by, ghi_chu, created_at, updated_at
+                FROM thuc_don 
+                WHERE DATE(ngay_ap_dung) = ?
+                ORDER BY loai_bua_an, created_at
+            `;
+            
+            const results = await this.db.query(query, [date]);
+            return results;
+        } catch (error) {
+            console.error('Error finding meals by date:', error);
+            throw new Error('Lỗi khi lấy thực đơn theo ngày: ' + error.message);
         }
     }
 
@@ -270,33 +358,6 @@ class Meal {
         } catch (error) {
             console.error('Error updating meal:', error);
             throw new Error('Lỗi khi cập nhật thực đơn');
-        }
-    }
-
-    /**
-     * Lấy thực đơn theo ID
-     */
-    async findById(id) {
-        try {
-            const query = `
-                SELECT 
-                    td.*,
-                    ma.ten_mon, ma.mo_ta, ma.calories_per_serving,
-                    ma.protein_per_serving, ma.carbs_per_serving,
-                    ma.fat_per_serving, ma.image_url,
-                    lh.ten_lop
-                FROM thuc_don td
-                LEFT JOIN mon_an ma ON td.mon_an_id = ma.id
-                LEFT JOIN lop_hoc lh ON td.lop_hoc_id = lh.id
-                WHERE td.id = ?
-            `;
-
-            const meals = await this.db.query(query, [id]);
-            return meals.length > 0 ? meals[0] : null;
-
-        } catch (error) {
-            console.error('Error finding meal by ID:', error);
-            throw new Error('Lỗi khi lấy thông tin thực đơn');
         }
     }
 

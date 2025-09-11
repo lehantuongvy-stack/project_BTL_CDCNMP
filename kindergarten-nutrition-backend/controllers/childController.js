@@ -5,6 +5,7 @@
 
 const BaseController = require('./BaseController');
 const Child = require('../models/Child');
+const url = require('url');
 
 class ChildController extends BaseController {
     constructor(db) {
@@ -19,10 +20,10 @@ class ChildController extends BaseController {
             const { page = 1, limit = 50, class_id, parent_id } = req.query;
             const offset = (page - 1) * limit;
 
-            let children;
+            let children = [];
 
             if (class_id) {
-                children = await this.childModel.findByClassId(class_id);
+                children = await this.childModel.findByClassId(class_id) || [];
             } else if (parent_id) {
                 // Kiểm tra quyền: chỉ parent hoặc admin/teacher mới xem được children theo parent_id
                 if (req.user.role === 'parent' && req.user.id !== parseInt(parent_id)) {
@@ -31,24 +32,24 @@ class ChildController extends BaseController {
                         message: 'Không có quyền xem thông tin này'
                     });
                 }
-                children = await this.childModel.findByParentId(parent_id);
+                children = await this.childModel.findByParentId(parent_id) || [];
             } else {
                 // Nếu là parent, chỉ xem children của mình
                 if (req.user.role === 'parent') {
-                    children = await this.childModel.findByParentId(req.user.id);
+                    children = await this.childModel.findByParentId(req.user.id) || [];
                 } else {
-                    children = await this.childModel.findAll(parseInt(limit), offset);
+                    children = await this.childModel.findAll(parseInt(limit), offset) || [];
                 }
             }
 
             this.sendResponse(res, 200, {
                 success: true,
                 data: {
-                    children,
+                    children: children || [],
                     pagination: {
                         page: parseInt(page),
                         limit: parseInt(limit),
-                        total: children.length
+                        total: (children && children.length) || 0
                     }
                 }
             });
@@ -103,11 +104,13 @@ class ChildController extends BaseController {
     async createChild(req, res) {
         try {
             const childData = req.body;
+            console.log('📝 Creating child with data:', childData);
 
             // Validate required fields
             const requiredFields = ['full_name', 'date_of_birth', 'gender'];
             for (const field of requiredFields) {
                 if (!childData[field]) {
+                    console.log(`❌ Missing required field: ${field}`);
                     return this.sendResponse(res, 400, {
                         success: false,
                         message: `Trường ${field} là bắt buộc`
@@ -118,22 +121,28 @@ class ChildController extends BaseController {
             // Kiểm tra quyền và set parent_id
             if (req.user.role === 'parent') {
                 childData.parent_id = req.user.id;
+                console.log('👤 Set parent_id from user:', req.user.id);
             } else if (req.user.role === 'admin' || req.user.role === 'teacher') {
                 // Admin/teacher có thể tạo child cho parent khác
                 if (!childData.parent_id) {
+                    console.log('❌ Missing parent_id for admin/teacher');
                     return this.sendResponse(res, 400, {
                         success: false,
                         message: 'parent_id là bắt buộc'
                     });
                 }
+                console.log('👤 Using provided parent_id:', childData.parent_id);
             } else {
+                console.log('❌ Unauthorized role:', req.user.role);
                 return this.sendResponse(res, 403, {
                     success: false,
                     message: 'Không có quyền tạo child'
                 });
             }
 
+            console.log('🔧 Calling childModel.create...');
             const newChild = await this.childModel.create(childData);
+            console.log('✅ Child created:', newChild);
 
             this.sendResponse(res, 201, {
                 success: true,
@@ -142,7 +151,7 @@ class ChildController extends BaseController {
             });
 
         } catch (error) {
-            console.error('Create child error:', error);
+            console.error('❌ Create child error:', error);
             this.sendResponse(res, 500, {
                 success: false,
                 message: 'Lỗi server khi tạo child',
@@ -239,36 +248,72 @@ class ChildController extends BaseController {
     // Tìm kiếm children
     async searchChildren(req, res) {
         try {
-            const { q } = req.query;
+            // Parse query parameters
+            const urlParts = url.parse(req.url, true);
+            const query = urlParts.query;
+            
+            console.log('🔍 Search children with query:', query);
+            
+            const searchTerm = query.q || query.search || '';
+            const className = query.class || query.lop || '';
+            const hasAllergy = query.has_allergy;
+            const age = query.age;
+            const gender = query.gender;
+            const page = parseInt(query.page) || 1;
+            const limit = parseInt(query.limit) || 10;
+            const offset = (page - 1) * limit;
 
-            if (!q) {
+            if (!searchTerm && !className && hasAllergy === undefined && !age && !gender) {
                 return this.sendResponse(res, 400, {
                     success: false,
-                    message: 'Query parameter "q" is required'
+                    message: 'Vui lòng cung cấp ít nhất một tham số tìm kiếm (q, class, has_allergy, age, hoặc gender)'
                 });
             }
 
-            let children = await this.childModel.findByName(q);
+            // Build search criteria
+            const searchCriteria = {
+                searchTerm: searchTerm.trim(),
+                className: className,
+                hasAllergy: hasAllergy !== undefined ? hasAllergy === 'true' : undefined,
+                age: age ? parseInt(age) : undefined,
+                gender: gender,
+                limit: limit,
+                offset: offset
+            };
 
-            // Nếu là parent, chỉ trả về children của họ
-            if (req.user.role === 'parent') {
-                children = children.filter(child => child.parent_id === req.user.id);
-            }
+            console.log('🔍 Search criteria:', searchCriteria);
+
+            const result = await this.searchChildren(searchCriteria);
 
             this.sendResponse(res, 200, {
                 success: true,
+                message: `Tìm kiếm trẻ em thành công. Tìm thấy ${result.total} kết quả`,
                 data: {
-                    children,
-                    total: children.length
+                    children: result.children,
+                    pagination: {
+                        current_page: page,
+                        total_pages: Math.ceil(result.total / limit),
+                        total_items: result.total,
+                        items_per_page: limit,
+                        has_next: page * limit < result.total,
+                        has_prev: page > 1
+                    },
+                    search_criteria: {
+                        search_term: searchTerm,
+                        class: className || 'all',
+                        has_allergy: hasAllergy || 'all',
+                        age: age || 'all',
+                        gender: gender || 'all'
+                    }
                 }
             });
 
         } catch (error) {
-            console.error('Search children error:', error);
+            console.error('Error in searchChildrenHandler:', error);
             this.sendResponse(res, 500, {
                 success: false,
-                message: 'Lỗi server khi tìm kiếm children',
-                error: error.message
+                message: 'Lỗi server',
+                error: 'Lỗi khi tìm kiếm trẻ em: ' + error.message
             });
         }
     }
@@ -366,6 +411,89 @@ class ChildController extends BaseController {
                 message: 'Lỗi server khi lấy danh sách sinh nhật',
                 error: error.message
             });
+        }
+    }
+
+    // Tìm kiếm children với handler
+    async searchChildrenHandler(req, res) {
+        try {
+            // Parse query parameters
+            const urlParts = url.parse(req.url, true);
+            const query = urlParts.query;
+            
+            console.log('🔍 Search children with query:', query);
+            
+            const searchTerm = query.q || query.search || '';
+            const className = query.class || query.lop || '';
+            const hasAllergy = query.has_allergy;
+            const age = query.age;
+            const gender = query.gender;
+            const page = parseInt(query.page) || 1;
+            const limit = parseInt(query.limit) || 10;
+            const offset = (page - 1) * limit;
+
+            if (!searchTerm && !className && hasAllergy === undefined && !age && !gender) {
+                return this.sendResponse(res, 400, {
+                    success: false,
+                    message: 'Vui lòng cung cấp ít nhất một tham số tìm kiếm (q, class, has_allergy, age, hoặc gender)'
+                });
+            }
+
+            // Build search criteria
+            const searchCriteria = {
+                searchTerm: searchTerm.trim(),
+                className: className,
+                hasAllergy: hasAllergy !== undefined ? hasAllergy === 'true' : undefined,
+                age: age ? parseInt(age) : undefined,
+                gender: gender,
+                limit: limit,
+                offset: offset
+            };
+
+            console.log('🔍 Search criteria:', searchCriteria);
+
+            const result = await this.searchChildren(searchCriteria);
+
+            this.sendResponse(res, 200, {
+                success: true,
+                message: `Tìm kiếm trẻ em thành công. Tìm thấy ${result.total} kết quả`,
+                data: {
+                    children: result.children,
+                    pagination: {
+                        current_page: page,
+                        total_pages: Math.ceil(result.total / limit),
+                        total_items: result.total,
+                        items_per_page: limit,
+                        has_next: page * limit < result.total,
+                        has_prev: page > 1
+                    },
+                    search_criteria: {
+                        search_term: searchTerm,
+                        class: className || 'all',
+                        has_allergy: hasAllergy || 'all',
+                        age: age || 'all',
+                        gender: gender || 'all'
+                    }
+                }
+            });
+
+        } catch (error) {
+            console.error('Error in searchChildrenHandler:', error);
+            this.sendResponse(res, 500, {
+                success: false,
+                message: 'Lỗi server',
+                error: 'Lỗi khi tìm kiếm trẻ em: ' + error.message
+            });
+        }
+    }
+
+    async searchChildren(criteria) {
+        try {
+            const result = await this.childModel.search(criteria);
+            return result || { children: [], total: 0 };
+        } catch (error) {
+            console.error('Error searching children:', error);
+            throw error;
         }
     }
 }

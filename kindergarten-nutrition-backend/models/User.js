@@ -17,23 +17,53 @@ class User {
             full_name,
             email,
             phone_number,
+            phone,
             role,
+            address,
             is_active = true
         } = userData;
 
         const query = `
             INSERT INTO ${this.tableName} 
-            (username, password_hash, full_name, email, phone_number, role, is_active, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
+            (username, password_hash, full_name, email, phone, role, address, is_active, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
         `;
 
-        const values = [username, password_hash, full_name, email, phone_number, role, is_active];
+        const values = [
+            username, 
+            password_hash, 
+            full_name, 
+            email, 
+            phone_number || phone || null,
+            role, 
+            address || null,
+            is_active
+        ];
+        
+        // Debug log
+        console.log('Create user values:', values);
+        console.log('Has undefined?', values.some(v => v === undefined));
+        
         const result = await this.db.query(query, values);
         
+        // Handle different MySQL2 response formats
+        let insertId;
+        if (Array.isArray(result) && result.length > 0) {
+            insertId = result[0].insertId || result.insertId;
+        } else {
+            insertId = result.insertId;
+        }
+        
         return {
-            id: result.insertId,
-            ...userData,
-            password_hash: undefined // Don't return password
+            id: insertId,
+            username,
+            full_name,
+            email,
+            phone: phone_number || phone,
+            role,
+            address,
+            is_active,
+            created_at: new Date()
         };
     }
 
@@ -45,8 +75,11 @@ class User {
             WHERE id = ? AND is_active = 1
         `;
         
-        const rows = await this.db.query(query, [id]);
-        return rows[0] || null;
+        const result = await this.db.query(query, [id]);
+        if (Array.isArray(result) && result.length > 0) {
+            return Array.isArray(result[0]) ? result[0][0] : result[0];
+        }
+        return null;
     }
 
     // Tìm user theo username
@@ -57,8 +90,11 @@ class User {
             WHERE username = ? AND is_active = 1
         `;
         
-        const rows = await this.db.query(query, [username]);
-        return rows[0] || null;
+        const result = await this.db.query(query, [username]);
+        if (Array.isArray(result) && result.length > 0) {
+            return Array.isArray(result[0]) ? result[0][0] : result[0];
+        }
+        return null;
     }
 
     // Tìm user theo email
@@ -70,7 +106,7 @@ class User {
         `;
         
         const rows = await this.db.query(query, [email]);
-        return rows[0] || null;
+        return (Array.isArray(rows) && rows.length > 0 && Array.isArray(rows[0])) ? rows[0][0] : rows[0] || null;
     }
 
     // Lấy tất cả users
@@ -83,8 +119,12 @@ class User {
             LIMIT ? OFFSET ?
         `;
         
-        const rows = await this.db.query(query, [limit, offset]);
-        return rows;
+        const result = await this.db.query(query, [limit, offset]);
+        if (Array.isArray(result) && result.length > 0) {
+            // Trả về array của tất cả users, không chỉ user đầu tiên
+            return Array.isArray(result[0]) ? result[0] : result;
+        }
+        return [];
     }
 
     // Lấy users theo role
@@ -96,8 +136,11 @@ class User {
             ORDER BY created_at DESC
         `;
         
-        const rows = await this.db.query(query, [role]);
-        return rows;
+        const result = await this.db.query(query, [role]);
+        if (Array.isArray(result) && result.length > 0) {
+            return Array.isArray(result[0]) ? result[0][0] : result[0];
+        }
+        return null;
     }
 
     // Cập nhật user
@@ -126,7 +169,7 @@ class User {
             WHERE id = ?
         `;
 
-        await this.db.execute(query, values);
+        await this.db.query(query, values);
         return this.findById(id);
     }
 
@@ -138,7 +181,7 @@ class User {
             WHERE id = ?
         `;
 
-        await this.db.execute(query, [newPasswordHash, id]);
+        await this.db.query(query, [newPasswordHash, id]);
         return true;
     }
 
@@ -150,7 +193,7 @@ class User {
             WHERE id = ?
         `;
 
-        await this.db.execute(query, [id]);
+        await this.db.query(query, [id]);
         return true;
     }
 
@@ -168,8 +211,8 @@ class User {
             values.push(excludeId);
         }
 
-        const [rows] = await this.db.execute(query, values);
-        return rows[0].count > 0;
+        const result = await this.db.query(query, values);
+        return (Array.isArray(result) && result.length > 0 && Array.isArray(result[0])) ? result[0][0] : result[0].count > 0;
     }
 
     // Kiểm tra email có tồn tại không
@@ -186,8 +229,8 @@ class User {
             values.push(excludeId);
         }
 
-        const [rows] = await this.db.execute(query, values);
-        return rows[0].count > 0;
+        const result = await this.db.query(query, values);
+        return (Array.isArray(result) && result.length > 0 && Array.isArray(result[0])) ? result[0][0] : result[0].count > 0;
     }
 
     // Thống kê số lượng users theo role
@@ -199,8 +242,76 @@ class User {
             GROUP BY role
         `;
 
-        const [rows] = await this.db.execute(query);
-        return rows;
+        const result = await this.db.query(query);
+        return (Array.isArray(result) && result.length > 0 && Array.isArray(result[0])) ? result[0] : result;
+    }
+
+    // Tìm kiếm user theo tiêu chí
+    async search(criteria) {
+        try {
+            const { searchTerm, role, isActive, limit, offset } = criteria;
+            
+            let whereConditions = [];
+            let queryParams = [];
+            let paramIndex = 1;
+
+            // Tìm kiếm theo username, email hoặc full_name
+            if (searchTerm) {
+                whereConditions.push(`(username LIKE ? OR email LIKE ? OR full_name LIKE ?)`);
+                const searchPattern = `%${searchTerm}%`;
+                queryParams.push(searchPattern, searchPattern, searchPattern);
+                paramIndex += 3;
+            }
+
+            // Lọc theo role
+            if (role) {
+                whereConditions.push(`role = ?`);
+                queryParams.push(role);
+                paramIndex++;
+            }
+
+            // Lọc theo trạng thái kích hoạt
+            if (isActive !== undefined) {
+                whereConditions.push(`is_active = ?`);
+                queryParams.push(isActive ? 1 : 0);
+                paramIndex++;
+            }
+
+            const whereClause = whereConditions.length > 0 ? 
+                `WHERE ${whereConditions.join(' AND ')}` : '';
+
+            // Đếm tổng số kết quả
+            const countQuery = `
+                SELECT COUNT(*) as total 
+                FROM users 
+                ${whereClause}
+            `;
+            
+            const countResult = await this.db.query(countQuery, queryParams);
+            const total = countResult[0]?.total || 0;
+
+            // Lấy kết quả phân trang
+            const searchQuery = `
+                SELECT id, username, email, full_name, phone, role, is_active, 
+                       created_at, updated_at
+                FROM users 
+                ${whereClause}
+                ORDER BY created_at DESC
+                LIMIT ? OFFSET ?
+            `;
+            
+            const searchParams = [...queryParams, limit, offset];
+            const users = await this.db.query(searchQuery, searchParams);
+
+            return {
+                users: users || [],
+                total: total
+            };
+
+        } catch (error) {
+            console.error('Error in User.search:', error);
+            throw error;
+        }
     }
 }
 

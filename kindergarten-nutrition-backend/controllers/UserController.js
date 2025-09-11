@@ -5,6 +5,7 @@
 
 const BaseController = require('./BaseController');
 const User = require('../models/User');
+const url = require('url');
 
 class UserController extends BaseController {
     constructor(db) {
@@ -71,6 +72,77 @@ class UserController extends BaseController {
             this.sendResponse(res, 500, {
                 success: false,
                 message: 'Lỗi server khi lấy thông tin user',
+                error: error.message
+            });
+        }
+    }
+
+    // Tạo user mới  
+    async createUser(req, res) {
+        try {
+            // Chỉ admin mới được tạo user
+            if (req.user.role !== 'admin') {
+                return this.sendResponse(res, 403, {
+                    success: false,
+                    message: 'Chỉ admin mới có thể tạo user'
+                });
+            }
+
+            const { username, email, password, full_name, role = 'teacher', phone, address } = req.body;
+
+            // Validate required fields
+            if (!username || !email || !password || !full_name) {
+                return this.sendResponse(res, 400, {
+                    success: false,
+                    message: 'Thiếu thông tin bắt buộc: username, email, password, full_name'
+                });
+            }
+
+            // Kiểm tra username trùng lặp
+            const usernameExists = await this.userModel.isUsernameExists(username);
+            if (usernameExists) {
+                return this.sendResponse(res, 400, {
+                    success: false,
+                    message: 'Username đã tồn tại'
+                });
+            }
+
+            // Kiểm tra email trùng lặp
+            const emailExists = await this.userModel.isEmailExists(email);
+            if (emailExists) {
+                return this.sendResponse(res, 400, {
+                    success: false,
+                    message: 'Email đã tồn tại'
+                });
+            }
+
+            // Hash password
+            const bcrypt = require('bcrypt');
+            const saltRounds = 10;
+            const password_hash = await bcrypt.hash(password, saltRounds);
+
+            // Tạo user mới
+            const newUser = await this.userModel.create({
+                username,
+                email,
+                password_hash,
+                full_name,
+                role,
+                phone: phone || null,
+                address
+            });
+
+            this.sendResponse(res, 201, {
+                success: true,
+                message: 'Tạo user thành công',
+                data: { user: newUser }
+            });
+
+        } catch (error) {
+            console.error('Create user error:', error);
+            this.sendResponse(res, 500, {
+                success: false,
+                message: 'Lỗi server khi tạo user',
                 error: error.message
             });
         }
@@ -242,6 +314,89 @@ class UserController extends BaseController {
                 message: 'Lỗi server khi tìm kiếm users',
                 error: error.message
             });
+        }
+    }
+
+    // Tìm kiếm users (phiên bản mới với phân trang và bộ lọc nâng cao)
+    async searchUsersHandler(req, res) {
+        try {
+            // Parse query parameters
+            const urlParts = url.parse(req.url, true);
+            const query = urlParts.query;
+            
+            console.log('🔍 Search users with query:', query);
+            
+            const searchTerm = query.q || query.search || '';
+            const role = query.role || '';
+            const isActive = query.is_active;
+            const page = parseInt(query.page) || 1;
+            const limit = parseInt(query.limit) || 10;
+            const offset = (page - 1) * limit;
+
+            if (!searchTerm && !role && isActive === undefined) {
+                return this.sendResponse(res, 400, {
+                    success: false,
+                    message: 'Vui lòng cung cấp ít nhất một tham số tìm kiếm (q, role, hoặc is_active)'
+                });
+            }
+
+            // Build search criteria
+            const searchCriteria = {
+                searchTerm: searchTerm.trim(),
+                role: role,
+                isActive: isActive !== undefined ? isActive === 'true' : undefined,
+                limit: limit,
+                offset: offset
+            };
+
+            console.log('🔍 Search criteria:', searchCriteria);
+
+            const result = await this.searchUsers(searchCriteria);
+            
+            // Remove sensitive information from all users
+            const safeUsers = result.users.map(user => {
+                const { password, ...safeUser } = user;
+                return safeUser;
+            });
+
+            this.sendResponse(res, 200, {
+                success: true,
+                message: `Tìm kiếm users thành công. Tìm thấy ${result.total} kết quả`,
+                data: {
+                    users: safeUsers,
+                    pagination: {
+                        current_page: page,
+                        total_pages: Math.ceil(result.total / limit),
+                        total_items: result.total,
+                        items_per_page: limit,
+                        has_next: page * limit < result.total,
+                        has_prev: page > 1
+                    },
+                    search_criteria: {
+                        search_term: searchTerm,
+                        role: role || 'all',
+                        is_active: isActive || 'all'
+                    }
+                }
+            });
+
+        } catch (error) {
+            console.error('Error in searchUsersHandler:', error);
+            this.sendResponse(res, 500, {
+                success: false,
+                message: 'Lỗi server',
+                error: 'Lỗi khi tìm kiếm users: ' + error.message
+            });
+        }
+    }
+
+    async searchUsers(criteria) {
+        try {
+            const result = await this.userModel.search(criteria);
+            return result || { users: [], total: 0 };
+        } catch (error) {
+            console.error('Error searching users:', error);
+            throw error;
         }
     }
 }

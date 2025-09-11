@@ -46,6 +46,21 @@ class AuthRoutes {
                     await this.authController.changePassword(req, res);
                     break;
 
+                case path === '/logout' && method === 'POST':
+                    console.log('🚪 Logout route matched');
+                    // Apply authentication middleware
+                    const authLogout = await this.applyAuthMiddleware(req, res, this.authController);
+                    if (!authLogout) return;
+                    await this.authController.logoutHandler(req, res);
+                    break;
+
+                case path === '/logout' && method === 'GET':
+                    console.log('🚪 Logout GET route matched');
+                    const authLogoutGet = await this.applyAuthMiddleware(req, res, this.authController);
+                    if (!authLogoutGet) return;
+                    await this.authController.logoutHandler(req, res);
+                    break;
+
                 case path === '' || path === '/' && method === 'GET':
                     this.sendResponse(res, 200, {
                         success: true,

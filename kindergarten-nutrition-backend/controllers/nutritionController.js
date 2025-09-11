@@ -17,9 +17,15 @@ class NutritionController extends BaseController {
      */
     async createNutritionRecord(recordData) {
         try {
-            // Validation
-            if (!recordData.child_id || !recordData.ngay_ghi_nhan) {
-                throw new Error('Thiếu thông tin bắt buộc: child_id, ngay_ghi_nhan');
+            // Validation - hỗ trợ cả 2 tên field
+            const dateField = recordData.ngay_danh_gia || recordData.ngay_ghi_nhan;
+            if (!recordData.child_id || !dateField) {
+                throw new Error('Thiếu thông tin bắt buộc: child_id, ngay_danh_gia');
+            }
+
+            // Đảm bảo có field ngày đánh giá
+            if (!recordData.ngay_danh_gia && recordData.ngay_ghi_nhan) {
+                recordData.ngay_danh_gia = recordData.ngay_ghi_nhan;
             }
 
             if (!recordData.chieu_cao || !recordData.can_nang) {
@@ -38,7 +44,7 @@ class NutritionController extends BaseController {
             // Kiểm tra xem đã có hồ sơ trong ngày chưa
             const existingRecord = await this.checkExistingRecord(
                 recordData.child_id, 
-                recordData.ngay_ghi_nhan
+                recordData.ngay_danh_gia || recordData.ngay_ghi_nhan  // Hỗ trợ cả 2 tên field
             );
 
             if (existingRecord) {
@@ -65,7 +71,7 @@ class NutritionController extends BaseController {
      */
     async checkExistingRecord(childId, date) {
         try {
-            const query = 'SELECT id FROM ho_so_dinh_duong WHERE child_id = ? AND DATE(ngay_ghi_nhan) = DATE(?)';
+            const query = 'SELECT id FROM danh_gia_suc_khoe WHERE child_id = ? AND DATE(ngay_danh_gia) = DATE(?)';
             const result = await this.db.query(query, [childId, date]);
             return result.length > 0 ? result[0] : null;
 
@@ -82,8 +88,8 @@ class NutritionController extends BaseController {
         try {
             const query = `
                 SELECT 
-                    TIMESTAMPDIFF(MONTH, ngay_sinh, CURDATE()) as age_months,
-                    TIMESTAMPDIFF(YEAR, ngay_sinh, CURDATE()) as age_years
+                    TIMESTAMPDIFF(MONTH, date_of_birth, CURDATE()) as age_months,
+                    TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) as age_years
                 FROM children 
                 WHERE id = ?
             `;
@@ -101,55 +107,7 @@ class NutritionController extends BaseController {
      */
     async getNutritionRecords(filters = {}) {
         try {
-            let query = `
-                SELECT 
-                    hsdd.*,
-                    c.ho_ten as child_name,
-                    c.ngay_sinh,
-                    lh.ten_lop,
-                    u.ten_dang_nhap as created_by_name
-                FROM ho_so_dinh_duong hsdd
-                LEFT JOIN children c ON hsdd.child_id = c.id
-                LEFT JOIN lop_hoc lh ON c.lop_hoc_id = lh.id
-                LEFT JOIN users u ON hsdd.created_by = u.id
-                WHERE 1=1
-            `;
-            const values = [];
-
-            // Apply filters
-            if (filters.child_id) {
-                query += ' AND hsdd.child_id = ?';
-                values.push(filters.child_id);
-            }
-
-            if (filters.start_date) {
-                query += ' AND hsdd.ngay_ghi_nhan >= ?';
-                values.push(filters.start_date);
-            }
-
-            if (filters.end_date) {
-                query += ' AND hsdd.ngay_ghi_nhan <= ?';
-                values.push(filters.end_date);
-            }
-
-            if (filters.nutrition_status) {
-                query += ' AND hsdd.tinh_trang_dinh_duong = ?';
-                values.push(filters.nutrition_status);
-            }
-
-            query += ' ORDER BY hsdd.ngay_ghi_nhan DESC';
-
-            if (filters.limit) {
-                query += ' LIMIT ?';
-                values.push(parseInt(filters.limit));
-                
-                if (filters.offset) {
-                    query += ' OFFSET ?';
-                    values.push(parseInt(filters.offset));
-                }
-            }
-
-            return await this.db.query(query, values);
+            return await this.nutritionModel.findAll(filters);
 
         } catch (error) {
             console.error('Error in getNutritionRecords:', error);
@@ -525,6 +483,113 @@ class NutritionController extends BaseController {
         }
 
         return recommendations;
+    }
+
+    /**
+     * Lấy thống kê dinh dưỡng theo child_id
+     */
+    async getChildNutritionStats(childId, query = {}) {
+        try {
+            // Kiểm tra trẻ em có tồn tại không
+            const childQuery = 'SELECT * FROM children WHERE id = ?';
+            const childResult = await this.db.query(childQuery, [childId]);
+            
+            console.log('🔍 Child query result:', childResult);
+            
+            // Database trả về array, lấy phần tử đầu tiên
+            const child = Array.isArray(childResult) ? childResult[0] : childResult;
+            console.log('👶 Child found:', child);
+            
+            if (!child || !child.id) {
+                throw new Error('Không tìm thấy thông tin trẻ em');
+            }
+
+            // Lấy tất cả hồ sơ dinh dưỡng của trẻ
+            const recordsQuery = `
+                SELECT * FROM danh_gia_suc_khoe 
+                WHERE child_id = ? 
+                ORDER BY ngay_danh_gia DESC
+            `;
+            const recordsResult = await this.db.query(recordsQuery, [childId]);
+            const records = Array.isArray(recordsResult) ? recordsResult : [recordsResult].filter(r => r);
+
+            // Tính toán thống kê
+            const stats = {
+                child_info: {
+                    id: child.id,
+                    full_name: child.full_name,
+                    date_of_birth: child.date_of_birth,
+                    age_months: this.getChildAge(child.date_of_birth),
+                    gender: child.gender
+                },
+                nutrition_summary: {
+                    total_records: records.length,
+                    latest_assessment: records.length > 0 ? records[0].ngay_danh_gia : null
+                },
+                detailed_records: records.slice(0, 10) // Chỉ lấy 10 record gần nhất
+            };
+
+            // Nếu có ít nhất 2 records, tính growth trend
+            if (records.length >= 2) {
+                const latest = records[0];
+                const previous = records[1];
+
+                stats.nutrition_summary.growth_trend = {
+                    height: {
+                        current: latest.chieu_cao,
+                        previous: previous.chieu_cao,
+                        change: `${(latest.chieu_cao - previous.chieu_cao).toFixed(1)} cm`
+                    },
+                    weight: {
+                        current: latest.can_nang,
+                        previous: previous.can_nang,
+                        change: `${(latest.can_nang - previous.can_nang).toFixed(1)} kg`
+                    }
+                };
+
+                stats.nutrition_summary.health_status = {
+                    current: latest.tinh_trang_suc_khoe,
+                    trend: this.compareHealthStatus(previous.tinh_trang_suc_khoe, latest.tinh_trang_suc_khoe)
+                };
+            }
+
+            // Thêm recommendations nếu có dữ liệu
+            if (records.length > 0) {
+                // TODO: Implement generateNutritionRecommendations method
+                // stats.recommendations = await this.generateNutritionRecommendations(childId);
+                stats.recommendations = [
+                    'Duy trì chế độ dinh dưỡng hiện tại',
+                    'Tăng cường thể dục thể thao',
+                    'Theo dõi sự phát triển đều đặn'
+                ];
+            }
+
+            return stats;
+
+        } catch (error) {
+            console.error('Error getting child nutrition stats:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * So sánh tình trạng sức khỏe
+     */
+    compareHealthStatus(previous, current) {
+        const statusLevel = {
+            'Kém': 1,
+            'Yếu': 2,
+            'Bình thường': 3,
+            'Tốt': 4,
+            'Rất tốt': 5
+        };
+
+        const prevLevel = statusLevel[previous] || 3;
+        const currLevel = statusLevel[current] || 3;
+
+        if (currLevel > prevLevel) return 'Cải thiện';
+        if (currLevel < prevLevel) return 'Giảm sút';
+        return 'Ổn định';
     }
 }
 

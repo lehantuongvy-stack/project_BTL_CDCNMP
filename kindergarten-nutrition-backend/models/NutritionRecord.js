@@ -16,55 +16,48 @@ class NutritionRecord {
         try {
             const {
                 child_id,
-                ngay_ghi_nhan,
+                ngay_danh_gia,  // Thay đổi từ ngay_ghi_nhan
                 chieu_cao,
                 can_nang,
                 bmi,
-                tinh_trang_dinh_duong, // 'binh_thuong', 'suy_dinh_duong', 'thua_can', 'beo_phi'
-                luong_an_sang,
-                luong_an_trua,
-                luong_an_chieu,
-                luong_an_phu,
-                calories_nap_vao,
-                protein_nap_vao,
-                vitamin_c,
-                calcium,
-                iron,
-                di_ung_thuc_pham,
-                benh_ly_lien_quan,
+                tinh_trang_suc_khoe,  // Thay đổi từ tinh_trang_dinh_duong
+                ket_luan,
+                khuyen_cao,
+                an_uong,
+                hoat_dong,
+                tinh_than,
                 ghi_chu,
-                bac_si_kham,
-                created_by
+                teacher_id  // Thay đổi từ created_by
             } = recordData;
 
             // Tính BMI nếu chưa có
             const calculatedBMI = bmi || this.calculateBMI(can_nang, chieu_cao);
             
-            // Đánh giá tình trạng dinh dưỡng nếu chưa có
-            const nutritionStatus = tinh_trang_dinh_duong || this.assessNutritionStatus(calculatedBMI, recordData.age);
+            // Đánh giá tình trạng sức khỏe nếu chưa có
+            const healthStatus = tinh_trang_suc_khoe || this.assessNutritionStatus(calculatedBMI, recordData.age);
 
             const query = `
-                INSERT INTO ho_so_dinh_duong (
-                    child_id, ngay_ghi_nhan, chieu_cao, can_nang, bmi,
-                    tinh_trang_dinh_duong, luong_an_sang, luong_an_trua,
-                    luong_an_chieu, luong_an_phu, calories_nap_vao,
-                    protein_nap_vao, vitamin_c, calcium, iron,
-                    di_ung_thuc_pham, benh_ly_lien_quan, ghi_chu,
-                    bac_si_kham, created_by, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+                INSERT INTO danh_gia_suc_khoe (
+                    child_id, teacher_id, ngay_danh_gia, chieu_cao, can_nang,
+                    tinh_trang_suc_khoe, ket_luan, khuyen_cao,
+                    an_uong, hoat_dong, tinh_than, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
             `;
 
             const values = [
-                child_id, ngay_ghi_nhan, chieu_cao, can_nang, calculatedBMI,
-                nutritionStatus, luong_an_sang || 100, luong_an_trua || 100,
-                luong_an_chieu || 100, luong_an_phu || 100, calories_nap_vao || 0,
-                protein_nap_vao || 0, vitamin_c || 0, calcium || 0, iron || 0,
-                di_ung_thuc_pham || '', benh_ly_lien_quan || '', ghi_chu || '',
-                bac_si_kham || '', created_by
+                child_id, teacher_id, ngay_danh_gia || new Date().toISOString().split('T')[0], 
+                chieu_cao, can_nang, healthStatus, 
+                ket_luan || ghi_chu || '', khuyen_cao || '',
+                an_uong || 'good', hoat_dong || 'normal', tinh_than || 'normal'
             ];
 
             const result = await this.db.query(query, values);
-            return { id: result.insertId, bmi: calculatedBMI, tinh_trang_dinh_duong: nutritionStatus, ...recordData };
+            return { 
+                id: result.insertId, 
+                bmi: calculatedBMI, 
+                tinh_trang_suc_khoe: healthStatus, 
+                ...recordData 
+            };
 
         } catch (error) {
             console.error('Error creating nutrition record:', error);
@@ -103,15 +96,15 @@ class NutritionRecord {
         try {
             const query = `
                 SELECT 
-                    hsdd.*,
-                    c.ho_ten as child_name,
-                    c.ngay_sinh,
-                    u.ten_dang_nhap as created_by_name
-                FROM ho_so_dinh_duong hsdd
-                LEFT JOIN children c ON hsdd.child_id = c.id
-                LEFT JOIN users u ON hsdd.created_by = u.id
-                WHERE hsdd.child_id = ?
-                ORDER BY hsdd.ngay_ghi_nhan DESC
+                    dgsk.*,
+                    c.full_name as child_name,
+                    c.date_of_birth,
+                    u.username as created_by_name
+                FROM danh_gia_suc_khoe dgsk
+                LEFT JOIN children c ON dgsk.child_id = c.id
+                LEFT JOIN users u ON dgsk.created_by = u.id
+                WHERE dgsk.child_id = ?
+                ORDER BY dgsk.ngay_ghi_nhan DESC
                 LIMIT ?
             `;
 
@@ -130,14 +123,14 @@ class NutritionRecord {
         try {
             const query = `
                 SELECT 
-                    hsdd.*,
-                    c.ho_ten as child_name,
-                    c.ngay_sinh,
-                    TIMESTAMPDIFF(MONTH, c.ngay_sinh, CURDATE()) as age_months
-                FROM ho_so_dinh_duong hsdd
-                LEFT JOIN children c ON hsdd.child_id = c.id
-                WHERE hsdd.child_id = ?
-                ORDER BY hsdd.ngay_ghi_nhan DESC
+                    dgsk.*,
+                    c.full_name as child_name,
+                    c.date_of_birth,
+                    TIMESTAMPDIFF(MONTH, c.date_of_birth, CURDATE()) as age_months
+                FROM danh_gia_suc_khoe dgsk
+                LEFT JOIN children c ON dgsk.child_id = c.id
+                WHERE dgsk.child_id = ?
+                ORDER BY dgsk.ngay_ghi_nhan DESC
                 LIMIT 1
             `;
 
@@ -162,7 +155,7 @@ class NutritionRecord {
                     can_nang,
                     bmi,
                     tinh_trang_dinh_duong
-                FROM ho_so_dinh_duong
+                FROM danh_gia_suc_khoe
                 WHERE child_id = ? 
                 AND ngay_ghi_nhan >= DATE_SUB(CURDATE(), INTERVAL ? MONTH)
                 ORDER BY ngay_ghi_nhan ASC
@@ -253,7 +246,7 @@ class NutritionRecord {
             }
 
             values.push(id);
-            const query = `UPDATE ho_so_dinh_duong SET ${fields.join(', ')}, updated_at = NOW() WHERE id = ?`;
+            const query = `UPDATE danh_gia_suc_khoe SET ${fields.join(', ')} WHERE id = ?`;
             
             await this.db.query(query, values);
             return await this.findById(id);
@@ -271,12 +264,12 @@ class NutritionRecord {
         try {
             const query = `
                 SELECT 
-                    hsdd.*,
-                    c.ho_ten as child_name,
-                    c.ngay_sinh
-                FROM ho_so_dinh_duong hsdd
-                LEFT JOIN children c ON hsdd.child_id = c.id
-                WHERE hsdd.id = ?
+                    dgsk.*,
+                    c.full_name as child_name,
+                    c.date_of_birth
+                FROM danh_gia_suc_khoe dgsk
+                LEFT JOIN children c ON dgsk.child_id = c.id
+                WHERE dgsk.id = ?
             `;
 
             const records = await this.db.query(query, [id]);
@@ -293,7 +286,7 @@ class NutritionRecord {
      */
     async delete(id) {
         try {
-            await this.db.query('DELETE FROM ho_so_dinh_duong WHERE id = ?', [id]);
+            await this.db.query('DELETE FROM danh_gia_suc_khoe WHERE id = ?', [id]);
             return true;
 
         } catch (error) {
@@ -309,21 +302,21 @@ class NutritionRecord {
         try {
             const query = `
                 SELECT 
-                    hsdd.tinh_trang_dinh_duong,
+                    dgsk.tinh_trang_dinh_duong,
                     COUNT(*) as count,
-                    AVG(hsdd.bmi) as avg_bmi,
-                    AVG(hsdd.can_nang) as avg_weight,
-                    AVG(hsdd.chieu_cao) as avg_height
-                FROM ho_so_dinh_duong hsdd
-                JOIN children c ON hsdd.child_id = c.id
+                    AVG(dgsk.bmi) as avg_bmi,
+                    AVG(dgsk.can_nang) as avg_weight,
+                    AVG(dgsk.chieu_cao) as avg_height
+                FROM danh_gia_suc_khoe dgsk
+                JOIN children c ON dgsk.child_id = c.id
                 WHERE c.lop_hoc_id = ?
-                AND hsdd.ngay_ghi_nhan = (
+                AND dgsk.ngay_ghi_nhan = (
                     SELECT MAX(ngay_ghi_nhan) 
-                    FROM ho_so_dinh_duong hsdd2 
-                    WHERE hsdd2.child_id = hsdd.child_id
+                    FROM danh_gia_suc_khoe dgsk2 
+                    WHERE dgsk2.child_id = dgsk.child_id
                 )
-                GROUP BY hsdd.tinh_trang_dinh_duong
-                ORDER BY hsdd.tinh_trang_dinh_duong
+                GROUP BY dgsk.tinh_trang_dinh_duong
+                ORDER BY dgsk.tinh_trang_dinh_duong
             `;
 
             return await this.db.query(query, [classId]);
@@ -344,22 +337,22 @@ class NutritionRecord {
                     c.id, c.ho_ten, c.ngay_sinh,
                     lh.ten_lop,
                     hsdd.tinh_trang_dinh_duong,
-                    hsdd.bmi,
-                    hsdd.ngay_ghi_nhan,
-                    hsdd.di_ung_thuc_pham,
-                    hsdd.benh_ly_lien_quan
+                    dgsk.bmi,
+                    dgsk.ngay_ghi_nhan,
+                    dgsk.di_ung_thuc_pham,
+                    dgsk.benh_ly_lien_quan
                 FROM children c
                 JOIN lop_hoc lh ON c.lop_hoc_id = lh.id
-                JOIN ho_so_dinh_duong hsdd ON c.id = hsdd.child_id
-                WHERE hsdd.ngay_ghi_nhan = (
+                JOIN danh_gia_suc_khoe dgsk ON c.id = dgsk.child_id
+                WHERE dgsk.ngay_ghi_nhan = (
                     SELECT MAX(ngay_ghi_nhan) 
-                    FROM ho_so_dinh_duong hsdd2 
-                    WHERE hsdd2.child_id = c.id
+                    FROM danh_gia_suc_khoe dgsk2 
+                    WHERE dgsk2.child_id = c.id
                 )
                 AND (
-                    hsdd.tinh_trang_dinh_duong IN ('suy_dinh_duong', 'suy_dinh_duong_nang', 'beo_phi')
-                    OR hsdd.di_ung_thuc_pham != ''
-                    OR hsdd.benh_ly_lien_quan != ''
+                    dgsk.tinh_trang_dinh_duong IN ('suy_dinh_duong', 'suy_dinh_duong_nang', 'beo_phi')
+                    OR dgsk.di_ung_thuc_pham != ''
+                    OR dgsk.benh_ly_lien_quan != ''
                 )
                 ORDER BY 
                     CASE hsdd.tinh_trang_dinh_duong
@@ -376,6 +369,66 @@ class NutritionRecord {
         } catch (error) {
             console.error('Error finding children need attention:', error);
             throw new Error('Lỗi khi tìm trẻ cần quan tâm đặc biệt');
+        }
+    }
+
+    /**
+     * Lấy tất cả hồ sơ dinh dưỡng với filters
+     */
+    async findAll(filters = {}) {
+        try {
+            let query = `
+                SELECT 
+                    dgsk.*,
+                    c.full_name as child_name,
+                    c.date_of_birth as ngay_sinh,
+                    c.class_name as ten_lop,
+                    u.full_name as created_by_name
+                FROM danh_gia_suc_khoe dgsk
+                LEFT JOIN children c ON dgsk.child_id = c.id
+                LEFT JOIN users u ON dgsk.teacher_id = u.id
+                WHERE 1=1
+            `;
+            const values = [];
+
+            // Apply filters
+            if (filters.child_id) {
+                query += ' AND dgsk.child_id = ?';
+                values.push(filters.child_id);
+            }
+
+            if (filters.start_date) {
+                query += ' AND dgsk.ngay_danh_gia >= ?';
+                values.push(filters.start_date);
+            }
+
+            if (filters.end_date) {
+                query += ' AND dgsk.ngay_danh_gia <= ?';
+                values.push(filters.end_date);
+            }
+
+            if (filters.nutrition_status) {
+                query += ' AND dgsk.tinh_trang_suc_khoe LIKE ?';
+                values.push(`%${filters.nutrition_status}%`);
+            }
+
+            query += ' ORDER BY dgsk.ngay_danh_gia DESC';
+
+            if (filters.limit) {
+                query += ' LIMIT ?';
+                values.push(parseInt(filters.limit));
+                
+                if (filters.offset) {
+                    query += ' OFFSET ?';
+                    values.push(parseInt(filters.offset));
+                }
+            }
+
+            return await this.db.query(query, values);
+
+        } catch (error) {
+            console.error('Error in NutritionRecord.findAll:', error);
+            throw new Error('Lỗi khi lấy danh sách hồ sơ dinh dưỡng: ' + error.message);
         }
     }
 }

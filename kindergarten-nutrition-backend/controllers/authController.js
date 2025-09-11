@@ -278,6 +278,48 @@ class AuthController {
         }
     }
 
+    // Verify token from request - used by route handlers
+    async verifyTokenFromRequest(req) {
+        try {
+            console.log('🔍 Auth headers:', req.headers.authorization);
+            const authHeader = req.headers.authorization;
+            
+            if (!authHeader || !authHeader.startsWith('Bearer ')) {
+                console.log('❌ No valid auth header found');
+                return {
+                    success: false,
+                    message: 'Access token is required'
+                };
+            }
+
+            const token = authHeader.substring(7);
+            console.log('🎫 Extracted token:', token ? 'Token found' : 'No token');
+            console.log('🎫 Token type:', typeof token);
+            console.log('🎫 Token length:', token ? token.length : 0);
+            
+            const user = await this.verifyToken(token);
+
+            if (!user) {
+                return {
+                    success: false,
+                    message: 'Invalid or expired token'
+                };
+            }
+
+            return {
+                success: true,
+                user: user
+            };
+        } catch (error) {
+            console.error('❌ Token verification from request error:', error.message);
+            return {
+                success: false,
+                message: 'Authentication error',
+                error: error.message
+            };
+        }
+    }
+
     // Middleware authentication - Không sử dụng trong Pure Node.js
     authenticate() {
         return async (req, res, next) => {
@@ -333,6 +375,82 @@ class AuthController {
 
             next();
         };
+    }
+
+    // Đăng xuất
+    async logoutHandler(req, res) {
+        try {
+            console.log('🚪 Logout request received');
+            
+            // Get user info from JWT token (set by auth middleware)
+            const userId = req.user?.id;
+            const username = req.user?.username;
+            
+            if (!userId) {
+                return this.sendResponse(res, 401, {
+                    success: false,
+                    message: 'Không tìm thấy thông tin người dùng trong token'
+                });
+            }
+
+            // Get token from Authorization header
+            const authHeader = req.headers.authorization;
+            const token = authHeader?.split(' ')[1]; // Bearer TOKEN
+
+            console.log('🚪 Logging out user:', username, 'ID:', userId);
+
+            // Perform logout logic (could blacklist token, update last_logout, etc.)
+            const logoutResult = await this.logout(userId, token);
+            
+            if (!logoutResult.success) {
+                return this.sendResponse(res, 400, {
+                    success: false,
+                    message: logoutResult.message
+                });
+            }
+
+            this.sendResponse(res, 200, {
+                success: true,
+                message: 'Đăng xuất thành công',
+                data: {
+                    logged_out_at: new Date().toISOString(),
+                    user_id: userId,
+                    username: username
+                }
+            });
+
+        } catch (error) {
+            console.error('Error in logoutHandler:', error);
+            this.sendResponse(res, 500, {
+                success: false,
+                message: 'Lỗi server',
+                error: 'Lỗi khi đăng xuất: ' + error.message
+            });
+        }
+    }
+
+    async logout(userId, token) {
+        try {
+            // In a production app, you might want to:
+            // 1. Add token to blacklist
+            // 2. Clear refresh tokens
+            // 3. Log logout activity
+            // 4. Update last_logout time (if column exists)
+
+            console.log('🚪 User logout completed:', userId);
+
+            return {
+                success: true,
+                message: 'Đăng xuất thành công'
+            };
+
+        } catch (error) {
+            console.error('Error in logout:', error);
+            return {
+                success: false,
+                message: 'Lỗi khi đăng xuất'
+            };
+        }
     }
 }
 

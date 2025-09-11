@@ -24,8 +24,9 @@ const AuthRoutes = require('./routes/auth');
 const UserRoutes = require('./routes/users');
 const ChildrenRoutes = require('./routes/children');
 const IngredientRoutes = require('./routes/ingredients');
-const MealsRoutes = require('./routes/meals');
+const MealsRoutes = require('./routes/meals-fixed');
 const NutritionRoutes = require('./routes/nutrition');
+const DishRoutes = require('./routes/dishes'); // ✅ Thêm route mới
 
 // Services (for backward compatibility)
 const ReportingService = require('./services/ReportingService');
@@ -56,6 +57,7 @@ class KindergartenServer {
         this.userRoutes = new UserRoutes(this.userController, this.authController);
         this.childrenRoutes = new ChildrenRoutes(this.childController, this.authController);
         this.ingredientRoutes = new IngredientRoutes(this.ingredientController, this.authController);
+        this.dishRoutes = new DishRoutes(this.authController); // ✅ Truyền authController
         this.mealsRoutes = new MealsRoutes(this.mealController, this.authController);
         this.nutritionRoutes = new NutritionRoutes(this.nutritionController, this.authController);
         
@@ -205,8 +207,10 @@ class KindergartenServer {
                 await this.childrenRoutes.handleChildrenRoutes(req, res, pathname.replace('/api/children', ''), method);
             } else if (pathname.startsWith('/api/ingredients')) {
                 await this.ingredientRoutes.handleIngredientRoutes(req, res, pathname.replace('/api/ingredients', ''), method);
+            } else if (pathname.startsWith('/api/dishes')) {
+                await this.dishRoutes.handleDishRoutes(req, res, pathname.replace('/api/dishes', ''), method);
             } else if (pathname.startsWith('/api/meals')) {
-                await this.mealsRoutes.handleMealsRoutes(req, res);
+                await this.mealsRoutes.handleMealsRoutes(req, res, pathname.replace('/api/meals', ''), method);
             } else if (pathname.startsWith('/api/nutrition')) {
                 await this.nutritionRoutes.handleNutritionRoutes(req, res);
             } else if (pathname.startsWith('/api/reports')) {
@@ -316,6 +320,16 @@ class KindergartenServer {
                     create: "POST /api/ingredients",
                     detail: "GET /api/ingredients/:id",
                     update: "PUT /api/ingredients/:id"
+                },
+                dishes: {
+                    list: "GET /api/dishes",
+                    create: "POST /api/dishes",
+                    detail: "GET /api/dishes/:id",
+                    update: "PUT /api/dishes/:id",
+                    delete: "DELETE /api/dishes/:id",
+                    search: "GET /api/dishes/search/:keyword",
+                    add_ingredient: "POST /api/dishes/:id/ingredients",
+                    nutrition_stats: "GET /api/dishes/stats/nutrition"
                 },
                 meals: {
                     list: "GET /api/meals",

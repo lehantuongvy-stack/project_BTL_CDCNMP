@@ -16,18 +16,13 @@ class IngredientController extends BaseController {
     // Lấy danh sách nguyên liệu
     async getIngredients(req, res) {
         try {
-            const { page = 1, limit = 50, category, supplier } = req.query;
+            const { page = 1, limit = 50, status } = req.query;
             const offset = (page - 1) * limit;
 
             let ingredients;
-            const filters = {};
 
-            if (category) filters.category = category;
-            if (supplier) filters.supplier = supplier;
-            if (limit) filters.limit = parseInt(limit);
-
-            if (Object.keys(filters).length > 0) {
-                ingredients = await this.ingredientModel.findWithFilters(filters);
+            if (status) {
+                ingredients = await this.ingredientModel.findByStatus(status);
             } else {
                 ingredients = await this.ingredientModel.findAll(parseInt(limit), offset);
             }
@@ -35,11 +30,11 @@ class IngredientController extends BaseController {
             this.sendResponse(res, 200, {
                 success: true,
                 data: {
-                    ingredients,
+                    ingredients: ingredients || [],
                     pagination: {
                         page: parseInt(page),
                         limit: parseInt(limit),
-                        total: ingredients.length
+                        total: (ingredients && ingredients.length) || 0
                     }
                 }
             });
@@ -88,7 +83,7 @@ class IngredientController extends BaseController {
             const ingredientData = req.body;
 
             // Validate required fields
-            const requiredFields = ['ten_nguyen_lieu', 'loai_nguyen_lieu', 'don_vi_tinh'];
+            const requiredFields = ['ten_nguyen_lieu', 'don_vi_tinh'];
             for (const field of requiredFields) {
                 if (!ingredientData[field]) {
                     return this.sendResponse(res, 400, {
@@ -98,7 +93,11 @@ class IngredientController extends BaseController {
                 }
             }
 
+            console.log('📝 Creating ingredient with data:', ingredientData);
+
             const newIngredient = await this.ingredientModel.create(ingredientData);
+
+            console.log('✅ Created ingredient:', newIngredient);
 
             this.sendResponse(res, 201, {
                 success: true,

@@ -73,6 +73,12 @@ class NutritionRoutes {
                 return await this.getNutritionOverview(req, res, query);
             }
 
+            // Thống kê dinh dưỡng theo child_id
+            if (pathname.match(/^\/api\/nutrition\/stats\/[a-fA-F0-9-]+$/) && method === 'GET') {
+                const childId = pathname.split('/').pop();
+                return await this.getChildNutritionStats(req, res, childId, query);
+            }
+
             // BMI Calculator
             if (pathname === '/api/nutrition/calculate-bmi' && method === 'POST') {
                 return await this.calculateBMI(req, res);
@@ -98,7 +104,7 @@ class NutritionRoutes {
      */
     async getNutritionRecords(req, res, query) {
         try {
-            const authResult = await this.authController.verifyToken(req);
+            const authResult = await this.authController.verifyTokenFromRequest(req);
             if (!authResult.success) {
                 return this.sendResponse(res, 401, authResult);
             }
@@ -134,12 +140,12 @@ class NutritionRoutes {
      */
     async createNutritionRecord(req, res) {
         try {
-            const authResult = await this.authController.verifyToken(req);
+            const authResult = await this.authController.verifyTokenFromRequest(req);
             if (!authResult.success) {
                 return this.sendResponse(res, 401, authResult);
             }
 
-            if (!['admin', 'staff', 'doctor'].includes(authResult.user.vai_tro)) {
+            if (!['admin', 'teacher', 'nutritionist'].includes(authResult.user.role)) {
                 return this.sendResponse(res, 403, {
                     success: false,
                     message: 'Không có quyền tạo hồ sơ dinh dưỡng'
@@ -149,7 +155,7 @@ class NutritionRoutes {
             const body = await this.parseRequestBody(req);
             const recordData = {
                 ...body,
-                created_by: authResult.user.id
+                teacher_id: authResult.user.id  // Sử dụng teacher_id thay vì created_by
             };
 
             const record = await this.nutritionController.createNutritionRecord(recordData);
@@ -174,7 +180,7 @@ class NutritionRoutes {
      */
     async getNutritionRecordById(req, res, id) {
         try {
-            const authResult = await this.authController.verifyToken(req);
+            const authResult = await this.authController.verifyTokenFromRequest(req);
             if (!authResult.success) {
                 return this.sendResponse(res, 401, authResult);
             }
@@ -207,12 +213,12 @@ class NutritionRoutes {
      */
     async updateNutritionRecord(req, res, id) {
         try {
-            const authResult = await this.authController.verifyToken(req);
+            const authResult = await this.authController.verifyTokenFromRequest(req);
             if (!authResult.success) {
                 return this.sendResponse(res, 401, authResult);
             }
 
-            if (!['admin', 'staff', 'doctor'].includes(authResult.user.vai_tro)) {
+            if (!['admin', 'staff', 'doctor'].includes(authResult.user.role)) {
                 return this.sendResponse(res, 403, {
                     success: false,
                     message: 'Không có quyền cập nhật hồ sơ dinh dưỡng'
@@ -242,12 +248,12 @@ class NutritionRoutes {
      */
     async deleteNutritionRecord(req, res, id) {
         try {
-            const authResult = await this.authController.verifyToken(req);
+            const authResult = await this.authController.verifyTokenFromRequest(req);
             if (!authResult.success) {
                 return this.sendResponse(res, 401, authResult);
             }
 
-            if (authResult.user.vai_tro !== 'admin') {
+            if (authResult.user.role !== 'admin') {
                 return this.sendResponse(res, 403, {
                     success: false,
                     message: 'Chỉ admin mới có quyền xóa hồ sơ dinh dưỡng'
@@ -483,6 +489,33 @@ class NutritionRoutes {
             this.sendResponse(res, 500, {
                 success: false,
                 message: 'Lỗi khi tính BMI'
+            });
+        }
+    }
+
+    /**
+     * GET /api/nutrition/stats/{child_id} - Thống kê dinh dưỡng theo trẻ
+     */
+    async getChildNutritionStats(req, res, childId, query) {
+        try {
+            const authResult = await this.authController.verifyTokenFromRequest(req);
+            if (!authResult.success) {
+                return this.sendResponse(res, 401, authResult);
+            }
+
+            const stats = await this.nutritionController.getChildNutritionStats(childId, query);
+
+            this.sendResponse(res, 200, {
+                success: true,
+                data: stats,
+                message: 'Lấy thống kê dinh dưỡng thành công'
+            });
+
+        } catch (error) {
+            console.error('Error getting child nutrition stats:', error);
+            this.sendResponse(res, 500, {
+                success: false,
+                message: 'Lỗi khi lấy thống kê dinh dưỡng'
             });
         }
     }

@@ -15,6 +15,8 @@ class IngredientRoutes {
     // Xử lý các ingredient routes
     async handleIngredientRoutes(req, res, path, method) {
         try {
+            console.log(`🛤️  Ingredient Route: ${method} ${path}`);
+            
             // Apply authentication middleware
             const isAuthenticated = await this.applyAuthMiddleware(req, res, this.authController);
             if (!isAuthenticated) return;
@@ -24,19 +26,24 @@ class IngredientRoutes {
                 req.body = await this.parseRequestBody(req);
             }
 
+            // Decode URL và trim spaces
+            const cleanPath = decodeURIComponent(path).trim();
+            console.log(`🧹 Clean path: "${cleanPath}"`);
+
             // Parse URL parameters
-            const pathParts = path.split('/').filter(Boolean);
+            const pathParts = cleanPath.split('/').filter(Boolean);
             const ingredientId = pathParts[0];
 
             // Route mapping
             switch (true) {
                 // GET /api/ingredients - Lấy danh sách ingredients
-                case path === '' || path === '/' && method === 'GET':
+                case (cleanPath === '' || cleanPath === '/') && method === 'GET':
                     await this.ingredientController.getIngredients(req, res);
                     break;
 
                 // POST /api/ingredients - Tạo ingredient mới
-                case path === '' || path === '/' && method === 'POST':
+                case (cleanPath === '' || cleanPath === '/') && method === 'POST':
+                    console.log('🔥 POST /api/ingredients route matched!');
                     // Chỉ admin, nutritionist, teacher mới được tạo ingredient
                     if (!['admin', 'nutritionist', 'teacher'].includes(req.user.role)) {
                         this.sendResponse(res, 403, {
@@ -45,21 +52,22 @@ class IngredientRoutes {
                         });
                         return;
                     }
+                    console.log('🔥 Calling createIngredient...');
                     await this.ingredientController.createIngredient(req, res);
                     break;
 
                 // GET /api/ingredients/categories - Lấy danh sách categories
-                case path === '/categories' && method === 'GET':
+                case cleanPath === '/categories' && method === 'GET':
                     await this.ingredientController.getCategories(req, res);
                     break;
 
                 // GET /api/ingredients/suppliers - Lấy danh sách suppliers
-                case path === '/suppliers' && method === 'GET':
+                case cleanPath === '/suppliers' && method === 'GET':
                     await this.ingredientController.getSuppliers(req, res);
                     break;
 
                 // GET /api/ingredients/low-stock - Lấy ingredients tồn kho thấp
-                case path === '/low-stock' && method === 'GET':
+                case cleanPath === '/low-stock' && method === 'GET':
                     if (!['admin', 'nutritionist', 'teacher'].includes(req.user.role)) {
                         this.sendResponse(res, 403, {
                             success: false,
@@ -71,7 +79,7 @@ class IngredientRoutes {
                     break;
 
                 // GET /api/ingredients/expiring - Lấy ingredients sắp hết hạn
-                case path === '/expiring' && method === 'GET':
+                case cleanPath === '/expiring' && method === 'GET':
                     if (!['admin', 'nutritionist', 'teacher'].includes(req.user.role)) {
                         this.sendResponse(res, 403, {
                             success: false,
@@ -83,7 +91,7 @@ class IngredientRoutes {
                     break;
 
                 // GET /api/ingredients/stats - Thống kê ingredients
-                case path === '/stats' && method === 'GET':
+                case cleanPath === '/stats' && method === 'GET':
                     if (!['admin', 'nutritionist'].includes(req.user.role)) {
                         this.sendResponse(res, 403, {
                             success: false,
@@ -95,18 +103,18 @@ class IngredientRoutes {
                     break;
 
                 // GET /api/ingredients/search - Tìm kiếm ingredients
-                case path === '/search' && method === 'GET':
+                case cleanPath === '/search' && method === 'GET':
                     await this.ingredientController.searchIngredients(req, res);
                     break;
 
                 // GET /api/ingredients/:id - Lấy ingredient theo ID
-                case ingredientId && !isNaN(ingredientId) && method === 'GET':
+                case ingredientId && ingredientId.length > 0 && method === 'GET':
                     req.params = { id: ingredientId };
                     await this.ingredientController.getIngredientById(req, res);
                     break;
 
                 // PUT /api/ingredients/:id - Cập nhật ingredient
-                case ingredientId && !isNaN(ingredientId) && method === 'PUT':
+                case ingredientId && ingredientId.length > 0 && method === 'PUT':
                     if (!['admin', 'nutritionist', 'teacher'].includes(req.user.role)) {
                         this.sendResponse(res, 403, {
                             success: false,
@@ -119,7 +127,7 @@ class IngredientRoutes {
                     break;
 
                 // PATCH /api/ingredients/:id/stock - Cập nhật stock
-                case ingredientId && !isNaN(ingredientId) && pathParts[1] === 'stock' && method === 'PATCH':
+                case ingredientId && ingredientId.length > 0 && pathParts[1] === 'stock' && method === 'PATCH':
                     if (!['admin', 'nutritionist', 'teacher'].includes(req.user.role)) {
                         this.sendResponse(res, 403, {
                             success: false,
@@ -132,7 +140,7 @@ class IngredientRoutes {
                     break;
 
                 // DELETE /api/ingredients/:id - Xóa ingredient
-                case ingredientId && !isNaN(ingredientId) && method === 'DELETE':
+                case ingredientId && ingredientId.length > 0 && method === 'DELETE':
                     if (!['admin', 'nutritionist'].includes(req.user.role)) {
                         this.sendResponse(res, 403, {
                             success: false,

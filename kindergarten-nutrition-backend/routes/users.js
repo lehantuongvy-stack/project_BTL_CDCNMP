@@ -31,8 +31,13 @@ class UserRoutes {
             // Route mapping
             switch (true) {
                 // GET /api/users - Lấy danh sách users
-                case path === '' || path === '/' && method === 'GET':
+                case (path === '' || path === '/') && method === 'GET':
                     await this.userController.getUsers(req, res);
+                    break;
+
+                // POST /api/users - Tạo user mới (Admin only)
+                case (path === '' || path === '/') && method === 'POST':
+                    await this.userController.createUser(req, res);
                     break;
 
                 // GET /api/users/stats - Lấy thống kê users
@@ -49,30 +54,26 @@ class UserRoutes {
 
                 // GET /api/users/search - Tìm kiếm users
                 case path === '/search' && method === 'GET':
-                    if (!['admin', 'teacher'].includes(req.user.role)) {
-                        this.sendResponse(res, 403, {
-                            success: false,
-                            message: 'Không có quyền tìm kiếm users'
-                        });
-                        return;
-                    }
-                    await this.userController.searchUsers(req, res);
+                    // Apply authentication middleware
+                    const authSearch = await this.applyAuthMiddleware(req, res, this.authController);
+                    if (!authSearch) return;
+                    await this.userController.searchUsersHandler(req, res);
                     break;
 
                 // GET /api/users/:id - Lấy user theo ID
-                case userId && !isNaN(userId) && method === 'GET':
+                case userId && this.isValidUUID(userId) && method === 'GET':
                     req.params = { id: userId };
                     await this.userController.getUserById(req, res);
                     break;
 
                 // PUT /api/users/:id - Cập nhật user
-                case userId && !isNaN(userId) && method === 'PUT':
+                case userId && this.isValidUUID(userId) && method === 'PUT':
                     req.params = { id: userId };
                     await this.userController.updateUser(req, res);
                     break;
 
                 // DELETE /api/users/:id - Xóa user
-                case userId && !isNaN(userId) && method === 'DELETE':
+                case userId && this.isValidUUID(userId) && method === 'DELETE':
                     req.params = { id: userId };
                     await this.userController.deleteUser(req, res);
                     break;
@@ -83,6 +84,7 @@ class UserRoutes {
                         message: 'User route not found',
                         available_routes: [
                             'GET /api/users - Lấy danh sách users',
+                            'POST /api/users - Tạo user mới (Admin)',
                             'GET /api/users/stats - Thống kê users (Admin)',
                             'GET /api/users/search?q=keyword - Tìm kiếm users',
                             'GET /api/users/:id - Lấy user theo ID',
@@ -169,6 +171,12 @@ class UserRoutes {
             });
             return false;
         }
+    }
+
+    // Helper method to validate UUID format
+    isValidUUID(uuid) {
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        return uuidRegex.test(uuid);
     }
 }
 

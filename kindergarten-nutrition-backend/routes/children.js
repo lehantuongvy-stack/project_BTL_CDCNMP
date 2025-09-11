@@ -15,28 +15,39 @@ class ChildrenRoutes {
     // Xử lý các children routes
     async handleChildrenRoutes(req, res, path, method) {
         try {
+            console.log('📝 ChildrenRoutes handling:', method, path);
+            
             // Apply authentication middleware
             const isAuthenticated = await this.applyAuthMiddleware(req, res, this.authController);
-            if (!isAuthenticated) return;
+            if (!isAuthenticated) {
+                console.log('❌ Authentication failed');
+                return;
+            }
+            console.log('✅ Authentication passed');
 
             // Parse request body cho POST/PUT requests
             if (['POST', 'PUT', 'PATCH'].includes(method)) {
                 req.body = await this.parseRequestBody(req);
+                console.log('📝 Parsed body:', req.body);
             }
 
             // Parse URL parameters
             const pathParts = path.split('/').filter(Boolean);
             const childId = pathParts[0];
 
+            console.log('🔧 Route matching - path:', path, 'method:', method);
+
             // Route mapping
             switch (true) {
                 // GET /api/children - Lấy danh sách children
-                case path === '' || path === '/' && method === 'GET':
+                case (path === '' || path === '/') && method === 'GET':
+                    console.log('📝 Calling getChildren');
                     await this.childController.getChildren(req, res);
                     break;
 
                 // POST /api/children - Tạo child mới
-                case path === '' || path === '/' && method === 'POST':
+                case (path === '' || path === '/') && method === 'POST':
+                    console.log('📝 Calling createChild');
                     await this.childController.createChild(req, res);
                     break;
 
@@ -57,23 +68,29 @@ class ChildrenRoutes {
 
                 // GET /api/children/search - Tìm kiếm children
                 case path === '/search' && method === 'GET':
-                    await this.childController.searchChildren(req, res);
+                    console.log('🔍 Children search route matched');
+                    // Apply authentication middleware
+                    const authSearch = await this.applyAuthMiddleware(req, res, this.authController);
+                    if (!authSearch) return;
+                    await this.childController.searchChildrenHandler(req, res);
                     break;
 
                 // GET /api/children/:id - Lấy child theo ID
-                case childId && !isNaN(childId) && method === 'GET':
+                case childId && this.isValidUUID(childId) && method === 'GET':
+                    console.log('📝 Calling getChildById with ID:', childId);
                     req.params = { id: childId };
                     await this.childController.getChildById(req, res);
                     break;
 
                 // PUT /api/children/:id - Cập nhật child
-                case childId && !isNaN(childId) && method === 'PUT':
+                case childId && this.isValidUUID(childId) && method === 'PUT':
                     req.params = { id: childId };
                     await this.childController.updateChild(req, res);
                     break;
 
                 // DELETE /api/children/:id - Xóa child
-                case childId && !isNaN(childId) && method === 'DELETE':
+                case childId && this.isValidUUID(childId) && method === 'DELETE':
+                    console.log('📝 Calling deleteChild with ID:', childId);
                     req.params = { id: childId };
                     await this.childController.deleteChild(req, res);
                     break;
@@ -173,6 +190,12 @@ class ChildrenRoutes {
             });
             return false;
         }
+    }
+
+    // Helper method to validate UUID format
+    isValidUUID(uuid) {
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        return uuidRegex.test(uuid);
     }
 }
 

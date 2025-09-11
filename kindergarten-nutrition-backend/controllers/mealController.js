@@ -13,9 +13,109 @@ class MealController extends BaseController {
     }
 
     /**
-     * Tạo thực đơn mới
+     * Lấy danh sách thực đơn với pagination
      */
-    async createMeal(mealData) {
+    async getMeals(req, res) {
+        try {
+            const { page = 1, limit = 50, date, class_id, session } = req.query;
+            const offset = (page - 1) * limit;
+
+            let meals;
+            const filters = {};
+
+            if (date) filters.date = date;
+            if (class_id) filters.class_id = class_id;
+            if (session) filters.session = session;
+
+            if (Object.keys(filters).length > 0) {
+                // Có filters - sử dụng findByDateAndClass hoặc findByWeek
+                if (filters.date) {
+                    meals = await this.mealModel.findByDateAndClass(filters.date, filters.class_id);
+                } else {
+                    meals = await this.mealModel.findAll(parseInt(limit), offset);
+                }
+            } else {
+                // Không có filters - lấy tất cả
+                meals = await this.mealModel.findAll(parseInt(limit), offset);
+            }
+
+            this.sendResponse(res, 200, {
+                success: true,
+                data: {
+                    meals: meals || [],
+                    pagination: {
+                        page: parseInt(page),
+                        limit: parseInt(limit),
+                        total: (meals && meals.length) || 0
+                    }
+                }
+            });
+
+        } catch (error) {
+            console.error('Get meals error:', error);
+            this.sendResponse(res, 500, {
+                success: false,
+                message: 'Lỗi server khi lấy danh sách thực đơn',
+                error: error.message
+            });
+        }
+    }
+
+    /**
+     * Tạo thực đơn mới (Route handler)
+     */
+    async createMeal(req, res) {
+        try {
+            const mealData = req.body;
+            
+            console.log('📝 Creating meal with data:', mealData);
+
+            // Mapping từ API format sang database format
+            const dbMealData = {
+                ten_thuc_don: mealData.ten_mon_an || `Thực đơn ${mealData.loai_bua_an} ${new Date().toISOString().split('T')[0]}`,
+                ngay_ap_dung: mealData.ngay_ap_dung || new Date().toISOString().split('T')[0],
+                loai_bua_an: mealData.loai_bua_an, // 'breakfast', 'lunch', 'dinner', 'snack'
+                lop_ap_dung: mealData.lop_ap_dung || 'Tất cả các lớp',
+                so_tre_du_kien: mealData.so_tre_du_kien || 30,
+                trang_thai: mealData.trang_thai || 'draft',
+                created_by: req.user?.id || null,
+                ghi_chu: mealData.ghi_chu || ''
+            };
+
+            // Validation
+            if (!dbMealData.loai_bua_an) {
+                return this.sendResponse(res, 400, {
+                    success: false,
+                    message: 'Thiếu thông tin bắt buộc: loại bữa ăn (loai_bua_an)'
+                });
+            }
+
+            const newMeal = await this.mealModel.create(dbMealData);
+            
+            console.log('✅ Created meal:', newMeal);
+
+            this.sendResponse(res, 201, {
+                success: true,
+                message: 'Tạo thực đơn thành công',
+                data: {
+                    meal: newMeal
+                }
+            });
+
+        } catch (error) {
+            console.error('Create meal error:', error);
+            this.sendResponse(res, 500, {
+                success: false,
+                message: 'Lỗi server khi tạo món ăn',
+                error: error.message
+            });
+        }
+    }
+
+    /**
+     * Tạo thực đơn mới (Business logic)
+     */
+    async createMealPlan(mealData) {
         try {
             // Validation
             if (!mealData.ngay || !mealData.buoi_an || !mealData.mon_an_id) {
@@ -77,10 +177,10 @@ class MealController extends BaseController {
      */
     async getMealsByDate(date, classId = null) {
         try {
-            return await this.mealModel.findByDateAndClass(date, classId);
-
+            const meals = await this.mealModel.findByDate(date);
+            return meals || [];
         } catch (error) {
-            console.error('Error in getMealsByDate:', error);
+            console.error('Error getting meals by date:', error);
             throw error;
         }
     }
@@ -142,6 +242,138 @@ class MealController extends BaseController {
         } catch (error) {
             console.error('Error in getMealById:', error);
             throw error;
+        }
+    }
+
+    /**
+     * HTTP Handler: Lấy thông tin thực đơn theo ID từ request
+     */
+    async getMealByIdHandler(req, res) {
+        try {
+            // Lấy ID từ URL path
+            const pathParts = req.url.split('/').filter(Boolean);
+            const mealId = pathParts[pathParts.length - 1];
+
+            if (!mealId) {
+                return this.sendResponse(res, 400, {
+                    success: false,
+                    message: 'ID thực đơn là bắt buộc'
+                });
+            }
+
+            // Đảm bảo mealId là string
+            const stringMealId = String(mealId);
+
+            const meal = await this.getMealById(stringMealId);
+
+            if (!meal) {
+                return this.sendResponse(res, 404, {
+                    success: false,
+                    message: 'Không tìm thấy thực đơn'
+                });
+            }
+
+            this.sendResponse(res, 200, {
+                success: true,
+                message: 'Lấy thông tin thực đơn thành công',
+                data: { meal }
+            });
+
+        } catch (error) {
+            console.error('Error in getMealByIdHandler:', error);
+            this.sendResponse(res, 500, {
+                success: false,
+                message: 'Lỗi server',
+                error: 'Lỗi khi lấy thực đơn theo ID: ' + error.message
+            });
+        }
+    }
+
+    /**
+     * HTTP Handler: Cập nhật thực đơn từ request
+     */
+    async updateMealHandler(req, res) {
+        try {
+            // Lấy ID từ URL path
+            const pathParts = req.url.split('/').filter(Boolean);
+            const mealId = pathParts[pathParts.length - 1];
+
+            console.log('🔄 Updating meal with ID:', mealId);
+
+            if (!mealId) {
+                return this.sendResponse(res, 400, {
+                    success: false,
+                    message: 'ID thực đơn là bắt buộc'
+                });
+            }
+
+            if (!req.body || Object.keys(req.body).length === 0) {
+                return this.sendResponse(res, 400, {
+                    success: false,
+                    message: 'Dữ liệu cập nhật không được để trống'
+                });
+            }
+
+            const updatedMeal = await this.updateMeal(mealId, req.body);
+
+            this.sendResponse(res, 200, {
+                success: true,
+                message: 'Cập nhật thực đơn thành công',
+                data: { meal: updatedMeal }
+            });
+
+        } catch (error) {
+            console.error('Error in updateMealHandler:', error);
+            this.sendResponse(res, 500, {
+                success: false,
+                message: 'Lỗi server',
+                error: 'Lỗi khi cập nhật thực đơn: ' + error.message
+            });
+        }
+    }
+
+    /**
+     * HTTP Handler: Xóa thực đơn từ request
+     */
+    async deleteMealHandler(req, res) {
+        try {
+            // Lấy ID từ URL path
+            const pathParts = req.url.split('/').filter(Boolean);
+            const mealId = pathParts[pathParts.length - 1];
+
+            console.log('🗑️ Deleting meal with ID:', mealId);
+
+            if (!mealId) {
+                return this.sendResponse(res, 400, {
+                    success: false,
+                    message: 'ID thực đơn là bắt buộc'
+                });
+            }
+
+            // Kiểm tra xem meal có tồn tại không
+            const existingMeal = await this.getMealById(mealId);
+            if (!existingMeal) {
+                return this.sendResponse(res, 404, {
+                    success: false,
+                    message: 'Không tìm thấy thực đơn để xóa'
+                });
+            }
+
+            const result = await this.deleteMeal(mealId);
+
+            this.sendResponse(res, 200, {
+                success: true,
+                message: 'Xóa thực đơn thành công',
+                data: { deleted: true, id: mealId }
+            });
+
+        } catch (error) {
+            console.error('Error in deleteMealHandler:', error);
+            this.sendResponse(res, 500, {
+                success: false,
+                message: 'Lỗi server',
+                error: 'Lỗi khi xóa thực đơn: ' + error.message
+            });
         }
     }
 
@@ -406,6 +638,48 @@ class MealController extends BaseController {
         } catch (error) {
             console.error('Error checking nutrition balance:', error);
             throw error;
+        }
+    }
+
+    /**
+     * HTTP Handler: Lấy thực đơn theo ngày từ request
+     */
+    async getMealsByDateHandler(req, res) {
+        try {
+            // Extract date from URL path
+            const urlParts = req.url.split('/');
+            const date = urlParts[urlParts.length - 1]; // Get last part as date
+            
+            console.log('📅 Getting meals for date:', date);
+            
+            // Validate date format (YYYY-MM-DD)
+            const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+            if (!dateRegex.test(date)) {
+                return this.sendResponse(res, 400, {
+                    success: false,
+                    message: 'Định dạng ngày không hợp lệ. Sử dụng YYYY-MM-DD'
+                });
+            }
+
+            const meals = await this.getMealsByDate(date);
+            
+            this.sendResponse(res, 200, {
+                success: true,
+                message: `Lấy thực đơn ngày ${date} thành công`,
+                data: {
+                    date: date,
+                    meals: meals,
+                    total: meals.length
+                }
+            });
+
+        } catch (error) {
+            console.error('Error in getMealsByDateHandler:', error);
+            this.sendResponse(res, 500, {
+                success: false,
+                message: 'Lỗi server',
+                error: 'Lỗi khi lấy thực đơn theo ngày: ' + error.message
+            });
         }
     }
 }

@@ -15,48 +15,35 @@ class Food {
     async create(foodData) {
         try {
             const {
-                ten_mon,
+                ten_mon_an,
                 mo_ta,
-                loai_mon, // 'sang', 'trua', 'chieu', 'phu'
-                calories_per_serving,
-                protein_per_serving,
-                carbs_per_serving,
-                fat_per_serving,
-                fiber_per_serving,
-                vitamin_c,
-                calcium,
-                iron,
-                serving_size,
-                preparation_time,
-                difficulty_level,
-                allergens,
-                is_vegetarian,
-                is_halal,
-                image_url,
-                recipe_instructions,
+                loai_mon, // 'main_dish', 'soup', 'dessert', 'drink', 'snack'
+                do_tuoi_phu_hop,
+                thoi_gian_che_bien,
+                khau_phan_chuan,
+                total_calories,
+                total_protein,
+                total_fat,
+                total_carbs,
+                huong_dan_che_bien,
                 created_by
             } = foodData;
 
             const query = `
                 INSERT INTO mon_an (
-                    ten_mon, mo_ta, loai_mon, calories_per_serving,
-                    protein_per_serving, carbs_per_serving, fat_per_serving,
-                    fiber_per_serving, vitamin_c, calcium, iron,
-                    serving_size, preparation_time, difficulty_level,
-                    allergens, is_vegetarian, is_halal, image_url,
-                    recipe_instructions, created_by, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+                    ten_mon_an, mo_ta, loai_mon, do_tuoi_phu_hop,
+                    thoi_gian_che_bien, khau_phan_chuan,
+                    total_calories, total_protein, total_fat, total_carbs,
+                    huong_dan_che_bien, created_by
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `;
 
             const values = [
-                ten_mon, mo_ta, loai_mon, calories_per_serving || 0,
-                protein_per_serving || 0, carbs_per_serving || 0, 
-                fat_per_serving || 0, fiber_per_serving || 0,
-                vitamin_c || 0, calcium || 0, iron || 0,
-                serving_size || '1 phần', preparation_time || 30,
-                difficulty_level || 'easy', allergens || '',
-                is_vegetarian || false, is_halal || true,
-                image_url || '', recipe_instructions || '', created_by
+                ten_mon_an, mo_ta, loai_mon || 'main_dish',
+                do_tuoi_phu_hop || '3-5 tuổi', thoi_gian_che_bien || 30,
+                khau_phan_chuan || 1, total_calories || 0,
+                total_protein || 0, total_fat || 0, total_carbs || 0,
+                huong_dan_che_bien || '', created_by
             ];
 
             const result = await this.db.query(query, values);
@@ -149,11 +136,11 @@ class Food {
         try {
             const query = `
                 SELECT 
-                    nl.id, nl.ten_nguyen_lieu, nl.don_vi,
-                    mani.so_luong, mani.ghi_chu
-                FROM mon_an_nguyen_lieu mani
-                JOIN nguyen_lieu nl ON mani.nguyen_lieu_id = nl.id
-                WHERE mani.mon_an_id = ?
+                    nl.id, nl.ten_nguyen_lieu, nl.don_vi_tinh,
+                    ctma.so_luong, ctma.ghi_chu
+                FROM chi_tiet_mon_an ctma
+                JOIN nguyen_lieu nl ON ctma.nguyen_lieu_id = nl.id
+                WHERE ctma.mon_an_id = ?
                 ORDER BY nl.ten_nguyen_lieu
             `;
             
@@ -171,7 +158,7 @@ class Food {
     async addIngredient(foodId, ingredientId, quantity, notes = '') {
         try {
             const query = `
-                INSERT INTO mon_an_nguyen_lieu (mon_an_id, nguyen_lieu_id, so_luong, ghi_chu)
+                INSERT INTO chi_tiet_mon_an (mon_an_id, nguyen_lieu_id, so_luong, ghi_chu)
                 VALUES (?, ?, ?, ?)
                 ON DUPLICATE KEY UPDATE so_luong = ?, ghi_chu = ?
             `;
@@ -222,18 +209,26 @@ class Food {
      */
     async delete(id) {
         try {
-            // Kiểm tra xem món ăn có trong thực đơn không
-            const menuCheck = await this.db.query(
-                'SELECT COUNT(*) as count FROM thuc_don WHERE mon_an_id = ?', 
+            // Tạm thời comment out constraint check vì table chưa có
+            // TODO: Uncomment khi database đã có đầy đủ tables
+            /*
+            // Kiểm tra xem món ăn có trong bữa ăn không
+            const mealCheck = await this.db.query(
+                'SELECT COUNT(*) as count FROM chi_tiet_bua_an WHERE mon_an_id = ?', 
                 [id]
             );
 
-            if (menuCheck[0].count > 0) {
-                throw new Error('Không thể xóa món ăn đang có trong thực đơn');
+            if (mealCheck[0].count > 0) {
+                throw new Error('Không thể xóa món ăn đang có trong bữa ăn');
             }
+            */
 
-            // Xóa nguyên liệu của món ăn trước
-            await this.db.query('DELETE FROM mon_an_nguyen_lieu WHERE mon_an_id = ?', [id]);
+            // Xóa nguyên liệu của món ăn trước (nếu có)
+            try {
+                await this.db.query('DELETE FROM chi_tiet_mon_an WHERE mon_an_id = ?', [id]);
+            } catch (err) {
+                console.log('Note: chi_tiet_mon_an table may not exist yet');
+            }
             
             // Xóa món ăn
             await this.db.query('DELETE FROM mon_an WHERE id = ?', [id]);
@@ -250,7 +245,7 @@ class Food {
      */
     async search(keyword, filters = {}) {
         try {
-            let query = 'SELECT * FROM mon_an WHERE ten_mon LIKE ? OR mo_ta LIKE ?';
+            let query = 'SELECT * FROM mon_an WHERE ten_mon_an LIKE ? OR mo_ta LIKE ?';
             const values = [`%${keyword}%`, `%${keyword}%`];
 
             if (filters.loai_mon) {
@@ -258,7 +253,7 @@ class Food {
                 values.push(filters.loai_mon);
             }
 
-            query += ' ORDER BY ten_mon ASC';
+            query += ' ORDER BY ten_mon_an ASC';
 
             return await this.db.query(query, values);
 
@@ -277,10 +272,10 @@ class Food {
                 SELECT 
                     loai_mon,
                     COUNT(*) as total_foods,
-                    AVG(calories_per_serving) as avg_calories,
-                    AVG(protein_per_serving) as avg_protein,
-                    AVG(carbs_per_serving) as avg_carbs,
-                    AVG(fat_per_serving) as avg_fat
+                    AVG(total_calories) as avg_calories,
+                    AVG(total_protein) as avg_protein,
+                    AVG(total_carbs) as avg_carbs,
+                    AVG(total_fat) as avg_fat
                 FROM mon_an 
                 GROUP BY loai_mon
                 ORDER BY loai_mon

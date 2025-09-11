@@ -1,6 +1,5 @@
 -- ============================================
 -- Kindergarten Nutrition Management - Enhanced Database Schema
--- Cải thiện từ schema gốc để phù hợp với Pure Node.js
 -- ============================================
 
 CREATE DATABASE IF NOT EXISTS kindergarten_nutrition;
@@ -15,11 +14,12 @@ DROP TABLE IF EXISTS phieu_nhap_hang;
 DROP TABLE IF EXISTS kho_hang;
 DROP TABLE IF EXISTS ke_hoach_dinh_duong;
 DROP TABLE IF EXISTS danh_gia_suc_khoe;
-DROP TABLE IF EXISTS chi_tiet_thuc_don;
-DROP TABLE IF EXISTS thuc_don;
+DROP TABLE IF EXISTS chi_tiet_bua_an;
+DROP TABLE IF EXISTS bua_an;
 DROP TABLE IF EXISTS chi_tiet_mon_an;
 DROP TABLE IF EXISTS mon_an;
 DROP TABLE IF EXISTS nguyen_lieu;
+DROP TABLE IF EXISTS danh_muc_nguyen_lieu;
 DROP TABLE IF EXISTS nha_cung_cap;
 DROP TABLE IF EXISTS children;
 DROP TABLE IF EXISTS users;
@@ -49,7 +49,7 @@ CREATE TABLE users (
     INDEX idx_active (is_active)
 );
 
--- B. Bảng Trẻ em (Children) - Cải thiện
+-- B. Bảng Trẻ em (Children) - Cải thiện với Age Column
 CREATE TABLE children (
     id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
     student_id VARCHAR(20) UNIQUE NOT NULL, -- Mã học sinh
@@ -69,6 +69,12 @@ CREATE TABLE children (
     -- Thông tin liên hệ khẩn cấp
     emergency_contact JSON,
     admission_date DATE DEFAULT (CURRENT_DATE),
+    
+    -- Cột age được tính tự động từ date_of_birth
+    age INT GENERATED ALWAYS AS (
+        FLOOR(DATEDIFF(CURDATE(), date_of_birth) / 365.25)
+    ) STORED,
+    
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -79,7 +85,9 @@ CREATE TABLE children (
     INDEX idx_student_id (student_id),
     INDEX idx_class (class_name),
     INDEX idx_parent (parent_id),
-    INDEX idx_teacher (teacher_id)
+    INDEX idx_teacher (teacher_id),
+    INDEX idx_age (age), -- Index cho age để search nhanh
+    INDEX idx_active (is_active)
 );
 
 -- ==============================================
@@ -101,7 +109,24 @@ CREATE TABLE nha_cung_cap (
     INDEX idx_trang_thai (trang_thai)
 );
 
--- D. Bảng Nguyên liệu (Foods/Ingredients) - Cải thiện
+-- D. Bảng Danh mục nguyên liệu - Mới thêm
+CREATE TABLE danh_muc_nguyen_lieu (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ten_danh_muc NVARCHAR(100) NOT NULL UNIQUE,
+    mo_ta NVARCHAR(200),
+    mau_sac VARCHAR(7) DEFAULT '#007bff', -- Màu hiển thị hex code
+    icon VARCHAR(50) DEFAULT 'category', -- Icon name
+    thu_tu_hien_thi INT DEFAULT 0, -- Thứ tự hiển thị
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    INDEX idx_ten_danh_muc (ten_danh_muc),
+    INDEX idx_thu_tu (thu_tu_hien_thi),
+    INDEX idx_active (is_active)
+);
+
+-- E. Bảng Nguyên liệu (Foods/Ingredients) - Cải thiện với danh mục
 CREATE TABLE nguyen_lieu (
     id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
     ten_nguyen_lieu NVARCHAR(100) NOT NULL,
@@ -109,6 +134,7 @@ CREATE TABLE nguyen_lieu (
     don_vi_tinh NVARCHAR(20) DEFAULT 'kg', -- kg, lít, hộp, gói
     gia_mua DECIMAL(10,2) DEFAULT 0,
     nha_cung_cap_id INT,
+    danh_muc_id INT, -- Foreign key đến bảng danh_muc_nguyen_lieu
     
     -- Thông tin dinh dưỡng trên 100g
     calories_per_100g FLOAT DEFAULT 0,
@@ -129,13 +155,15 @@ CREATE TABLE nguyen_lieu (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
     FOREIGN KEY (nha_cung_cap_id) REFERENCES nha_cung_cap(id),
+    FOREIGN KEY (danh_muc_id) REFERENCES danh_muc_nguyen_lieu(id) ON DELETE SET NULL ON UPDATE CASCADE,
     
     INDEX idx_ten_nguyen_lieu (ten_nguyen_lieu),
     INDEX idx_trang_thai (trang_thai),
-    INDEX idx_nha_cung_cap (nha_cung_cap_id)
+    INDEX idx_nha_cung_cap (nha_cung_cap_id),
+    INDEX idx_danh_muc_id (danh_muc_id)
 );
 
--- E. Bảng Món ăn - Cải thiện
+-- F. Bảng Món ăn - Cải thiện
 CREATE TABLE mon_an (
     id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
     ten_mon_an NVARCHAR(100) NOT NULL,
@@ -181,13 +209,13 @@ CREATE TABLE chi_tiet_mon_an (
 );
 
 -- ==============================================
--- BẢNG QUẢN LÝ THỰC ĐƠN
+-- BẢNG QUẢN LÝ BỮA ĂN & THỰC ĐƠN
 -- ==============================================
 
--- G. Bảng Thực đơn
-CREATE TABLE thuc_don (
+-- G. Bảng Bữa ăn (Meals)
+CREATE TABLE bua_an (
     id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
-    ten_thuc_don NVARCHAR(100) NOT NULL,
+    ten_bua_an NVARCHAR(100) NOT NULL, -- "Bữa sáng 12/09/2025 - Lớp Chồi"
     ngay_ap_dung DATE NOT NULL,
     loai_bua_an ENUM('breakfast', 'lunch', 'dinner', 'snack') NOT NULL,
     lop_ap_dung NVARCHAR(50), -- Lớp áp dụng
@@ -210,18 +238,19 @@ CREATE TABLE thuc_don (
     INDEX idx_trang_thai (trang_thai)
 );
 
--- H. Bảng Chi tiết thực đơn
-CREATE TABLE chi_tiet_thuc_don (
+-- H. Bảng Chi tiết bữa ăn (Meal Details) - Liên kết bữa ăn với món ăn
+CREATE TABLE chi_tiet_bua_an (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    thuc_don_id CHAR(36) NOT NULL,
+    bua_an_id CHAR(36) NOT NULL,
     mon_an_id CHAR(36) NOT NULL,
     so_khau_phan INT NOT NULL DEFAULT 1,
+    thu_tu_phuc_vu INT DEFAULT 0, -- Thứ tự phục vụ trong bữa ăn
     ghi_chu NVARCHAR(200),
     
-    FOREIGN KEY (thuc_don_id) REFERENCES thuc_don(id) ON DELETE CASCADE,
+    FOREIGN KEY (bua_an_id) REFERENCES bua_an(id) ON DELETE CASCADE,
     FOREIGN KEY (mon_an_id) REFERENCES mon_an(id) ON DELETE CASCADE,
     
-    INDEX idx_thuc_don (thuc_don_id),
+    INDEX idx_bua_an (bua_an_id),
     INDEX idx_mon_an (mon_an_id)
 );
 
@@ -356,7 +385,7 @@ CREATE TABLE y_kien_phu_huynh (
     id INT AUTO_INCREMENT PRIMARY KEY,
     parent_id CHAR(36) NOT NULL,
     child_id CHAR(36),
-    thuc_don_id CHAR(36),
+    bua_an_id CHAR(36), -- Đổi từ thuc_don_id sang bua_an_id
     mon_an_id CHAR(36),
     
     loai_y_kien ENUM('compliment', 'suggestion', 'complaint', 'question') DEFAULT 'suggestion',
@@ -373,7 +402,7 @@ CREATE TABLE y_kien_phu_huynh (
     
     FOREIGN KEY (parent_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (child_id) REFERENCES children(id) ON DELETE SET NULL,
-    FOREIGN KEY (thuc_don_id) REFERENCES thuc_don(id) ON DELETE SET NULL,
+    FOREIGN KEY (bua_an_id) REFERENCES bua_an(id) ON DELETE SET NULL,
     FOREIGN KEY (mon_an_id) REFERENCES mon_an(id) ON DELETE SET NULL,
     FOREIGN KEY (nguoi_phan_hoi) REFERENCES users(id),
     
@@ -387,7 +416,7 @@ CREATE TABLE y_kien_phu_huynh (
 CREATE TABLE lich_su_su_dung_nguyen_lieu (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nguyen_lieu_id CHAR(36) NOT NULL,
-    thuc_don_id CHAR(36),
+    bua_an_id CHAR(36), -- Đổi từ thuc_don_id sang bua_an_id
     mon_an_id CHAR(36),
     so_luong_su_dung FLOAT NOT NULL,
     ly_do ENUM('cooking', 'waste', 'expired', 'damaged') DEFAULT 'cooking',
@@ -396,7 +425,7 @@ CREATE TABLE lich_su_su_dung_nguyen_lieu (
     ghi_chu NVARCHAR(200),
     
     FOREIGN KEY (nguyen_lieu_id) REFERENCES nguyen_lieu(id),
-    FOREIGN KEY (thuc_don_id) REFERENCES thuc_don(id) ON DELETE SET NULL,
+    FOREIGN KEY (bua_an_id) REFERENCES bua_an(id) ON DELETE SET NULL,
     FOREIGN KEY (mon_an_id) REFERENCES mon_an(id) ON DELETE SET NULL,
     FOREIGN KEY (nguoi_su_dung) REFERENCES users(id),
     
@@ -424,21 +453,23 @@ SELECT
 FROM nguyen_lieu nl
 LEFT JOIN kho_hang kh ON nl.id = kh.nguyen_lieu_id;
 
--- View: Thống kê dinh dưỡng theo thực đơn
-CREATE VIEW v_thong_ke_dinh_duong_thuc_don AS
+-- View: Thống kê dinh dưỡng theo bữa ăn
+CREATE VIEW v_thong_ke_dinh_duong_bua_an AS
 SELECT 
-    td.id as thuc_don_id,
-    td.ten_thuc_don,
-    td.ngay_ap_dung,
-    td.loai_bua_an,
-    SUM(ma.total_calories * cttd.so_khau_phan) as tong_calories,
-    SUM(ma.total_protein * cttd.so_khau_phan) as tong_protein,
-    SUM(ma.total_fat * cttd.so_khau_phan) as tong_fat,
-    SUM(ma.total_carbs * cttd.so_khau_phan) as tong_carbs
-FROM thuc_don td
-JOIN chi_tiet_thuc_don cttd ON td.id = cttd.thuc_don_id
-JOIN mon_an ma ON cttd.mon_an_id = ma.id
-GROUP BY td.id, td.ten_thuc_don, td.ngay_ap_dung, td.loai_bua_an;
+    ba.id as bua_an_id,
+    ba.ten_bua_an,
+    ba.ngay_ap_dung,
+    ba.loai_bua_an,
+    ba.lop_ap_dung,
+    SUM(ma.total_calories * ctba.so_khau_phan) as tong_calories,
+    SUM(ma.total_protein * ctba.so_khau_phan) as tong_protein,
+    SUM(ma.total_fat * ctba.so_khau_phan) as tong_fat,
+    SUM(ma.total_carbs * ctba.so_khau_phan) as tong_carbs,
+    COUNT(ctba.mon_an_id) as so_mon_an
+FROM bua_an ba
+JOIN chi_tiet_bua_an ctba ON ba.id = ctba.bua_an_id
+JOIN mon_an ma ON ctba.mon_an_id = ma.id
+GROUP BY ba.id, ba.ten_bua_an, ba.ngay_ap_dung, ba.loai_bua_an, ba.lop_ap_dung;
 
 -- ==============================================
 -- SAMPLE DATA
@@ -451,6 +482,19 @@ INSERT INTO users (id, username, email, password_hash, full_name, role, phone, a
 (UUID(), 'parent1', 'parent1@gmail.com', '$2a$10$LvyJV6/.PbSa8UfPYhSwReRnOlsokOzr7J3QRGvr9xJgEu1qGwZhG', 'Anh Trần Văn Minh', 'parent', '0912345678', '789 Đường GHI, Hà Nội'),
 (UUID(), 'nutritionist1', 'nutritionist@kindergarten.com', '$2a$10$LvyJV6/.PbSa8UfPYhSwReRnOlsokOzr7J3QRGvr9xJgEu1qGwZhG', 'Chuyên viên Lê Thị Hương', 'nutritionist', '0998765432', '321 Đường JKL, Hà Nội');
 
+-- Sample Danh mục nguyên liệu
+INSERT INTO danh_muc_nguyen_lieu (ten_danh_muc, mo_ta, mau_sac, icon, thu_tu_hien_thi) VALUES
+('Ngũ cốc', 'Gạo, lúa mì, yến mạch và các loại ngũ cốc khác', '#FFD700', '🌾', 1),
+('Thịt', 'Thịt heo, thịt bò, thịt gà và các loại thịt khác', '#FF6B6B', '🥩', 2),
+('Cá và Hải sản', 'Cá tươi, tôm, cua và các loại hải sản khác', '#4ECDC4', '🐟', 3),
+('Rau xanh', 'Rau cải, rau muống, rau chân vịt và các loại rau lá xanh', '#95E1D3', '🥬', 4),
+('Củ quả', 'Khoai tây, cà rốt, củ cải và các loại củ quả', '#F38BA8', '🥕', 5),
+('Trái cây', 'Táo, chuối, cam và các loại trái cây tươi', '#A8E6CF', '🍎', 6),
+('Sữa và Chế phẩm sữa', 'Sữa tươi, phô mai, sữa chua và các sản phẩm từ sữa', '#DDA0DD', '🥛', 7),
+('Gia vị', 'Muối, đường, tiêu và các loại gia vị nấu ăn', '#FFEAA7', '🧂', 8),
+('Dầu ăn', 'Dầu thực vật, dầu olive và các loại dầu ăn', '#FDCB6E', '🫒', 9),
+('Đậu và Hạt', 'Đậu xanh, đậu phộng, hạt điều và các loại đậu hạt', '#E17055', '🥜', 10);
+
 -- Sample Nhà cung cấp
 INSERT INTO nha_cung_cap (ten_ncc, phone, dia_chi, email) VALUES
 ('Công ty Thực phẩm An Toàn', '0243123456', '12 Phố Huế, Hà Nội', 'info@antoan.com'),
@@ -458,25 +502,44 @@ INSERT INTO nha_cung_cap (ten_ncc, phone, dia_chi, email) VALUES
 ('Siêu thị Metro Wholesale', '0243999888', '78 Láng Hạ, Hà Nội', 'wholesale@metro.com');
 
 -- Sample Nguyên liệu
-INSERT INTO nguyen_lieu (id, ten_nguyen_lieu, mo_ta, don_vi_tinh, gia_mua, calories_per_100g, protein_per_100g, fat_per_100g, carbs_per_100g, nha_cung_cap_id) VALUES
-(UUID(), 'Gạo tẻ', 'Gạo trắng thường dùng nấu cơm', 'kg', 25000, 130, 2.7, 0.3, 28, 1),
-(UUID(), 'Thịt heo nạc', 'Thịt heo phần nạc vai', 'kg', 180000, 143, 20.9, 6.2, 0, 2),
-(UUID(), 'Cà rốt', 'Cà rốt tươi màu cam', 'kg', 15000, 41, 0.9, 0.2, 10, 2),
-(UUID(), 'Trứng gà', 'Trứng gà tươi size L', 'quả', 3500, 155, 13, 11, 1.1, 1),
-(UUID(), 'Sữa tươi', 'Sữa tươi không đường 3.25% béo', 'lít', 45000, 42, 3.4, 1.0, 5, 3),
-(UUID(), 'Rau cải xanh', 'Rau cải xanh tươi', 'kg', 12000, 20, 1.5, 0.2, 4, 2),
-(UUID(), 'Dầu ăn', 'Dầu đậu nành cao cấp', 'lít', 55000, 884, 0, 100, 0, 3),
-(UUID(), 'Muối', 'Muối iod tinh khiết', 'kg', 8000, 0, 0, 0, 0, 1);
+INSERT INTO nguyen_lieu (id, ten_nguyen_lieu, mo_ta, don_vi_tinh, gia_mua, calories_per_100g, protein_per_100g, fat_per_100g, carbs_per_100g, nha_cung_cap_id, danh_muc_id) VALUES
+(UUID(), 'Gạo tẻ', 'Gạo trắng thường dùng nấu cơm', 'kg', 25000, 130, 2.7, 0.3, 28, 1, (SELECT id FROM danh_muc_nguyen_lieu WHERE ten_danh_muc = 'Ngũ cốc')),
+(UUID(), 'Thịt heo nạc', 'Thịt heo phần nạc vai', 'kg', 180000, 143, 20.9, 6.2, 0, 2, (SELECT id FROM danh_muc_nguyen_lieu WHERE ten_danh_muc = 'Thịt')),
+(UUID(), 'Cà rốt', 'Cà rốt tươi màu cam', 'kg', 15000, 41, 0.9, 0.2, 10, 2, (SELECT id FROM danh_muc_nguyen_lieu WHERE ten_danh_muc = 'Củ quả')),
+(UUID(), 'Trứng gà', 'Trứng gà tươi size L', 'quả', 3500, 155, 13, 11, 1.1, 1, (SELECT id FROM danh_muc_nguyen_lieu WHERE ten_danh_muc = 'Thịt')),
+(UUID(), 'Sữa tươi', 'Sữa tươi không đường 3.25% béo', 'lít', 45000, 42, 3.4, 1.0, 5, 3, (SELECT id FROM danh_muc_nguyen_lieu WHERE ten_danh_muc = 'Sữa và Chế phẩm sữa')),
+(UUID(), 'Rau cải xanh', 'Rau cải xanh tươi', 'kg', 12000, 20, 1.5, 0.2, 4, 2, (SELECT id FROM danh_muc_nguyen_lieu WHERE ten_danh_muc = 'Rau xanh')),
+(UUID(), 'Dầu ăn', 'Dầu đậu nành cao cấp', 'lít', 55000, 884, 0, 100, 0, 3, (SELECT id FROM danh_muc_nguyen_lieu WHERE ten_danh_muc = 'Dầu ăn')),
+(UUID(), 'Muối', 'Muối iod tinh khiết', 'kg', 8000, 0, 0, 0, 0, 1, (SELECT id FROM danh_muc_nguyen_lieu WHERE ten_danh_muc = 'Gia vị'));
 
 -- Sample Món ăn
 INSERT INTO mon_an (id, ten_mon_an, mo_ta, loai_mon, do_tuoi_phu_hop, khau_phan_chuan, total_calories, total_protein, created_by) VALUES
-(UUID(), 'Cơm thịt heo xào cà rốt', 'Món chính đầy đủ dinh dưỡng cho bữa trưa', 'main_dish', '3-5 tuổi', 1, 320, 18.5, (SELECT id FROM users WHERE role = 'nutritionist' LIMIT 1)),
+(UUID(), 'Cơm gà xối mỏ', 'Món cơm gà truyền thống Hội An', 'main_dish', '3-5 tuổi', 1, 380, 22.5, (SELECT id FROM users WHERE role = 'nutritionist' LIMIT 1)),
 (UUID(), 'Canh trứng rau cải', 'Canh nhẹ bổ sung vitamin và protein', 'soup', '3-5 tuổi', 1, 85, 8.2, (SELECT id FROM users WHERE role = 'nutritionist' LIMIT 1)),
-(UUID(), 'Sữa tươi', 'Đồ uống bổ sung canxi cho trẻ', 'drink', 'Tất cả độ tuổi', 1, 168, 13.6, (SELECT id FROM users WHERE role = 'nutritionist' LIMIT 1));
+(UUID(), 'Sữa tươi', 'Đồ uống bổ sung canxi cho trẻ', 'drink', 'Tất cả độ tuổi', 1, 168, 13.6, (SELECT id FROM users WHERE role = 'nutritionist' LIMIT 1)),
+(UUID(), 'Cháo tôm rau củ', 'Cháo dinh dưỡng cho bữa sáng', 'main_dish', '3-4 tuổi', 1, 220, 12.5, (SELECT id FROM users WHERE role = 'nutritionist' LIMIT 1)),
+(UUID(), 'Chè đậu xanh', 'Món tráng miệng healthy', 'dessert', '3-5 tuổi', 1, 150, 6.2, (SELECT id FROM users WHERE role = 'nutritionist' LIMIT 1));
+
+-- Sample Bữa ăn
+INSERT INTO bua_an (id, ten_bua_an, ngay_ap_dung, loai_bua_an, lop_ap_dung, so_tre_du_kien, trang_thai, created_by) VALUES
+(UUID(), 'Bữa sáng 12/09/2025 - Lớp Chồi', '2025-09-12', 'breakfast', 'Lớp Chồi', 30, 'active', (SELECT id FROM users WHERE role = 'nutritionist' LIMIT 1)),
+(UUID(), 'Bữa trưa 12/09/2025 - Lớp Chồi', '2025-09-12', 'lunch', 'Lớp Chồi', 30, 'active', (SELECT id FROM users WHERE role = 'nutritionist' LIMIT 1)),
+(UUID(), 'Bữa xế 12/09/2025 - Lớp Chồi', '2025-09-12', 'snack', 'Lớp Chồi', 30, 'draft', (SELECT id FROM users WHERE role = 'nutritionist' LIMIT 1));
+
+-- Sample Chi tiết bữa ăn
+INSERT INTO chi_tiet_bua_an (bua_an_id, mon_an_id, so_khau_phan, thu_tu_phuc_vu) VALUES
+((SELECT id FROM bua_an WHERE ten_bua_an = 'Bữa sáng 12/09/2025 - Lớp Chồi'), (SELECT id FROM mon_an WHERE ten_mon_an = 'Cháo tôm rau củ'), 30, 1),
+((SELECT id FROM bua_an WHERE ten_bua_an = 'Bữa sáng 12/09/2025 - Lớp Chồi'), (SELECT id FROM mon_an WHERE ten_mon_an = 'Sữa tươi'), 30, 2),
+((SELECT id FROM bua_an WHERE ten_bua_an = 'Bữa trưa 12/09/2025 - Lớp Chồi'), (SELECT id FROM mon_an WHERE ten_mon_an = 'Cơm gà xối mỏ'), 30, 1),
+((SELECT id FROM bua_an WHERE ten_bua_an = 'Bữa trưa 12/09/2025 - Lớp Chồi'), (SELECT id FROM mon_an WHERE ten_mon_an = 'Canh trứng rau cải'), 30, 2),
+((SELECT id FROM bua_an WHERE ten_bua_an = 'Bữa xế 12/09/2025 - Lớp Chồi'), (SELECT id FROM mon_an WHERE ten_mon_an = 'Chè đậu xanh'), 30, 1);
 
 -- Console output
 SELECT 'Enhanced Database Schema created successfully!' as message;
 SELECT 'Sample data inserted for testing!' as message;
 SELECT CONCAT('Total users: ', COUNT(*)) as user_count FROM users;
+SELECT CONCAT('Total categories: ', COUNT(*)) as category_count FROM danh_muc_nguyen_lieu;
 SELECT CONCAT('Total ingredients: ', COUNT(*)) as ingredient_count FROM nguyen_lieu;
 SELECT CONCAT('Total suppliers: ', COUNT(*)) as supplier_count FROM nha_cung_cap;
+SELECT CONCAT('Total dishes: ', COUNT(*)) as dish_count FROM mon_an;
+SELECT CONCAT('Total meals: ', COUNT(*)) as meal_count FROM bua_an;
