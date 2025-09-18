@@ -71,6 +71,7 @@
 
 /* Input ngày */
 .date-field {
+    color: black;
     display: flex;
     align-items: center;
     /* căn giữa theo trục dọc */
@@ -104,13 +105,12 @@
 /* Group Container */
 .group-container {
     display: flex;
-    flex-wrap: wrap;
-    gap: 30px;
-    /* khoảng cách giữa các group-box */
-    margin-left: 50px;
-    /* cách lề trái 50px */
-    margin-top: 50px;
-    /* cách date-field 50px */
+    flex-wrap: nowrap;   /* ❌ không cho xuống dòng */
+    gap: 30px;           /* khoảng cách giữa các group-box */
+    margin-left: 50px;   /* cách lề trái */
+    margin-top: 50px;    /* cách date-field */
+    /* overflow-x: auto;    ✅ thêm thanh cuộn ngang nếu tràn màn hình */
+    padding-bottom: 10px;/* tránh dính sát mép dưới */
 }
 
 /* Group Box */
@@ -119,12 +119,14 @@
     background: #f3dfe8;
     border-radius: 12px;
     padding: 30px;
-    /* to thêm bên trong */
-    width: 600px;
-    /* to hơn so với 320px */
+    width: 40%;         /* giữ chiều rộng cố định */
+    flex: 0 0 auto;       /* ❌ không cho co giãn, giữ nguyên kích thước */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     text-align: left;
 }
+
+
+
 
 .group-box h3 {
 
@@ -159,4 +161,33 @@
     height: 2px;
     background: #dcdcdc;
     margin: 6px 0;
+}
+
+.menu-table {
+    color: #333;
+  width: 90%;
+  margin: 20px auto;
+  border-collapse: collapse;
+  font-size: 16px;
+}
+
+.menu-table th,
+.menu-table td {
+  border: 2px solid white;
+  padding: 5px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.menu-table th {
+  background: #ec3582;
+  font-weight: bold;
+}
+
+.menu-table tr:nth-child(even) {
+  background: #f3945d;
+}
+
+.menu-table tr:hover {
+  background: #7badee;
 }

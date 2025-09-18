@@ -5,9 +5,9 @@ import HealthManager from "./pages/HealthManager";
 function App() {
   return (
     <div>
-      {/* <Home /> */}
-      <Menu />
-      {/* <HealthManager /> */}
+      {/* <Home />  */}
+      {/* <Menu /> */}
+       <HealthManager />
     </div>
   );
 }

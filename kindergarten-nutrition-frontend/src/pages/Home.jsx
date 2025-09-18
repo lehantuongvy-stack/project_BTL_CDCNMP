@@ -47,6 +47,11 @@ export default function Home() {
             <li>Góc phụ huynh</li>
             <li>Quản lý sức khỏe</li>
             <li>Thư viện món ăn</li>
+            <li className="logout-item"><img 
+            src="/images/icon.png" 
+            alt="Đăng xuất" 
+            className="logout-icon" 
+          /> ĐĂNG XUẤT</li>
           </ul>
         </nav>
 

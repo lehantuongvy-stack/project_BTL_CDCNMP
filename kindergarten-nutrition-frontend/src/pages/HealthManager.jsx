@@ -8,7 +8,10 @@ const HealthManager = () => {
         name: "",
         dob: "",
         className: "",
+        parentName: "",
+        phone: ""
     });
+
 
     // State dị ứng
     const [allergies, setAllergies] = useState([]);
@@ -16,6 +19,17 @@ const HealthManager = () => {
 
     // State mức độ ăn
     const [mealPercent, setMealPercent] = useState(0);
+
+    // State BMI
+    const [weight, setWeight] = useState("");
+    const [height, setHeight] = useState("");
+    const [bmi, setBmi] = useState(null);
+    const [bmiCategory, setBmiCategory] = useState("");
+
+    const [gender, setGender] = useState("");
+    const [ageMonths, setAgeMonths] = useState("");
+
+
 
     // Gợi ý nhanh
     const quickSuggestions = ["Mè (vừng)", "Trứng", "Hải sản", "Lúa mì", "Đậu nành", "Đậu phộng"];
@@ -25,6 +39,25 @@ const HealthManager = () => {
         const { name, value } = e.target;
         setChildInfo({ ...childInfo, [name]: value });
     };
+
+    // Hàm tính BMI
+    const calculateBMI = () => {
+        if (!weight || !height) return;
+
+        const hMeters = Number(height) / 100; // đổi cm sang m
+        const bmiValue = Number(weight) / (hMeters * hMeters);
+        setBmi(bmiValue.toFixed(1));
+
+        // phân loại tạm (người lớn)
+        if (bmiValue < 18.5) setBmiCategory("Gầy");
+        else if (bmiValue < 25) setBmiCategory("Bình thường");
+        else if (bmiValue < 30) setBmiCategory("Thừa cân");
+        else setBmiCategory("Béo phì");
+
+        console.log("Giới tính:", gender, "Tuổi (tháng):", ageMonths);
+    };
+
+
 
     // Hàm thêm dị ứng
     const handleAddAllergy = () => {
@@ -82,28 +115,85 @@ const HealthManager = () => {
                             onChange={handleChildChange}
                         />
                     </div>
+
+                    <div className="form-row">
+                        <label htmlFor="parentName">Tên phụ huynh:</label>
+                        <input
+                            id="parentName"
+                            type="text"
+                            name="parentName"
+                            placeholder="Nhập tên phụ huynh"
+                            value={childInfo.parentName}
+                            onChange={handleChildChange}
+                        />
+                    </div>
+
+                    <div className="form-row">
+                        <label htmlFor="phone">Số điện thoại:</label>
+                        <input
+                            id="phone"
+                            type="tel"
+                            name="phone"
+                            placeholder="Nhập số điện thoại"
+                            value={childInfo.phone}
+                            onChange={handleChildChange}
+                        />
+                    </div>
+
                 </div>
 
 
-                <div className="icon-box">🐰</div>
+                {/* <div className="icon-box">🐰</div> */}
             </div>
 
             <div className="form-sections">
                 {/* BMI */}
                 <div className="card">
                     <h3>Tính BMI của trẻ</h3>
-                    <input type="text" placeholder="Cân nặng (kg) vd. 14.5" />
-                    <input type="text" placeholder="Chiều cao (cm) vd. 95" />
-                    <select>
-                        <option>Giới tính</option>
-                        <option>Nam</option>
-                        <option>Nữ</option>
+                    <input
+                        type="number"
+                        placeholder="Cân nặng (kg)"
+                        value={weight}
+                        onChange={(e) => setWeight(e.target.value)}
+                    />
+                    <input
+                        type="number"
+                        placeholder="Chiều cao (cm)"
+                        value={height}
+                        onChange={(e) => setHeight(e.target.value)}
+                    />
+
+                    <select value={gender} onChange={(e) => setGender(e.target.value)}>
+                        <option value="">Giới tính</option>
+                        <option value="male">Nam</option>
+                        <option value="female">Nữ</option>
                     </select>
-                    <input type="text" placeholder="Tuổi (tháng) vd. 48" />
+
+                    <input
+                        type="number"
+                        placeholder="Tuổi (tháng)"
+                        value={ageMonths}
+                        onChange={(e) => setAgeMonths(e.target.value)}
+                    />
+
+
                     <div className="btn-group">
-                        <button>Lưu số liệu</button>
-                        <button className="danger">Xóa</button>
+                        <button onClick={calculateBMI}>Lưu </button>
+                        <button
+                            className="danger"
+                            onClick={() => { setWeight(""); setHeight(""); setBmi(null); }}
+                        >
+                            Xóa
+                        </button>
                     </div>
+
+
+                    {bmi && (
+                        <p>
+                            👉 BMI của bé là <b>{bmi}</b> ({bmiCategory})
+                        </p>
+                    )}
+
                 </div>
 
                 {/* Ăn uống */}
@@ -162,11 +252,11 @@ const HealthManager = () => {
                         ))}
                     </div>
 
-                    <button>Lưu số liệu</button>
+                    <button>Lưu </button>
                 </div>
             </div>
         </div>
     );
 };
 
-export default HealthManager;
+export default HealthManager; 

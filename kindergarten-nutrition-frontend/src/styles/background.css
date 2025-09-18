@@ -1,21 +1,23 @@
-.home {
-  position: relative;
-  height: 100vh;   /* cao full màn hình */
-  width: 100vw;        /* rộng full màn hình */
-   background-color: #ffced2; 
-  /* fixed */
-  background-size: cover;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-   z-index: 0;     /* chặn tràn trong div này */
-}
+  .home {
+    position: relative;
+    height: 100vh;   /* cao full màn hình */
+    width: 100vw;        /* rộng full màn hình */
+    background-color: #ffced2; 
 
-html, body {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  width: 100%;
-  overflow-x: hidden;  /* chặn thanh trượt ngang */
-  
-}  
+    /* background-image: linear-gradient(to bottom, #fc7c87, white); */
+    /* fixed */
+    background-size: cover;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    z-index: 0;     /* chặn tràn trong div này */
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    overflow-x: hidden;  /* chặn thanh trượt ngang */
+    
+  }  
