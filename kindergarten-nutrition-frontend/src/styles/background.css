@@ -1,5 +1,5 @@
 .home {
-  position: relative;
+  
   height: 100vh;   /* cao full màn hình */
   width: 100vw;        /* rộng full màn hình */
    background-color: #ffced2; 
@@ -7,8 +7,7 @@
   background-size: cover;
   margin: 0;
   padding: 0;
-  overflow: hidden;
-   z-index: 0;     /* chặn tràn trong div này */
+       /* chặn tràn trong div này */
 }
 
 html, body {
