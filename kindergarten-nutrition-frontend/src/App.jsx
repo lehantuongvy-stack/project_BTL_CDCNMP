@@ -6,6 +6,7 @@ import CreateReport from "./pages/CreateReport";
 
 function App() {
   return (
+<<<<<<< HEAD
     <BrowserRouter>
       <Routes>
         <Route path="/report" element={<Report />} />
@@ -15,6 +16,13 @@ function App() {
         <Route path="*" element={<Report />} />
       </Routes>
     </BrowserRouter>
+=======
+    <div>
+      {/* <Home />  */}
+      {/* <Menu /> */}
+       <HealthManager />
+    </div>
+>>>>>>> backup-local
   );
 }
 
