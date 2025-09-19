@@ -16,22 +16,22 @@
 }
 
 .menu-title {
-    
+
     display: inline-block;
-    background:#eb9c5c ;
+    background: #eb9c5c;
     color: #fff;
     font-size: 22px;
     /* chỉnh cỡ chữ */
     font-weight: bold;
-    margin-top: 30px;
+    margin-top: 20px;
 
     padding: 20px 60px;
     /* tăng padding để ô to ra */
     border-radius: 6px;
     position: relative;
-    width: 220px;
+    width: 260px;
     /* đặt chiều rộng cụ thể */
-    height: 70px;
+    height: 80px;
     /* đặt chiều cao cụ thể */
     text-align: center;
     /* căn chữ giữa */
@@ -105,12 +105,17 @@
 /* Group Container */
 .group-container {
     display: flex;
-    flex-wrap: nowrap;   /* ❌ không cho xuống dòng */
-    gap: 30px;           /* khoảng cách giữa các group-box */
-    margin-left: 50px;   /* cách lề trái */
-    margin-top: 50px;    /* cách date-field */
+    flex-wrap: nowrap;
+    /* ❌ không cho xuống dòng */
+    gap: 30px;
+    /* khoảng cách giữa các group-box */
+    margin-left: 50px;
+    /* cách lề trái */
+    margin-top: 50px;
+    /* cách date-field */
     /* overflow-x: auto;    ✅ thêm thanh cuộn ngang nếu tràn màn hình */
-    padding-bottom: 10px;/* tránh dính sát mép dưới */
+    padding-bottom: 10px;
+    /* tránh dính sát mép dưới */
 }
 
 /* Group Box */
@@ -119,8 +124,10 @@
     background: #f3dfe8;
     border-radius: 12px;
     padding: 30px;
-    width: 40%;         /* giữ chiều rộng cố định */
-    flex: 0 0 auto;       /* ❌ không cho co giãn, giữ nguyên kích thước */
+    width: 40%;
+    /* giữ chiều rộng cố định */
+    flex: 0 0 auto;
+    /* ❌ không cho co giãn, giữ nguyên kích thước */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     text-align: left;
 }
@@ -165,29 +172,29 @@
 
 .menu-table {
     color: #333;
-  width: 90%;
-  margin: 20px auto;
-  border-collapse: collapse;
-  font-size: 16px;
+    width: 90%;
+    margin: 20px auto;
+    border-collapse: collapse;
+    font-size: 16px;
 }
 
 .menu-table th,
 .menu-table td {
-  border: 2px solid white;
-  padding: 5px;
-  text-align: center;
-  vertical-align: middle;
+    border: 2px solid white;
+    padding: 5px;
+    text-align: center;
+    vertical-align: middle;
 }
 
 .menu-table th {
-  background: #ec3582;
-  font-weight: bold;
+    background: #ec3582;
+    font-weight: bold;
 }
 
 .menu-table tr:nth-child(even) {
-  background: #f3945d;
+    background: #f3945d;
 }
 
 .menu-table tr:hover {
-  background: #7badee;
+    background: #7badee;
 }
