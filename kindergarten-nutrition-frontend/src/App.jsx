@@ -11,19 +11,7 @@ import ListStudent from "./pages/ListStudent";
 
 function App() {
   return (
-
-    // <div>
-    //   {/* <Home />  */}
-    //   {/* <Menu /> */}
-    //   {/* <HealthManager /> */}
-    //   {/* <CreateReport /> */}
-    //   {/* < WarehouseForm /> */}
-
-    //   {/* <Report /> */}
-
-    // </div>
-
-     <BrowserRouter>
+    <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/menu" element={<Menu />} />
@@ -35,6 +23,7 @@ function App() {
 
       </Routes>
     </BrowserRouter>
+
   );
 }
 

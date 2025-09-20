@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import "../styles/background.css";
 import "./../styles/Menu.css"; // import css riêng cho Menu
+
 import Header from "../components/Header"; 
 import BackButton from "../components/BackButton"; // 👈 import nút back riêng
+
 
 
 function Menu() {
@@ -151,8 +153,10 @@ function Menu() {
   return (
 
     <div className="menu-container home">
+
       {/* <Header /> */}
       <BackButton />
+
       <div className="menu-header">
         <div className="menu-title">Thực đơn</div>
         <div className="tabs">
