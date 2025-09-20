@@ -1,7 +1,8 @@
 import React, { useState } from "react";
+
 import "./../styles/HealthManager.css";
 import "../styles/background.css";
-
+import BackButton from "../components/BackButton"; 
 const HealthManager = () => {
     // State thông tin bé
     const [childInfo, setChildInfo] = useState({
@@ -76,7 +77,9 @@ const HealthManager = () => {
 
     return (
         <div className="health-container home">
+            
             <div className="header">
+                <BackButton />
                 <div className="title-box">QUẢN LÝ SỨC KHỎE</div>
                 <div className="info-box">
                     <p><b>Thông tin bé</b></p>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import Header from "../components/Header";
-import '../components/header.css';
+// import Header from "../components/Header";
+// import '../components/header.css';
 import '../styles/background.css';
 import '../styles/WarehouseForm.css';
 
@@ -49,7 +49,7 @@ function WarehouseForm() {
 
   return (
     <div className="home">
-      <Header />
+      {/* <Header /> */}
       <div className='form-box'>
 
           <label>Loại nguyên liệu</label>
