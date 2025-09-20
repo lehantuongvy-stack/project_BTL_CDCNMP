@@ -1,19 +1,22 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Report from "./pages/Report";    
+import Report from "./pages/Report";
 import WarehouseForm from "./pages/WarehouseForm";
 import CreateReport from "./pages/CreateReport";
+import HealthManager from "./pages/HealthManager";
+import Home from "./pages/Home";
+import Menu from "./pages/Menu";
 
 function App() {
   return (
-
     <BrowserRouter>
       <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/menu" element={<Menu />} />
+        <Route path="/health" element={<HealthManager />} />
         <Route path="/report" element={<Report />} />
         <Route path="/create" element={<CreateReport />} />
-        {/* <Route path="/warehouse" element={<WarehouseForm />} /> */}
-        {/* Route mặc định chuyển về /report */}
-        <Route path="*" element={<Report />} />
+        <Route path="/warehouse" element={<WarehouseForm />} />
       </Routes>
     </BrowserRouter>
 

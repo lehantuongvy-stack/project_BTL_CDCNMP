@@ -147,9 +147,9 @@ function Menu() {
   const todayMeals = weeklyMealData[getDayOfWeek(selectedDate)];
 
   return (
-    
+
     <div className="menu-container home">
-      {/* <Header />  */}
+      <Header /> 
       <div className="menu-header">
         <div className="menu-title">Thực đơn</div>
         <div className="tabs">

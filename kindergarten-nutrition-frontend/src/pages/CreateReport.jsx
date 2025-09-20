@@ -7,7 +7,7 @@ import {
 } from "recharts";
 import "../styles/CreateReport.css";
 import '../components/header.css';
-import Header from "../components/header";
+import Header from "../components/Header";
 
 const data = [
   { name: "Mục 1", value: 62.4 },
@@ -78,7 +78,7 @@ function CreateReport() {
 
   return (
     <div className="report-container">
-      {/* Header */}
+      <Header />
       <div className="report-header">
         {isSaved ?(
           <span>{title || "Chưa nhập tên báo cáo"}</span>
