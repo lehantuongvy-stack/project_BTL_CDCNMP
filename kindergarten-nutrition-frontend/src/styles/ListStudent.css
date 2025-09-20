@@ -1,0 +1,135 @@
+/* Container tổng */
+.container {
+  min-height: 100vh;
+  font-family: "Times New Roman", serif;
+  margin: 0;
+  background: #fafafa;
+}
+
+/* Header */
+.header {
+  background-color: #f8cce6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+  position: relative;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 22px;
+  color: #333;
+  margin-right: 10px;
+}
+
+.back-btn:hover {
+  color: #000;
+}
+
+/* Title */
+.title {
+  font-size: 20px;
+  font-weight: bold;
+  color: #444;
+  flex: 1;
+  text-align: center;
+}
+
+/* ---- Search box ---- */
+.search-box {
+  display: flex;
+  align-items: center;
+  background: white;
+  border-radius: 25px;
+  padding: 6px 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  border: 1px solid #ddd;
+  flex: 1;
+  max-width: 350px;
+  margin: 0 15px;
+  transition: all 0.2s ease;
+}
+
+.search-box input {
+  border: none;
+  outline: none;
+  font-size: 14px;
+  flex: 1;
+  background: none;
+}
+
+.search-box:focus-within {
+  border-color: #f48fb1;
+  box-shadow: 0 0 5px rgba(244, 143, 177, 0.6);
+}
+
+.search-btn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  font-size: 18px;
+  color: #555;
+  transition: color 0.2s;
+}
+
+.search-btn:hover {
+  color: #000;
+}
+
+/* Flower / Icon */
+.flower,
+.logout-icon {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #facc15;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+/* Main */
+.main {
+  padding: 20px 40px;
+}
+
+/* Table */
+.student-table {
+    color: black;
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.student-table th {
+  background-color: #fbcfe8;
+  padding: 12px;
+  text-align: left;
+  font-weight: bold;
+  color: #444;
+}
+
+.student-table td {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+}
+
+.student-table tr:nth-child(even) {
+  background-color: #fef6fb;
+}
+
+.student-table tr:hover {
+  background-color: #fdf2f8;
+  transition: background 0.3s;
+}

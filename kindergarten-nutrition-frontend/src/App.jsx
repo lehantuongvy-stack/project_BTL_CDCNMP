@@ -6,6 +6,8 @@ import CreateReport from "./pages/CreateReport";
 import HealthManager from "./pages/HealthManager";
 import Home from "./pages/Home";
 import Menu from "./pages/Menu";
+import ListStudent from "./pages/ListStudent";
+
 
 function App() {
   return (
@@ -29,6 +31,8 @@ function App() {
         <Route path="/report" element={<Report />} />
         <Route path="/create" element={<CreateReport />} />
         <Route path="/warehouse" element={<WarehouseForm />} />
+        <Route path="/students" element={<ListStudent />} />
+
       </Routes>
     </BrowserRouter>
   );
