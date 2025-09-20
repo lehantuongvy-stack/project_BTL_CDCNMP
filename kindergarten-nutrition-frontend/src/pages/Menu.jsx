@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import "../styles/background.css";
 import "./../styles/Menu.css"; // import css riêng cho Menu
-import Header from "../components/Header"; 
+// import Header from "../components/Header"; 
 
 function Menu() {
   const [activeTab, setActiveTab] = useState("ngay");
@@ -149,7 +149,7 @@ function Menu() {
   return (
     
     <div className="menu-container home">
-      <Header /> 
+      {/* <Header />  */}
       <div className="menu-header">
         <div className="menu-title">Thực đơn</div>
         <div className="tabs">
