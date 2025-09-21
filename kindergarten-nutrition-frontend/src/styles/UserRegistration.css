@@ -1,0 +1,385 @@
+/* User Registration Styles - Enhanced with 2-column layout */
+.user-registration {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(135deg, #e91e63 0%, #f06292 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 15px;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.registration-container {
+  background: white;
+  border-radius: 8px;
+  padding: 25px;
+  width: 100%;
+  max-width: 1200px; /* Increased for 2-column layout */
+  max-height: 95vh;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  overflow-y: auto;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.registration-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.registration-header h2 {
+  color: #e91e63;
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.registration-header p {
+  color: #666;
+  font-size: 13px;
+}
+
+/* Two Column Layout for Parent Registration */
+.two-column-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.left-column {
+  border-right: 2px solid #f0f0f0;
+  padding-right: 1.5rem;
+}
+
+.right-column {
+  padding-left: 1.5rem;
+}
+
+/* Form Styles */
+.registration-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.form-group label {
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+
+.form-control {
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 13px;
+  transition: border-color 0.2s ease;
+  outline: none;
+}
+
+.form-control:focus {
+  border-color: #e91e63;
+  box-shadow: 0 0 0 2px rgba(233, 30, 99, 0.1);
+}
+
+.form-control.is-invalid {
+  border-color: #dc3545;
+}
+
+/* Textarea specific styling */
+textarea.form-control {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* Select dropdown styling */
+select.form-control {
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 8px center;
+  background-repeat: no-repeat;
+  background-size: 14px;
+  padding-right: 30px;
+  appearance: none;
+}
+
+/* Error Messages */
+.error-message {
+  color: #dc3545;
+  font-size: 11px;
+  margin-top: 2px;
+}
+
+/* Form Sections */
+.form-section {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.form-section h3 {
+  color: #e91e63;
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #e91e63;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.form-section h3::before {
+  content: "📝";
+  font-size: 1.2rem;
+}
+
+.right-column .form-section h3::before {
+  content: "👶";
+}
+
+/* Alert Messages */
+.alert {
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.alert-success {
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+  color: #155724;
+}
+
+.alert-danger {
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  color: #721c24;
+}
+
+.alert-error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+/* Form Actions */
+.form-actions {
+  display: flex;
+  gap: 15px;
+  justify-content: space-between;
+  margin-top: 25px;
+  padding-top: 20px;
+  border-top: 1px solid #e9ecef;
+}
+
+.btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #e91e63 0%, #d81b60 100%);
+  color: white;
+  box-shadow: 0 2px 4px rgba(233, 30, 99, 0.3);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #d81b60 0%, #c2185b 100%);
+  box-shadow: 0 4px 8px rgba(233, 30, 99, 0.4);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+  box-shadow: 0 2px 4px rgba(108, 117, 125, 0.3);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #5a6268;
+  box-shadow: 0 4px 8px rgba(108, 117, 125, 0.4);
+  transform: translateY(-1px);
+}
+
+/* Access Denied */
+.access-denied {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #e91e63 0%, #f06292 100%);
+  color: white;
+  text-align: center;
+  padding: 20px;
+}
+
+.access-denied h2 {
+  font-size: 32px;
+  margin-bottom: 16px;
+}
+
+.access-denied p {
+  font-size: 18px;
+  margin-bottom: 24px;
+  opacity: 0.9;
+}
+
+/* Loading Animation */
+.btn .fa-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .registration-container {
+    max-width: 900px;
+  }
+  
+  .two-column-layout {
+    gap: 1.5rem;
+  }
+  
+  .left-column {
+    padding-right: 1rem;
+  }
+  
+  .right-column {
+    padding-left: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .registration-container {
+    margin: 10px;
+    padding: 20px;
+    max-width: none;
+  }
+  
+  /* Stack columns on mobile */
+  .two-column-layout {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .left-column {
+    border-right: none;
+    border-bottom: 2px solid #f0f0f0;
+    padding-right: 0;
+    padding-bottom: 1rem;
+  }
+  
+  .right-column {
+    padding-left: 0;
+    padding-top: 1rem;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+  }
+  
+  .btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .registration-header h2 {
+    font-size: 18px;
+  }
+  
+  .form-control {
+    padding: 10px 12px;
+  }
+  
+  .form-section {
+    padding: 1rem;
+  }
+  
+  .form-section h3 {
+    font-size: 1rem;
+  }
+}
+
+/* Enhanced visual elements */
+.form-section {
+  position: relative;
+  overflow: hidden;
+}
+
+.form-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, #e91e63, #f06292);
+}
+
+/* Improved focus states */
+.form-control:focus {
+  border-color: #e91e63;
+  box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1);
+}
+
+/* Better spacing for child info section */
+.right-column .form-group:last-child {
+  margin-bottom: 0;
+}
