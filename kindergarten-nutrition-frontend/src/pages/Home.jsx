@@ -1,6 +1,5 @@
 import React from 'react';
-import { useAuth } from '../context/AuthContext.jsx';
-import { useNavigate } from 'react-router-dom';
+import Header from '../components/common/Header.jsx';
 import '../styles/background.css';
 import '../styles/Home.css';
 
@@ -38,70 +37,10 @@ function MenuSection({ title, meals }) {
 }
 
 export default function Home() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-
-  // Xử lý đăng xuất
-  const handleLogout = async () => {
-    try {
-      await logout();
-      navigate('/'); // Chuyển về trang đăng nhập
-    } catch (error) {
-      console.error('Logout failed:', error);
-      navigate('/'); // Vẫn chuyển về trang đăng nhập nếu có lỗi
-    }
-  };
-
-  // Tạo avatar từ tên user
-  const getAvatarText = (fullName) => {
-    if (!fullName) return 'U';
-    const nameParts = fullName.split(' ');
-    if (nameParts.length >= 2) {
-      return nameParts[0].charAt(0) + nameParts[nameParts.length - 1].charAt(0);
-    }
-    return fullName.charAt(0);
-  };
-
   return (
     <div className="home">
+      <Header />
       <div className="home-container">
-        {/* Menu */}
-        <nav>
-          <ul className="menu-home">
-            <li>Trang chủ</li>
-            <li>Giới thiệu</li>
-            <li>Kho nguyên liệu</li>
-            <li>Góc phụ huynh</li>
-            <li>Quản lý sức khỏe</li>
-            <li>Thư viện món ăn</li>
-            
-            {/* User info và logout */}
-            <li className="user-section">
-              <div className="user-info">
-                <div className="user-avatar">
-                  {getAvatarText(user?.full_name)}
-                </div>
-                <div className="user-greeting">
-                  <span className="welcome-text">Chào mừng</span>
-                  <span className="user-name">{user?.full_name || 'User'}</span>
-                </div>
-              </div>
-              <button 
-                className="logout-btn" 
-                onClick={handleLogout}
-                title="Đăng xuất"
-              >
-                <img 
-                  src="/images/icon.png" 
-                  alt="Đăng xuất" 
-                  className="logout-icon" 
-                /> 
-                ĐĂNG XUẤT
-              </button>
-            </li>
-          </ul>
-        </nav>
-
         <div className="content-home">
           {/* Sidebar trái */}
           <aside className="sidebar-left-home">

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Header from '../components/common/Header.jsx';
 import "./../styles/HealthManager.css";
 import "../styles/background.css";
 
@@ -75,10 +76,12 @@ const HealthManager = () => {
     };
 
     return (
-        <div className="health-container home">
-            <div className="header">
-                <div className="title-box">QUẢN LÝ SỨC KHỎE</div>
-                <div className="info-box">
+        <div className="health-manager-page">
+            <Header />
+            <div className="health-container">
+                <div className="header">
+                    <div className="title-box">QUẢN LÝ SỨC KHỎE</div>
+                    <div className="info-box">
                     <p><b>Thông tin bé</b></p>
 
                     <div className="form-row">
@@ -255,6 +258,7 @@ const HealthManager = () => {
                     <button>Lưu </button>
                 </div>
             </div>
+        </div>
         </div>
     );
 };

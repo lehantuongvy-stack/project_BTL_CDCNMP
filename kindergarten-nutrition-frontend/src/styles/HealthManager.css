@@ -1,11 +1,28 @@
-* {
-  box-sizing: border-box;
+/* Health Manager Page Styles - Full viewport layout */
+.health-manager-page {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #ffeef1;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 0;
 }
 
 .health-container {
-    font-family: "Arial", sans-serif;
-    padding: 20px;
-    border-radius: 12px;
+  font-family: "Arial", sans-serif;
+  padding: 60px 40px 40px;
+  border-radius: 12px;
+  background: white;
+  margin: 0;
+  margin-top: 80px; /* Account for header height */
+  min-height: calc(100vh - 80px);
+  width: 100vw;
+  box-sizing: border-box;
 }
 
 .header {

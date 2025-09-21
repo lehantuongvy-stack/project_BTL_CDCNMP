@@ -14,6 +14,8 @@ import ChitietMon from "./pages/chitietmonan";
 import AdminDashboard from "./pages/AdminDashboard";
 import UserRegistration from "./pages/UserRegistration";
 import ParentRegistration from "./pages/ParentRegistration";
+import About from "./pages/About";
+import ParentCorner from "./pages/ParentCorner";
 
 function App() {
   return (
@@ -36,12 +38,34 @@ function App() {
               <Home />
             </ProtectedRoute>
           } />
+          <Route path="/about" element={
+            <ProtectedRoute>
+              <About />
+            </ProtectedRoute>
+          } />
+          <Route path="/warehouse" element={
+            <ProtectedRoute>
+              <WarehouseForm />
+            </ProtectedRoute>
+          } />
+          <Route path="/parent" element={
+            <ProtectedRoute>
+              <ParentCorner />
+            </ProtectedRoute>
+          } />
+          <Route path="/health" element={
+            <ProtectedRoute>
+              <HealthManager />
+            </ProtectedRoute>
+          } />
+          <Route path="/thuvienmonan" element={
+            <ProtectedRoute>
+              <ThuvienMonan />
+            </ProtectedRoute>
+          } />
           <Route path="/menu" element={<Menu />} />
-          <Route path="/health" element={<HealthManager />} />
           <Route path="/report" element={<Report />} />
           <Route path="/create" element={<CreateReport />} />
-          <Route path="/warehouse" element={<WarehouseForm />} />
-          <Route path="/thuvienmonan" element={<ThuvienMonan />} />
           <Route path="/mon/:id" element={<ChitietMon />} />
         </Routes>
       </BrowserRouter>

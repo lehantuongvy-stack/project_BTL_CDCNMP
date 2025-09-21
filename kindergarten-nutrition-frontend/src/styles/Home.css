@@ -2,18 +2,14 @@
 .home-container {
   display: flex;
   flex-direction: column;
-  height: 100vh; /* toàn bộ màn hình */
+  min-height: calc(100vh - 80px); /* Trừ đi chiều cao header */
   z-index: 1;
+  padding-top: 20px; /* Thêm padding top */
 }
 
-/* Menu ngang */
+/* Ẩn menu cũ vì đã chuyển lên Header */
 .menu-home {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-  margin: 15px 0;
-  padding: 0;
-  list-style: none;
+  display: none;
 }
 
 .menu-home li {

@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom"; // thêm import
+import Header from '../components/common/Header.jsx';
 import "../styles/thuvienmonan.css";
 
 function ThuvienMonan() {
@@ -13,19 +14,22 @@ function ThuvienMonan() {
   ];
 
   return (
-    <div className="thu-vien">
-      <h1 className="title">THƯ VIỆN MÓN ĂN</h1>
-      <div className="grid">
-        {monAn.map((item) => (
-          <div className="card" key={item.id}>
-            <img src={item.anh} alt={item.ten} />
-            <p>{item.ten}</p>
-            {/* Nút link sang trang chi tiết */}
-            <Link to={`/mon/${item.id}`} className="detail-btn">
-              Xem chi tiết
-            </Link>
-          </div>
-        ))}
+    <div className="thu-vien-page">
+      <Header />
+      <div className="thu-vien">
+        <h1 className="title">THƯ VIỆN MÓN ĂN</h1>
+        <div className="grid">
+          {monAn.map((item) => (
+            <div className="card" key={item.id}>
+              <img src={item.anh} alt={item.ten} />
+              <p>{item.ten}</p>
+              {/* Nút link sang trang chi tiết */}
+              <Link to={`/mon/${item.id}`} className="detail-btn">
+                Xem chi tiết
+              </Link>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
