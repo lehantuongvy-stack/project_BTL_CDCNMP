@@ -1,264 +1,225 @@
+
+
+
+/* --- Reset cơ bản --- */
 * {
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 .health-container {
-    font-family: "Arial", sans-serif;
-    padding: 20px;
-    border-radius: 12px;
+  font-family: "Arial", sans-serif;
+  padding: 20px;
+  border-radius: 12px;
 }
 
+/* --- Header --- */
 .header {
-    background: none;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
-    /* khoảng cách giữa các khối */
-    flex-wrap: wrap;
-    /* cho phép tự xuống hàng khi màn hình nhỏ */
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 20px;
 }
 
 .title-box {
-    flex: 0 0 auto;
-    /* chỉ chiếm đúng nội dung */
-    background: #f08050;
-    color: white;
-    padding: 10px 20px;
-    font-weight: bold;
-    border-radius: 8px;
-    white-space: nowrap;
-    /* không cho xuống dòng */
+  background: #f08050;
+  color: white;
+  font-weight: bold;
+  padding: 8px 16px;
+  border-radius: 8px;
+  white-space: nowrap;
 }
-
 
 .info-box {
   flex: 1;
   min-width: 200px;
-  margin: 0 10px;
-  font-size: 14px;
-
   background-color: #f3bebe;
-  color: black;
-  padding: 8px;          /* ↓ giảm padding (trước là 12px) */
+  padding: 8px;
   border-radius: 10px;
-  line-height: 1.3;      /* ↓ giảm chiều cao dòng */
+  font-size: 14px;
+  line-height: 1.3;
 }
 
-/* Thu nhỏ khoảng cách giữa các form-row */
 .info-box .form-row {
-  margin-bottom: 6px;    /* ↓ trước là 10px */
+  margin-bottom: 6px;
 }
 
-/* Thu nhỏ input */
+.form-row label{
+    color: black;
+}
+ b{
+    color: black;
+ }
 
-.info-box .form-row input,
-.info-box .form-row select,
-.info-box .form-row textarea {
+.info-box label {
+  min-width: 100px;
+  font-weight: bold;
   font-size: 13px;
-  padding: 3px 6px;      
-  border: none;              /* bỏ viền */
-  outline: none;             /* bỏ viền khi focus */
-  background: #f3bebe;       /* giữ nền cùng màu khung */
+}
+
+.info-box input,
+.info-box select,
+.info-box textarea {
+  flex: 1;
+  font-size: 13px;
+  padding: 4px 6px;
   border-radius: 6px;
+  border: none;
+  background: #f3bebe;
+  outline: none;
+  color: #302e2e;
 }
 
+.header-buttons button{
+    background: #4CAF50;
+}
 
-
-
-
-
-
+/* --- Form sections --- */
 .form-sections {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 20px;
-    margin-top: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
 }
 
+/* --- Card --- */
 .card {
   background: #f9a896;
-  padding: 10px;         /* giảm padding (trước là 15px) */
+  padding: 12px;          /* vừa phải */
   border-radius: 10px;
-  font-size: 14px;       /* chữ nhỏ hơn */
-  line-height: 1.3;      /* giảm chiều cao dòng */
+  font-size: 14px;
+  line-height: 1.4;
+  max-height: none;       /* không giới hạn chiều cao */
 }
 
 .card h3 {
-  margin: 8px 0;         /* giảm margin */
-  font-size: 15px;       /* tiêu đề nhỏ gọn */
+  font-size: 15px;
+  margin: 8px 0;
 }
 
 .card input,
 .card select,
 .card textarea {
-  font-size: 13px;       /* chữ nhỏ */
-  padding: 5px 8px;      /* giảm padding bên trong input */
-  margin: 5px 0;         /* giảm khoảng cách */
-  border-radius: 6px;
-}
-
-.btn-group button,
-.card button {
   font-size: 13px;
-  padding: 6px 10px;     /* nút nhỏ gọn */
+  padding: 6px 8px;
+  margin: 6px 0;
+  border: none;
   border-radius: 6px;
-}
-
-
-.form-row {
-    display: flex;
-    align-items: center;
-    margin-bottom: 10px;
-}
-
-.form-row label {
-    width: 120px;
-    /* chiều rộng cố định cho label */
-    font-weight: bold;
-}
-
-.form-row input {
-    flex: 1;
-    /* input chiếm hết phần còn lại */
-    padding: 5px 8px;
-    /* border: 1px solid #ccc; */
-    border-radius: 6px;
-}
-
-
-input,
-select,
-textarea {
-    width: 90%;
-    margin: 6px 0;
-    padding: 8px;
-    border: none;
-    background: #f3bebe;
-    color: black;
-    border-radius: 6px;
+  width: 95%;
+  background: #f3bebe;
+  color: black;
 }
 
 textarea {
-    min-height: 60px;
+  min-height: 60px;
 }
 
+/* --- Buttons --- */
 .btn-group {
-    display: flex;
-    justify-content: space-between;
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
 }
 
-.card button {
-    background: #f8b9e3;
-    color: black;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 8px;
-    cursor: pointer;
+.card button,
+.btn-group button {
+  font-size: 13px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: #f8b9e3;
+  color: black;
+  border: none;
+  cursor: pointer;
 }
 
-button.danger {
-    background: #ff6666;
-    color: #fff;
+.card button.danger {
+  background: #ff6666;
+  color: white;
 }
 
+.card button:hover,
+.btn-group button:hover {
+  opacity: 0.9;
+}
+
+/* --- Tags / Allergies --- */
 .tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin: 10px 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0;
 }
 
 .tags span {
-    background: #ff5722;
-    color: white;
-    padding: 6px 10px;
-    border-radius: 20px;
-    font-size: 14px;
+  background: #ff5722;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 18px;
+  font-size: 13px;
+  cursor: pointer;
 }
 
 .allergy-input {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    /* khoảng cách giữa input và button */
+  display: flex;
+  gap: 8px;
+  margin: 6px 0;
 }
 
 .allergy-input input {
-    flex: 1;
-    /* input chiếm hết chiều ngang còn lại */
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
+  flex: 1;
+  font-size: 13px;
+  padding: 6px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
 }
 
 .allergy-input button {
-    padding: 8px 16px;
-    border: none;
-    border-radius: 6px;
-    background-color: #4CAF50;
-    color: white;
-    cursor: pointer;
+  padding: 6px 12px;
+  font-size: 13px;
+  border-radius: 6px;
+  background-color: #4CAF50;
+  color: white;
+  cursor: pointer;
 }
 
 .allergy-input button:hover {
-    background-color: #45a049;
+  background-color: #45a049;
 }
 
+/* --- Checkbox custom --- */
 .checkbox-field {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin: 6px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0;
 }
 
 .checkbox-field input[type="checkbox"] {
-    appearance: none;
-    /* bỏ style mặc định */
-    -webkit-appearance: none;
-    -moz-appearance: none;
-
-    width: 18px;
-    height: 18px;
-    border-radius: 4px;
-    border: 2px solid #f08050;
-    /* viền cam */
-    background-color: #f08050;
-    /* nền cam luôn */
-    cursor: pointer;
-    position: relative;
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 2px solid #f08050;
+  background-color: #f08050;
+  cursor: pointer;
+  position: relative;
 }
 
-.checkbox-field input[type="checkbox"] {
-    appearance: none;
-    /* bỏ style mặc định */
-    -webkit-appearance: none;
-    -moz-appearance: none;
-
-    width: 18px;
-    height: 18px;
-    border-radius: 4px;
-    border: 2px solid #f08050;
-    /* viền cam */
-    background-color: #f08050;
-    /* nền cam luôn */
-    cursor: pointer;
-    position: relative;
-}
-
-/* Khi tick thì đổi dấu ✔ trắng */
 .checkbox-field input[type="checkbox"]:checked::after {
-    content: "✔";
-    position: absolute;
-    top: -2px;
-    left: 2px;
-    font-size: 14px;
-    color: white;
+  content: "✔";
+  position: absolute;
+  top: -2px;
+  left: 2px;
+  font-size: 14px;
+  color: white;
 }
 
+/* --- Range --- */
 input[type="range"] {
-    width: 100%;
-    accent-color: #f08050;
-    /* màu cam đồng bộ */
-    cursor: pointer;
+  width: 100%;
+  accent-color: #f08050;
+  height: 8px;
+  cursor: pointer;
 }
