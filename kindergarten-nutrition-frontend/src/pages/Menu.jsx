@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import "../styles/background.css";
 import "./../styles/Menu.css"; // import css riêng cho Menu
 
-import Header from "../components/Header"; 
 import BackButton from "../components/BackButton"; // 👈 import nút back riêng
 
 

@@ -1,3 +1,4 @@
+import {Link} from "react-router-dom";
 import '../styles/background.css';
 import '../styles/Home.css';
 
@@ -45,8 +46,8 @@ export default function Home() {
             <li>Giới thiệu</li>
             <li>Kho nguyên liệu</li>
             <li>Góc phụ huynh</li>
-            <li>Quản lý sức khỏe</li>
-            <li>Thư viện món ăn</li>
+            <li ><Link to="/health" style={{ color: 'inherit', textDecoration: 'inherit'}}>Quản lý sức khỏe</Link></li>
+            <li><Link to="/menu" style={{ color: 'inherit', textDecoration: 'inherit' }}>Thư viện món ăn </Link></li>
             <li className="logout-item"><img 
             src="/images/icon.png" 
             alt="Đăng xuất" 

@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 // import Header from "../components/Header";
 // import '../components/header.css';
 import BackButton from "../components/BackButton";
-import '../styles/background.css';
+// import '../styles/background.css';
 import "../styles/Report.css";
 
 function Report() {
