@@ -22,9 +22,9 @@ const UserRegistration = () => {
 
   // Debug auth info
   React.useEffect(() => {
-    console.log('🔍 UserRegistration - Current user:', user);
-    console.log('🔍 UserRegistration - Auth token:', localStorage.getItem('authToken'));
-    console.log('🔍 UserRegistration - User from storage:', localStorage.getItem('user'));
+    console.log(' UserRegistration - Current user:', user);
+    console.log(' UserRegistration - Auth token:', localStorage.getItem('authToken'));
+    console.log(' UserRegistration - User from storage:', localStorage.getItem('user'));
   }, [user]);
 
   // Handle input change
@@ -97,19 +97,19 @@ const UserRegistration = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    console.log('🚀 Form submission started');
-    console.log('👤 Current user role:', user?.role);
-    console.log('🔑 Auth token exists:', !!localStorage.getItem('authToken'));
+    console.log(' Form submission started');
+    console.log(' Current user role:', user?.role);
+    console.log(' Auth token exists:', !!localStorage.getItem('authToken'));
     
     // Check if user is admin
     if (!user || user.role !== 'admin') {
       setErrors({ general: 'Chỉ admin mới có thể tạo tài khoản' });
-      console.error('❌ Access denied: Not admin');
+      console.error(' Access denied: Not admin');
       return;
     }
     
     if (!validateForm()) {
-      console.error('❌ Form validation failed');
+      console.error(' Form validation failed');
       return;
     }
 
@@ -121,11 +121,11 @@ const UserRegistration = () => {
       // Prepare data for API (remove confirmPassword)
       const { confirmPassword, ...registerData } = formData;
       
-      console.log('📤 Sending registration data:', registerData);
+      console.log(' Sending registration data:', registerData);
       
       const response = await authService.register(registerData);
       
-      console.log('✅ Registration successful:', response);
+      console.log(' Registration successful:', response);
       
       if (response.success) {
         setSuccessMessage(`Tạo tài khoản ${formData.role === 'teacher' ? 'giáo viên' : 'phụ huynh'} thành công!`);
@@ -148,7 +148,7 @@ const UserRegistration = () => {
       }
       
     } catch (error) {
-      console.error('❌ Registration failed:', error);
+      console.error(' Registration failed:', error);
       setErrors({ submit: error.message || 'Có lỗi xảy ra khi tạo tài khoản' });
     } finally {
       setLoading(false);
@@ -172,7 +172,7 @@ const UserRegistration = () => {
     <div className="user-registration">
       <div className="registration-container">
         <div className="registration-header">
-          <h2>🆕 Tạo tài khoản mới</h2>
+          <h2> Tạo tài khoản mới</h2>
           <p>Tạo tài khoản cho giáo viên hoặc phụ huynh</p>
         </div>
 
@@ -201,8 +201,8 @@ const UserRegistration = () => {
               onChange={handleChange}
               className={`form-control ${errors.role ? 'is-invalid' : ''}`}
             >
-              <option value="parent">👨‍👩‍👧‍👦 Phụ huynh</option>
-              <option value="teacher">👩‍🏫 Giáo viên</option>
+              <option value="parent"> Phụ huynh</option>
+              <option value="teacher"> Giáo viên</option>
             </select>
             {errors.role && <span className="error-message">{errors.role}</span>}
           </div>

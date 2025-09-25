@@ -14,6 +14,7 @@ import ChitietMon from "./pages/chitietmonan";
 import AdminDashboard from "./pages/AdminDashboard";
 import UserRegistration from "./pages/UserRegistration";
 import ParentRegistration from "./pages/ParentRegistration";
+import AccountInfo from "./pages/AccountInfo";
 import About from "./pages/About";
 import ParentCorner from "./pages/ParentCorner";
 
@@ -31,6 +32,16 @@ function App() {
           <Route path="/admin/register" element={
             <ProtectedRoute requiredRole="admin">
               <ParentRegistration />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/user-registration" element={
+            <ProtectedRoute requiredRole="admin">
+              <UserRegistration />
+            </ProtectedRoute>
+          } />
+          <Route path="/account-info" element={
+            <ProtectedRoute>
+              <AccountInfo />
             </ProtectedRoute>
           } />
           <Route path="/home" element={

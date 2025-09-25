@@ -29,6 +29,11 @@ const Header = () => {
     return fullName.charAt(0);
   };
 
+  // Xử lý click vào user avatar (cho tất cả user)
+  const handleAvatarClick = () => {
+    navigate('/account-info');
+  };
+
   // Navigation items với routes
   const navItems = [
     { id: 'home', label: 'Trang chủ', path: '/home' },
@@ -70,7 +75,11 @@ const Header = () => {
         {/* User Section - Moved to right with new pink color */}
         <div className="user-section-right">
           <div className="user-info">
-            <div className="user-avatar">
+            <div 
+              className="user-avatar clickable-avatar"
+              onClick={handleAvatarClick}
+              title="Click để xem thông tin cá nhân"
+            >
               {getAvatarText(user?.full_name)}
             </div>
             <div className="user-greeting">

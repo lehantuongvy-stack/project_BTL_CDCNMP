@@ -110,6 +110,21 @@
   box-shadow: 0 4px 15px rgba(0,0,0,0.3);
 }
 
+/* Clickable avatar - for all users */
+.clickable-avatar {
+  cursor: pointer;
+  position: relative;
+}
+
+.clickable-avatar:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+}
+
+.clickable-avatar:active {
+  transform: scale(0.95);
+}
+
 /* User greeting */
 .user-greeting {
   display: flex;
