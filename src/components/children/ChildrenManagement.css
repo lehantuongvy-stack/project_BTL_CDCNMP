@@ -1,0 +1,463 @@
+/* Children Management Styles */
+.children-management {
+  padding: 1.5rem;
+  background: #f8f9fa;
+  min-height: 100vh;
+  color: #333;
+}
+
+/* Force all text to be visible */
+.children-management,
+.children-management *,
+.children-management *:before,
+.children-management *:after {
+  color: #333 !important;
+}
+
+/* Override any pink theme colors for table */
+.children-management table,
+.children-management table *,
+.children-management .children-table,
+.children-management .children-table * {
+  color: #333 !important;
+  text-shadow: none !important;
+}
+
+.children-header {
+  margin-bottom: 2rem;
+}
+
+.children-header h2 {
+  color: #e91e63;
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.children-header h2::before {
+  content: "👶";
+  font-size: 1.5rem;
+}
+
+.children-header p {
+  color: #6c757d;
+  margin: 0;
+}
+
+/* Filters Section */
+.filters-section {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.filters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  align-items: end;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.filter-group label {
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.filter-input,
+.filter-select {
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  transition: border-color 0.2s ease;
+}
+
+.filter-input:focus,
+.filter-select:focus {
+  outline: none;
+  border-color: #e91e63;
+  box-shadow: 0 0 0 2px rgba(233, 30, 99, 0.1);
+}
+
+.filter-actions {
+  display: flex;
+  align-items: flex-end;
+}
+
+/* Results Section */
+.results-section {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.results-header {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e9ecef;
+  background: #f8f9fa;
+}
+
+.results-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.results-count {
+  font-weight: 500;
+  color: #495057;
+}
+
+/* Loading State */
+.loading-container {
+  padding: 3rem;
+  text-align: center;
+  color: #6c757d;
+}
+
+.loading-spinner {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Children Table */
+.children-table {
+  overflow-x: auto;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+}
+
+.children-table table {
+  width: 100%;
+  min-width: 1300px; /* Reduced from 1400px since removed ID column */
+  border-collapse: collapse;
+}
+
+.children-table th,
+.children-table td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #e9ecef;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #333 !important; /* Force text color */
+  background: white !important; /* Force background */
+}
+
+.children-table th {
+  background: #f8f9fa !important;
+  font-weight: 600;
+  color: #495057 !important;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.children-table tr:hover {
+  background: #f8f9fa;
+}
+
+/* Force all table cells to show text clearly */
+.children-table td,
+.children-table th,
+.children-table td *,
+.children-table th * {
+  color: #333 !important;
+  background: transparent !important;
+}
+
+.children-table th {
+  background: #f8f9fa !important;
+  color: #495057 !important;
+}
+
+/* Specific column styling */
+.child-id,
+.student-id,
+.parent-id,
+.teacher-id,
+.parent-name,
+.teacher-name {
+  font-family: monospace;
+  font-weight: 600;
+  color: #e91e63 !important;
+  max-width: 120px;
+  background: white !important;
+}
+
+.child-name,
+.name {
+  min-width: 150px;
+  max-width: 200px;
+  color: #333 !important;
+  background: white !important;
+}
+
+.child-name .name {
+  font-weight: 500;
+  color: #333 !important;
+}
+
+.height,
+.weight {
+  font-weight: 500;
+  text-align: center;
+  max-width: 80px;
+  color: #333 !important;
+  background: white !important;
+}
+
+.medical-conditions,
+.emergency-contact {
+  max-width: 150px;
+}
+
+.contact-info,
+.medical-note {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  cursor: help;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.contact-info {
+  background: #e8f5e8;
+  color: #388e3c;
+}
+
+.medical-note {
+  background: #fff3e0;
+  color: #f57c00;
+}
+
+/* Badges */
+.gender-badge,
+.class-badge,
+.allergy-badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.gender-badge.male {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.gender-badge.female {
+  background: #fce4ec;
+  color: #c2185b;
+}
+
+.class-badge {
+  background: #f3e5f5;
+  color: #7b1fa2;
+}
+
+.allergy-badge.has-allergy {
+  background: #ffebee;
+  color: #d32f2f;
+}
+
+.allergy-badge.no-allergy {
+  background: #e8f5e8;
+  color: #388e3c;
+}
+
+/* Notes */
+.notes {
+  min-width: 120px;
+}
+
+.health-note,
+.allergy-note {
+  display: inline-block;
+  margin-right: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  cursor: help;
+}
+
+.health-note {
+  background: #e1f5fe;
+  color: #0277bd;
+}
+
+.allergy-note {
+  background: #fff3e0;
+  color: #f57c00;
+}
+
+/* No Results */
+.no-results {
+  padding: 3rem;
+  text-align: center;
+  color: #6c757d;
+}
+
+.no-results-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.no-results h3 {
+  color: #495057;
+  margin-bottom: 0.5rem;
+}
+
+.no-results p {
+  margin-bottom: 1.5rem;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.5rem;
+  border-top: 1px solid #e9ecef;
+}
+
+.page-numbers {
+  display: flex;
+  gap: 0.25rem;
+}
+
+/* Buttons */
+.btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: #e91e63;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #d81b60;
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #5a6268;
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid #dee2e6;
+  color: #495057;
+}
+
+.btn-outline:hover:not(:disabled) {
+  background: #e9ecef;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .children-management {
+    padding: 1rem;
+  }
+  
+  .filters-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .children-table {
+    font-size: 0.8rem;
+  }
+  
+  .children-table table {
+    min-width: 1100px; /* Reduced for mobile since removed ID column */
+  }
+  
+  .children-table th,
+  .children-table td {
+    padding: 0.5rem;
+    font-size: 0.75rem;
+  }
+  
+  .results-header {
+    padding: 1rem;
+  }
+  
+  .pagination {
+    flex-wrap: wrap;
+    padding: 1rem;
+  }
+  
+  /* Hide some less critical columns on small screens */
+  .children-table th:nth-child(6), /* Parent ID */
+  .children-table td:nth-child(6),
+  .children-table th:nth-child(7), /* Teacher ID */
+  .children-table td:nth-child(7) {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .children-header h2 {
+    font-size: 1.25rem;
+  }
+  
+  .filters-section {
+    padding: 1rem;
+  }
+  
+  .children-table th,
+  .children-table td {
+    padding: 0.4rem;
+    font-size: 0.7rem;
+  }
+  
+  /* Hide more columns on very small screens */
+  .children-table th:nth-child(8), /* Height */
+  .children-table td:nth-child(8),
+  .children-table th:nth-child(9), /* Weight */
+  .children-table td:nth-child(9) {
+    display: none;
+  }
+}

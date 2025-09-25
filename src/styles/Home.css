@@ -1,0 +1,285 @@
+/* Nền + container */
+.home-container {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 80px); /* Trừ đi chiều cao header */
+  z-index: 1;
+  padding-top: 20px; /* Thêm padding top */
+}
+
+/* Ẩn menu cũ vì đã chuyển lên Header */
+.menu-home {
+  display: none;
+}
+
+.menu-home li {
+  display: flex;              /* để icon + text nằm ngang */
+  align-items: center;        /* căn giữa theo chiều dọc */
+  gap: 6px;                   /* khoảng cách icon - chữ */
+  background: #f4a261;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: bold;
+  color: #000;
+  box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.menu-home li:hover {
+  background: #e76f51;
+  color: white;
+}
+
+/* Icon Logout */
+.logout-icon {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;     /* giữ tỉ lệ */
+  border-radius: 50%;    /* bo tròn */
+  border: 1px solid #ccc; /* viền mảnh */
+}
+
+/* Cách trái 30px chỉ cho user section */
+.menu-home li.user-section {
+  margin-left: 30px;
+  background: transparent;
+  padding: 5px 15px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  box-shadow: none;
+}
+
+.menu-home li.user-section:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* User info section */
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Avatar */
+.user-avatar {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 16px;
+  border: 3px solid white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  text-transform: uppercase;
+}
+
+/* User greeting */
+.user-greeting {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.welcome-text {
+  font-size: 12px;
+  color: #555;
+  margin-bottom: 2px;
+  font-weight: normal;
+}
+
+.user-name {
+  font-size: 14px;
+  font-weight: bold;
+  color: #333;
+  max-width: 120px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Logout button */
+.logout-btn {
+  background: #d62828;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 25px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  box-shadow: 0 2px 6px rgba(214, 40, 40, 0.3);
+}
+
+.logout-btn:hover {
+  background: #b91e1e;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(214, 40, 40, 0.4);
+}
+
+.logout-btn:active {
+  transform: translateY(0);
+}
+
+/* Bố cục chính */
+.content-home {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 10px 20px;
+  height: calc(100% - 60px); /* trừ menu */
+  box-sizing: border-box;
+}
+
+/* Sidebar trái */
+.sidebar-left-home {
+  width: 20%;
+  min-width: 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.contact-home {
+  background: #f28482;
+  padding: 15px;
+  border-radius: 10px;
+  color: white;
+  font-weight: bold;
+}
+
+.report-btn-home {
+  background: #f28482;
+  color: #e92214;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  width: 100%;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* Khu vực chính (giữa) */
+.main-area-home {
+  flex: 1;
+  margin: 0 10px;
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0eded;
+}
+
+.news-img-home {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+/* Sidebar phải */
+.sidebar-right-home {
+  width: 25%;
+  min-width: 200px;
+  background: #fabbb9;
+  padding: 15px;
+  border-radius: 10px;
+  color: black;
+  overflow-y: auto;       /* cuộn riêng nếu dài */
+}
+
+.sidebar-right-home h3 {
+  text-align: center;
+  margin-top: 0;
+}
+
+.menu-section-home h4 {
+  margin: 12px 0 6px;
+}
+
+.sidebar-right-home p {
+  margin: 6px 0;
+}
+
+.sidebar-right-home b {
+  font-weight: bold;
+  color: black;
+}
+.news-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* 2 cột */
+  grid-template-rows: 1fr 1fr;   /* 2 hàng */
+  gap: 10px;
+  width: 100%;
+  height: 100%;
+}
+
+.news-grid img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .menu-home {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  
+  .menu-home li {
+    padding: 8px 15px;
+    font-size: 12px;
+  }
+  
+  .menu-home li.user-section {
+    margin-left: 0;
+    width: 100%;
+    justify-content: space-between;
+    padding: 10px;
+    background: rgba(244, 162, 97, 0.1);
+    border-radius: 10px;
+  }
+  
+  .user-avatar {
+    width: 35px;
+    height: 35px;
+    font-size: 14px;
+  }
+  
+  .welcome-text {
+    font-size: 11px;
+  }
+  
+  .user-name {
+    font-size: 13px;
+    max-width: 100px;
+  }
+  
+  .logout-btn {
+    padding: 6px 12px;
+    font-size: 11px;
+  }
+  
+  .content-home {
+    flex-direction: column;
+  }
+  
+  .sidebar-left-home,
+  .sidebar-right-home {
+    width: 100%;
+  }
+}
