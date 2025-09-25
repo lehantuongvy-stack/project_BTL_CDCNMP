@@ -18,6 +18,7 @@ const ChildController = require('./controllers/ChildController');
 const IngredientController = require('./controllers/IngredientController');
 const MealController = require('./controllers/MealController');
 const NutritionController = require('./controllers/NutritionController');
+const ReportController = require('./controllers/ReportController'); //  Thêm ReportControlle
 
 // Routes
 const AuthRoutes = require('./routes/auth');
@@ -26,7 +27,8 @@ const ChildrenRoutes = require('./routes/children');
 const IngredientRoutes = require('./routes/ingredients');
 const MealsRoutes = require('./routes/meals-fixed');
 const NutritionRoutes = require('./routes/nutrition');
-const DishRoutes = require('./routes/dishes'); // ✅ Thêm route mới
+const DishRoutes = require('./routes/dishes'); 
+const ReportRoutes = require('./routes/report');
 
 // Services (for backward compatibility)
 const ReportingService = require('./services/ReportingService');
