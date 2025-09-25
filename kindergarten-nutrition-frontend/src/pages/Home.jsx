@@ -42,11 +42,11 @@ export default function Home() {
         {/* Menu */}
         <nav>
           <ul className="menu-home">
-            <li>Trang chủ</li>
+            <li>Trang chủ</li>            
             <li>Giới thiệu</li>
             <li>Kho nguyên liệu</li>
             <li>Góc phụ huynh</li>
-            <li ><Link to="/health" style={{ color: 'inherit', textDecoration: 'inherit'}}>Quản lý sức khỏe</Link></li>
+            <li ><Link to="/healthstudent" style={{ color: 'inherit', textDecoration: 'inherit'}}>Quản lý sức khỏe</Link></li>
             <li><Link to="/menu" style={{ color: 'inherit', textDecoration: 'inherit' }}>Thư viện món ăn </Link></li>
             <li className="logout-item"><img 
             src="/images/icon.png" 
