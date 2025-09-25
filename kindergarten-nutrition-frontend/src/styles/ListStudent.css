@@ -19,18 +19,6 @@
   position: relative;
 }
 
-.back-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 22px;
-  color: #333;
-  margin-right: 10px;
-}
-
-.back-btn:hover {
-  color: #000;
-}
 
 /* Title */
 .title {
@@ -57,6 +45,7 @@
 }
 
 .search-box input {
+  color: #555;
   border: none;
   outline: none;
   font-size: 14px;
