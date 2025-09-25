@@ -1,0 +1,28 @@
+.menu-actions {
+  display: flex;
+  gap: 10px;
+  margin-left: auto; /* đẩy về bên phải */
+   margin-right: 70px; 
+}
+
+.menu-actions .btn-save,
+.menu-actions .btn-edit {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.menu-actions .btn-save {
+  background: #28a745; /* xanh lá */
+  color: #fff;
+}
+
+.menu-actions .btn-edit {
+  background: #ffc107; /* vàng */
+  color: #000;
+}
+
+

@@ -1,11 +1,5 @@
 import React, { useState } from 'react';
-<<<<<<< HEAD
 import Header from '../components/common/Header.jsx';
-=======
-// import Header from "../components/Header";
-// import '../components/header.css';
-import '../styles/background.css';
->>>>>>> be6b8457ed3269237c5f585676a23b622508e679
 import '../styles/WarehouseForm.css';
 
 function WarehouseForm() {
