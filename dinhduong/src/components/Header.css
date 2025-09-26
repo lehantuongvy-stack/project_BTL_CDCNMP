@@ -1,0 +1,23 @@
+.header {
+  position: relative;
+  width: 100%;
+}
+
+.back-btn {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: white;
+  border: 1px solid #ddd;
+  padding: 6px 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  transition: background 0.2s ease;
+}
+
+.back-btn:hover {
+  background: #f1f1f1;
+}

@@ -37,7 +37,7 @@ h1 {
     font-size: 2rem;
     font-weight: bold;
     text-align: left;
-    margin: 1rem 0 2rem 0;
+    margin: 4rem 0 2rem 0;
     background-color: white;
     display: inline-block;
     padding: 0.8rem 2rem;
@@ -108,7 +108,7 @@ li::before {
     left: 0;
 }
 
-@media (max-width: 768px) {
+/* @media (max-width: 768px) {
     .detail-content {
         grid-template-columns: 1fr;
     }
@@ -121,4 +121,4 @@ li::before {
         margin-left: 0;
         text-align: center;
     }
-}
+} */

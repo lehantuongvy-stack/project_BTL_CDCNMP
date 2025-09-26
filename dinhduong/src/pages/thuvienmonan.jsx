@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom"; 
 import "../styles/thuvienmonan.css";
+
 
 function ThuvienMonan() {
   const monAn = [
@@ -22,15 +23,32 @@ function ThuvienMonan() {
     { id: 16, ten: "Cháo đậu xanh", anh: "/src/assets/chao-dau-xanh.jpg" },
   ];
 
+  const [search, setSearch] = useState("");
+
+  const filteredMonAn = monAn.filter((item) =>
+    item.ten.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
     <div className="thu-vien">
+      <div><Link to="/" className="back-btn">← Quay lại</Link></div>
+      {/* Ô tìm kiếm góc trên bên phải */}
+      <input
+        type="text"
+        className="search-box"
+        placeholder="Tìm món ăn..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
+
+      {/* Tiêu đề ở chính giữa */}
       <h1 className="title">THƯ VIỆN MÓN ĂN</h1>
+
       <div className="grid">
-        {monAn.map((item) => (
+        {filteredMonAn.map((item) => (
           <div className="card" key={item.id}>
             <img src={item.anh} alt={item.ten} />
             <p>{item.ten}</p>
-            {/* Nút link sang trang chi tiết */}
             <Link to={`/mon/${item.id}`} className="detail-btn">
               Xem chi tiết
             </Link>
