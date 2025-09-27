@@ -1,5 +1,5 @@
 // Base API configuration
-const API_BASE_URL = 'http://localhost:3001';
+const API_BASE_URL = 'http://localhost:3002';
 
 class ApiService {
   constructor() {
@@ -24,7 +24,7 @@ class ApiService {
       };
     }
 
-    console.log('🚀 API Request:', {
+    console.log(' API Request:', {
       url,
       method: config.method,
       headers: config.headers,
@@ -34,17 +34,17 @@ class ApiService {
     try {
       const response = await fetch(url, config);
       
-      console.log('📡 Response status:', response.status);
-      console.log('📡 Response headers:', response.headers);
+      console.log(' Response status:', response.status);
+      console.log(' Response headers:', response.headers);
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('❌ Response error text:', errorText);
+        console.error(' Response error text:', errorText);
         throw new Error(`HTTP ${response.status}: ${errorText || 'Server error'}`);
       }
 
       const data = await response.json();
-      console.log('✅ Response data:', data);
+      console.log(' Response data:', data);
 
       return data;
     } catch (error) {

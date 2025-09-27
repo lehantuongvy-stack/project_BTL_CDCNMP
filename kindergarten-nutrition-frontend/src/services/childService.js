@@ -73,6 +73,17 @@ class ChildService {
     }
   }
 
+  // Lấy danh sách học sinh của teacher đang đăng nhập
+  async getMyClassChildren() {
+    try {
+      const response = await apiService.get('/api/children/my-class');
+      return response;
+    } catch (error) {
+      console.error('Get my class children error:', error);
+      throw error;
+    }
+  }
+
   // Xóa trẻ em
   async deleteChild(childId) {
     try {

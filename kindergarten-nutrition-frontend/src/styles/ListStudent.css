@@ -1,32 +1,40 @@
-/* Container tổng */
-.container {
-  min-height: 100vh;
-  font-family: "Times New Roman", serif;
+/* Page wrapper - giống thuvienmonan */
+.list-student-page {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #ffeef1;
   margin: 0;
-  background: #fafafa;
+  padding: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 0;
 }
 
-/* Header */
-.header {
-  background-color: #f8cce6;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 20px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  border-bottom-left-radius: 10px;
-  border-bottom-right-radius: 10px;
-  position: relative;
+/* Container tổng */
+.container {
+  background: white;
+  min-height: calc(100vh - 80px);
+  width: 100vw;
+  font-family: "Times New Roman", serif;
+  margin: 0;
+  margin-top: 80px;
+  padding: 60px 40px 40px;
+  box-sizing: border-box;
 }
+
+/* Header - removed separate header styling since using common Header component */
 
 
 /* Title */
 .title {
-  font-size: 20px;
+  font-size: 28px;
   font-weight: bold;
-  color: #444;
-  flex: 1;
+  color: #333;
   text-align: center;
+  margin-bottom: 2rem;
 }
 
 /* ---- Search box ---- */
@@ -121,4 +129,33 @@
 .student-table tr:hover {
   background-color: #fdf2f8;
   transition: background 0.3s;
+}
+
+/* Responsive design cho table với 5 cột */
+@media (max-width: 768px) {
+  .student-table {
+    font-size: 14px;
+  }
+  
+  .student-table th,
+  .student-table td {
+    padding: 8px 6px;
+  }
+  
+  .student-table th:nth-child(4),
+  .student-table td:nth-child(4) {
+    /* Ẩn cột tuổi trên mobile để tiết kiệm không gian */
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .student-table {
+    font-size: 12px;
+  }
+  
+  .student-table th,
+  .student-table td {
+    padding: 6px 4px;
+  }
 }

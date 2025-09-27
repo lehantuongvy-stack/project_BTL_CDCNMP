@@ -14,7 +14,7 @@ class MealsRoutes {
     // Xử lý các meal routes
     async handleMealsRoutes(req, res, path, method) {
         try {
-            console.log(`🛤️  Meals Route: ${method} ${path}`);
+            console.log(`Meals Route: ${method} ${path}`);
             
             // Apply authentication middleware
             const isAuthenticated = await this.applyAuthMiddleware(req, res, this.authController);
@@ -38,7 +38,7 @@ class MealsRoutes {
 
                 // POST /api/meals - Tạo meal mới
                 case (path === '' || path === '/') && method === 'POST':
-                    console.log('🔥 POST /api/meals route matched!');
+                    console.log(' POST /api/meals route matched!');
                     // Chỉ admin, nutritionist, teacher mới được tạo meal
                     if (!['admin', 'nutritionist', 'teacher'].includes(req.user.role)) {
                         this.sendResponse(res, 403, {
@@ -47,7 +47,7 @@ class MealsRoutes {
                         });
                         return;
                     }
-                    console.log('🔥 Calling createMeal...');
+                    console.log(' Calling createMeal...');
                     await this.mealController.createMeal(req, res);
                     break;
 
@@ -123,11 +123,11 @@ class MealsRoutes {
         }
 
         const token = authHeader.substring(7);
-        console.log('🔐 Verifying token with secret:', process.env.JWT_SECRET || 'kindergarten_secret_key_2024');
+        console.log('Verifying token with secret:', process.env.JWT_SECRET || 'kindergarten_secret_key_2024');
         
         try {
             const decoded = await authController.verifyToken(token);
-            console.log('✅ Token decoded:', decoded);
+            console.log('Token decoded:', decoded);
             
             // Lấy thông tin user từ database
             const user = await authController.userModel.findById(decoded.id);
@@ -139,12 +139,12 @@ class MealsRoutes {
                 return false;
             }
             
-            console.log('👤 User found by ID:', user);
+            console.log('User found by ID:', user);
             req.user = user;
             return true;
             
         } catch (error) {
-            console.error('❌ Token verification error:', error.message);
+            console.error('Token verification error:', error.message);
             this.sendResponse(res, 401, {
                 success: false,
                 message: 'Token không hợp lệ'

@@ -79,9 +79,10 @@ class AuthService {
   async fetchCurrentUser() {
     try {
       const response = await apiService.get('/api/auth/me');
-      if (response.success && response.data) {
-        localStorage.setItem('user', JSON.stringify(response.data));
-        return response.data;
+      if (response.success && response.data && response.data.user) {
+        const userData = response.data.user;
+        localStorage.setItem('user', JSON.stringify(userData));
+        return userData;
       }
       return null;
     } catch (error) {
@@ -106,18 +107,18 @@ class AuthService {
   // Đăng ký (chỉ admin)
   async register(userData) {
     try {
-      console.log('📝 Registering user with data:', userData);
-      console.log('🔑 Current auth token:', localStorage.getItem('authToken'));
-      console.log('👤 Current user:', localStorage.getItem('user'));
+      console.log(' Registering user with data:', userData);
+      console.log(' Current auth token:', localStorage.getItem('authToken'));
+      console.log(' Current user:', localStorage.getItem('user'));
       
       const response = await apiService.post('/api/auth/register', userData);
-      console.log('✅ Registration response:', response);
+      console.log(' Registration response:', response);
       
       return response;
     } catch (error) {
-      console.error('❌ Register error:', error);
-      console.error('❌ Error message:', error.message);
-      console.error('❌ Error stack:', error.stack);
+      console.error(' Register error:', error);
+      console.error(' Error message:', error.message);
+      console.error(' Error stack:', error.stack);
       throw new Error(error.message || 'Lỗi khi tạo tài khoản');
     }
   }

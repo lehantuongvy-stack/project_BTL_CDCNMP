@@ -22,10 +22,10 @@ class DishRoutes {
 
     async handleDishRoutes(req, res, path, method) {
         try {
-            console.log(`🛤️  Dish Route: ${method} ${path}`);
-            console.log('🔍 DishController type:', typeof this.dishController);
-            console.log('🔍 getAllDishes exists:', !!this.dishController.getAllDishes);
-            console.log('🔍 DishController methods:', Object.getOwnPropertyNames(this.dishController));
+            console.log(`Dish Route: ${method} ${path}`);
+            console.log('DishController type:', typeof this.dishController);
+            console.log('getAllDishes exists:', !!this.dishController.getAllDishes);
+            console.log('DishController methods:', Object.getOwnPropertyNames(this.dishController));
 
             // Initialize req.query if not exists
             if (!req.query) {

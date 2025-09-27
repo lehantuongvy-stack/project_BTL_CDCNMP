@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import "../styles/background.css";
 import "./../styles/Menu.css"; // import css riêng cho Menu
-import Header from "../components/Header"; 
+import Header from "../components/common/Header.jsx"; 
 
 function Menu() {
   const [activeTab, setActiveTab] = useState("ngay");

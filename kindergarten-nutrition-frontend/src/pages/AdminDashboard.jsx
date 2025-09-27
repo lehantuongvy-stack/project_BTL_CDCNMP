@@ -11,9 +11,9 @@ function AdminDashboard() {
   const [activeSection, setActiveSection] = useState('dashboard');
   const [dashboardData, setDashboardData] = useState({
     totalChildren: 0,
-    attendanceRate: '85%',
-    totalTeachers: 12,
-    mealsServed: 156
+    attendanceRate: 0,
+    totalTeachers: 0,
+    mealsServed: 0
   });
   const [loading, setLoading] = useState(true);
   const [childrenDetails, setChildrenDetails] = useState([]);
@@ -25,24 +25,24 @@ function AdminDashboard() {
     const loadDashboardData = async () => {
       try {
         setLoading(true);
-        console.log('📊 Loading dashboard data...');
+        console.log(' Loading dashboard data...');
         
         // Lấy tổng số trẻ em từ API
         const childrenResponse = await childService.getAllChildren();
-        console.log('👶 Children API response:', childrenResponse);
+        console.log(' Children API response:', childrenResponse);
         
         const totalChildren = childrenResponse.data?.children?.length || 0;
-        console.log('📈 Total children count:', totalChildren);
+        console.log(' Total children count:', totalChildren);
         
         setDashboardData(prev => ({
           ...prev,
           totalChildren
         }));
         
-        console.log('✅ Dashboard data loaded successfully');
+        console.log(' Dashboard data loaded successfully');
         
       } catch (error) {
-        console.error('❌ Error loading dashboard data:', error);
+        console.error(' Error loading dashboard data:', error);
       } finally {
         setLoading(false);
       }
@@ -99,12 +99,12 @@ function AdminDashboard() {
 
   // Handle More Info click
   const handleMoreInfo = async (statType) => {
-    console.log('🔄 handleMoreInfo called with:', statType);
+    console.log(' handleMoreInfo called with:', statType);
     if (statType === 'children') {
-      console.log('🔄 Setting activeSection to children');
+      console.log(' Setting activeSection to children');
       // Navigate to children management section
       setActiveSection('children');
-      console.log('✅ activeSection set, current value:', 'children');
+      console.log(' activeSection set, current value:', 'children');
     }
   };
 
@@ -113,7 +113,6 @@ function AdminDashboard() {
     { 
       title: 'Tổng số trẻ em', 
       value: loading ? '...' : dashboardData.totalChildren, 
-      icon: '👶', 
       color: 'pink', 
       description: 'Tăng 5% so với tháng trước',
       moreInfo: true 
@@ -121,21 +120,18 @@ function AdminDashboard() {
     { 
       title: 'Tỷ lệ có mặt', 
       value: dashboardData.attendanceRate, 
-      icon: '📊', 
       color: 'green', 
       description: 'Tỷ lệ điểm danh hôm nay' 
     },
     { 
       title: 'Giáo viên', 
-      value: dashboardData.totalTeachers, 
-      icon: '👩‍🏫', 
+      value: dashboardData.totalTeachers,  
       color: 'orange', 
       description: 'Đội ngũ giáo viên' 
     },
     { 
       title: 'Bữa ăn phục vụ', 
       value: dashboardData.mealsServed, 
-      icon: '🍽️', 
       color: 'red', 
       description: 'Bữa ăn hôm nay' 
     }
@@ -150,25 +146,25 @@ function AdminDashboard() {
   ];
 
   const menuItems = [
-    { id: 'dashboard', name: 'Dashboard', icon: '📊' },
-    { id: 'children', name: 'Quản lý trẻ em', icon: '👶' },
-    { id: 'teachers', name: 'Quản lý giáo viên', icon: '👩‍🏫' },
-    { id: 'meals', name: 'Quản lý bữa ăn', icon: '🍽️' },
-    { id: 'nutrition', name: 'Dinh dưỡng', icon: '🥗' },
-    { id: 'reports', name: 'Báo cáo', icon: '📋' },
-    { id: 'warehouse', name: 'Kho hàng', icon: '📦' },
-    { id: 'settings', name: 'Cài đặt', icon: '⚙️' }
+    { id: 'dashboard', name: 'Dashboard' },
+    { id: 'children', name: 'Quản lý trẻ em'},
+    { id: 'teachers', name: 'Quản lý giáo viên'},
+    { id: 'meals', name: 'Quản lý bữa ăn'},
+    { id: 'nutrition', name: 'Dinh dưỡng' },
+    { id: 'reports', name: 'Báo cáo' },
+    { id: 'warehouse', name: 'Kho hàng' },
+    { id: 'settings', name: 'Cài đặt' }
   ];
 
   const userMenuItems = [
-    { id: 'profile', name: 'Profile', icon: '👤' },
-    { id: 'create-account', name: 'Tạo tài khoản', icon: '➕' },
-    { id: 'settings', name: 'Settings', icon: '⚙️' },
-    { id: 'logout', name: 'Logout', icon: '🚪' }
+    { id: 'profile', name: 'Profile' },
+    { id: 'create-account', name: 'Tạo tài khoản' },
+    { id: 'settings', name: 'Settings' },
+    { id: 'logout', name: 'Logout' }
   ];
 
   const renderContent = () => {
-    console.log('🎨 renderContent called, activeSection:', activeSection);
+    console.log(' renderContent called, activeSection:', activeSection);
     switch (activeSection) {
       case 'dashboard':
         return (
@@ -176,14 +172,13 @@ function AdminDashboard() {
             {/* Page Header */}
             <div className="page-header">
               <h1 className="page-title">
-                <span className="page-icon">📊</span>
-                Dashboard
+                <strong>Dashboard</strong>
               </h1>
               <div className="page-actions">
                 <button className="btn btn-primary">Share</button>
                 <button className="btn btn-secondary">Export</button>
                 <div className="dropdown">
-                  <button className="btn btn-outline">📅 This week ▼</button>
+                  <button className="btn btn-outline"> This week ▼</button>
                 </div>
               </div>
             </div>
@@ -201,17 +196,17 @@ function AdminDashboard() {
                     <span 
                       className="more-info" 
                       onClick={() => {
-                        console.log('🖱️ More info clicked for:', stat.title);
+                        console.log(' More info clicked for:', stat.title);
                         if (stat.moreInfo && stat.title === 'Tổng số trẻ em') {
-                          console.log('✅ Condition met, calling handleMoreInfo');
+                          console.log(' Condition met, calling handleMoreInfo');
                           handleMoreInfo('children');
                         } else {
-                          console.log('❌ Condition not met, stat.moreInfo:', stat.moreInfo, 'title:', stat.title);
+                          console.log(' Condition not met, stat.moreInfo:', stat.moreInfo, 'title:', stat.title);
                         }
                       }}
                       style={{ cursor: stat.moreInfo ? 'pointer' : 'default' }}
                     >
-                      More info ➤
+                      More info 
                     </span>
                   </div>
                 </div>
@@ -225,11 +220,11 @@ function AdminDashboard() {
                 {recentActivities.map(activity => (
                   <div key={activity.id} className="activity-item">
                     <div className="activity-icon">
-                      {activity.type === 'meal' && '🍽️'}
-                      {activity.type === 'child' && '👶'}
-                      {activity.type === 'report' && '📊'}
-                      {activity.type === 'ingredient' && '🥕'}
-                      {activity.type === 'menu' && '📋'}
+                      {activity.type === 'meal' }
+                      {activity.type === 'child'}
+                      {activity.type === 'report'}
+                      {activity.type === 'ingredient' }
+                      {activity.type === 'menu'}
                     </div>
                     <div className="activity-info">
                       <p className="activity-action">{activity.action}</p>
@@ -243,7 +238,7 @@ function AdminDashboard() {
         );
       
       case 'children':
-        console.log('👶 Rendering ChildrenManagement component');
+        console.log(' Rendering ChildrenManagement component');
         return <ChildrenManagement />;
       
       case 'meals':
@@ -283,7 +278,7 @@ function AdminDashboard() {
       {/* Top Navigation */}
       <nav className="top-navbar">
         <div className="navbar-brand">
-          <div className="brand-icon">🏫</div>
+          <div className="brand-icon"></div>
           <span className="brand-text">Quản lý Dinh dưỡng Mầm non</span>
         </div>
         <div className="navbar-nav">
@@ -320,7 +315,6 @@ function AdminDashboard() {
               }}
               title="Đăng xuất"
             >
-              🚪
             </button>
           </div>
         </div>
@@ -375,7 +369,6 @@ function AdminDashboard() {
                           handleNavigation('create-teacher');
                         }}
                       >
-                        <span className="nav-icon">👩‍🏫</span>
                         <span className="nav-text">Tạo tài khoản giáo viên</span>
                       </div>
                       <div 
@@ -385,7 +378,6 @@ function AdminDashboard() {
                           handleNavigation('create-parent');
                         }}
                       >
-                        <span className="nav-icon">👨‍👩‍👧‍👦</span>
                         <span className="nav-text">Tạo tài khoản phụ huynh</span>
                       </div>
                     </div>

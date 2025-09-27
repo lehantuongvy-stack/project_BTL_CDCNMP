@@ -16,6 +16,7 @@ export const useAuth = () => {
 // AuthProvider component
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [token, setToken] = useState(localStorage.getItem('authToken') || null); 
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -24,29 +25,31 @@ export const AuthProvider = ({ children }) => {
     const initializeAuth = async () => {
       try {
         setLoading(true);
-        
-        // Kiểm tra token và user trong localStorage
-        const token = authService.getToken();
+        const savedToken = authService.getToken();
         const savedUser = authService.getCurrentUser();
-        
-        if (token && savedUser) {
-          // Verify token với server
-          const currentUser = await authService.fetchCurrentUser();
-          if (currentUser) {
-            setUser(currentUser);
-            setIsAuthenticated(true);
-          } else {
-            // Token không hợp lệ, clear data
-            setUser(null);
-            setIsAuthenticated(false);
+
+        if (savedToken && savedUser) {
+          setUser(savedUser);
+          setToken(savedToken);                
+          setIsAuthenticated(true);
+
+          try {
+            const currentUser = await authService.fetchCurrentUser();
+            if (currentUser) {
+              setUser(currentUser);
+            }
+          } catch (error) {
+            console.warn('Token verification failed:', error);
           }
         } else {
           setUser(null);
+          setToken(null);                      
           setIsAuthenticated(false);
         }
       } catch (error) {
-        console.error('Auth initialization error:', error);
+        console.error('Auth init error:', error);
         setUser(null);
+        setToken(null);
         setIsAuthenticated(false);
       } finally {
         setLoading(false);
@@ -63,14 +66,21 @@ export const AuthProvider = ({ children }) => {
       const response = await authService.login(credentials);
       
       if (response.success && response.data) {
-        setUser(response.data.user);
+        const { user, token } = response.data;
+
+        setUser(user);
+        setToken(token);                                     
         setIsAuthenticated(true);
+
+        localStorage.setItem('authToken', token);             
+        localStorage.setItem('user', JSON.stringify(user));
         return response;
       } else {
         throw new Error(response.message || 'Đăng nhập thất bại');
       }
     } catch (error) {
       setUser(null);
+      setToken(null);
       setIsAuthenticated(false);
       throw error;
     } finally {
@@ -81,22 +91,20 @@ export const AuthProvider = ({ children }) => {
   // Logout function
   const logout = async () => {
     try {
-      console.log('🚪 Starting logout process...');
       setLoading(true);
       await authService.logout();
-      console.log('✅ Logout API call completed');
     } catch (error) {
-      console.error('❌ Logout error:', error);
+      console.error('Logout error:', error);
     } finally {
-      console.log('🔄 Clearing user state...');
       setUser(null);
+      setToken(null);                        
       setIsAuthenticated(false);
+      localStorage.removeItem('authToken');  
+      localStorage.removeItem('user');
       setLoading(false);
-      console.log('✅ User state cleared, isAuthenticated:', false);
     }
   };
 
-  // Update user function
   const updateUser = (userData) => {
     setUser(userData);
     localStorage.setItem('user', JSON.stringify(userData));
@@ -104,6 +112,7 @@ export const AuthProvider = ({ children }) => {
 
   const value = {
     user,
+    token,             
     isAuthenticated,
     loading,
     login,
@@ -117,3 +126,5 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
+
+export default AuthContext;

@@ -67,9 +67,15 @@ class UserRoutes {
                     break;
 
                 // PUT /api/users/:id - Cập nhật user
-                case userId && this.isValidUUID(userId) && method === 'PUT':
+                case userId && this.isValidUUID(userId) && method === 'PUT' && !pathParts[1]:
                     req.params = { id: userId };
                     await this.userController.updateUser(req, res);
+                    break;
+
+                // PUT /api/users/:id/password - Cập nhật mật khẩu
+                case userId && this.isValidUUID(userId) && pathParts[1] === 'password' && method === 'PUT':
+                    req.params = { id: userId };
+                    await this.userController.updatePassword(req, res);
                     break;
 
                 // DELETE /api/users/:id - Xóa user
@@ -89,6 +95,7 @@ class UserRoutes {
                             'GET /api/users/search?q=keyword - Tìm kiếm users',
                             'GET /api/users/:id - Lấy user theo ID',
                             'PUT /api/users/:id - Cập nhật user',
+                            'PUT /api/users/:id/password - Cập nhật mật khẩu',
                             'DELETE /api/users/:id - Xóa user (Admin)'
                         ]
                     });

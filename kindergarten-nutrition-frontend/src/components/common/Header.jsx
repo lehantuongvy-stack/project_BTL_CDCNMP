@@ -29,20 +29,33 @@ const Header = () => {
     return fullName.charAt(0);
   };
 
-  // Xử lý click vào user avatar (cho tất cả user)
+  // Xử lý click vào user avatar 
   const handleAvatarClick = () => {
     navigate('/account-info');
   };
 
-  // Navigation items với routes
-  const navItems = [
-    { id: 'home', label: 'Trang chủ', path: '/home' },
-    { id: 'about', label: 'Giới thiệu', path: '/about' },
-    { id: 'warehouse', label: 'Kho nguyên liệu', path: '/warehouse' },
-    { id: 'parent', label: 'Góc phụ huynh', path: '/parent' },
-    { id: 'health', label: 'Quản lý sức khỏe', path: '/health' },
-    { id: 'library', label: 'Thư viện món ăn', path: '/thuvienmonan' }
-  ];
+  // Navigation items khác nhau theo role
+  const getNavItems = () => {
+    if (user?.role === 'parent') {
+      return [
+        { id: 'home', label: 'Trang chủ', path: '/home' },
+        { id: 'parent', label: 'Góc phụ huynh', path: '/parent' },
+        { id: 'health', label: 'Quản lý sức khỏe', path: '/health' },
+        { id: 'library', label: 'Thư viện món ăn', path: '/thuvienmonan' },
+        { id: 'tre', label: 'Trẻ', path: '/tre' }
+      ];
+    } else if (user?.role === 'teacher') {
+      return [
+        { id: 'home', label: 'Trang chủ', path: '/home' },
+        { id: 'warehouse', label: 'Kho nguyên liệu', path: '/warehouse' },
+        { id: 'health', label: 'Quản lý sức khỏe', path: '/health-manager' },
+        { id: 'library', label: 'Thư viện món ăn', path: '/thuvienmonan' },
+        { id: 'students', label: 'Lớp của tôi', path: '/list-students' }
+      ];
+    } 
+  };
+
+  const navItems = getNavItems();
 
   // Xử lý navigation
   const handleNavigation = (path) => {

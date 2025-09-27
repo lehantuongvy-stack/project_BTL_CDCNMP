@@ -114,7 +114,6 @@ function KitchenMenu() {
               { title: "Bữa xế", kcal: 195, dish: "Xoài + Yaourt" },
             ],
           },
-    // 👉 bạn thêm các ngày khác tương tự
   };
 
   const [weeklyMealData, setWeeklyMealData] = useState(initialData);

@@ -50,7 +50,7 @@ class AuthRoutes {
                     break;
 
                 case path === '/logout' && method === 'POST':
-                    console.log('🚪 Logout route matched');
+                    console.log(' Logout route matched');
                     // Apply authentication middleware
                     const authLogout = await this.applyAuthMiddleware(req, res, this.authController);
                     if (!authLogout) return;
@@ -58,7 +58,7 @@ class AuthRoutes {
                     break;
 
                 case path === '/logout' && method === 'GET':
-                    console.log('🚪 Logout GET route matched');
+                    console.log(' Logout GET route matched');
                     const authLogoutGet = await this.applyAuthMiddleware(req, res, this.authController);
                     if (!authLogoutGet) return;
                     await this.authController.logoutHandler(req, res);
@@ -139,10 +139,10 @@ class AuthRoutes {
     async applyAuthMiddleware(req, res, controller) {
         try {
             const authHeader = req.headers.authorization;
-            console.log('🔍 Auth Header:', authHeader);
+            console.log(' Auth Header:', authHeader);
             
             if (!authHeader || !authHeader.startsWith('Bearer ')) {
-                console.log('❌ No Bearer token found');
+                console.log(' No Bearer token found');
                 this.sendResponse(res, 401, {
                     success: false,
                     message: 'Access token is required'
@@ -151,13 +151,13 @@ class AuthRoutes {
             }
 
             const token = authHeader.substring(7);
-            console.log('🎫 Extracted token (first 50 chars):', token.substring(0, 50));
+            console.log(' Extracted token (first 50 chars):', token.substring(0, 50));
             
             const user = await controller.verifyToken(token);
-            console.log('👤 User from token:', user);
+            console.log(' User from token:', user);
 
             if (!user) {
-                console.log('❌ Token verification failed');
+                console.log(' Token verification failed');
                 this.sendResponse(res, 401, {
                     success: false,
                     message: 'Invalid or expired token'

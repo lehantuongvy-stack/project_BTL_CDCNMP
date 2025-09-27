@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext.jsx';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import authService from '../services/authService';
 import childService from '../services/childService';
@@ -38,9 +38,9 @@ const ParentRegistration = () => {
 
   // Debug auth info
   useEffect(() => {
-    console.log('🔍 UserRegistration - Current user:', user);
-    console.log('🔍 UserRegistration - Auth token:', localStorage.getItem('authToken'));
-    console.log('🔍 UserRegistration - Registration type:', registrationType);
+    console.log(' UserRegistration - Current user:', user);
+    console.log(' UserRegistration - Auth token:', localStorage.getItem('authToken'));
+    console.log(' UserRegistration - Registration type:', registrationType);
   }, [user, registrationType]);
 
   // Handle input change for user data
@@ -158,12 +158,12 @@ const ParentRegistration = () => {
     // Check if user is admin
     if (!user || user.role !== 'admin') {
       setErrors({ general: 'Chỉ admin mới có thể tạo tài khoản' });
-      console.error('❌ Access denied: Not admin');
+      console.error(' Access denied: Not admin');
       return;
     }
     
     if (!validateForm()) {
-      console.error('❌ Form validation failed');
+      console.error(' Form validation failed');
       return;
     }
 
@@ -184,11 +184,11 @@ const ParentRegistration = () => {
         throw new Error(userResponse.message || 'Tạo tài khoản thất bại');
       }
 
-      console.log('✅ User registration successful:', userResponse);
+      console.log(' User registration successful:', userResponse);
 
       // If parent registration, auto-login and create child record
       if (registrationType === 'parent') {
-        console.log('� Auto-login for child creation...');
+        console.log(' Auto-login for child creation...');
         
         try {
           // Auto-login the newly created parent
@@ -198,7 +198,7 @@ const ParentRegistration = () => {
           });
           
           if (!loginResponse.success) {
-            console.warn('⚠️ Auto-login failed:', loginResponse.message);
+            console.warn(' Auto-login failed:', loginResponse.message);
             setSuccessMessage('Tạo tài khoản phụ huynh thành công! Vui lòng đăng nhập để tạo hồ sơ trẻ.');
             return;
           }
@@ -206,25 +206,25 @@ const ParentRegistration = () => {
           // Update localStorage with new token
           if (loginResponse.data.token) {
             localStorage.setItem('authToken', loginResponse.data.token);
-            console.log('🔑 Auth token updated:', loginResponse.data.token.substring(0, 20) + '...');
+            console.log(' Auth token updated:', loginResponse.data.token.substring(0, 20) + '...');
           }
           
-          console.log('✅ Auto-login successful');
+          console.log(' Auto-login successful');
           
           // Now create child record with authenticated user
-          console.log('📤 Creating child record for new parent:', childData);
+          console.log(' Creating child record for new parent:', childData);
           
           const childResponse = await childService.createChild(childData);
           
           if (!childResponse.success) {
-            console.warn('⚠️ Child creation failed:', childResponse.message);
+            console.warn(' Child creation failed:', childResponse.message);
             setSuccessMessage(`Tạo tài khoản phụ huynh thành công! Tuy nhiên có lỗi khi tạo hồ sơ trẻ: ${childResponse.message}`);
           } else {
-            console.log('✅ Child creation successful:', childResponse);
+            console.log(' Child creation successful:', childResponse);
             setSuccessMessage('Tạo tài khoản phụ huynh và hồ sơ trẻ em thành công!');
           }
         } catch (error) {
-          console.error('❌ Auto-login or child creation error:', error);
+          console.error(' Auto-login or child creation error:', error);
           setSuccessMessage(`Tạo tài khoản phụ huynh thành công! Tuy nhiên có lỗi khi tạo hồ sơ trẻ: ${error.message}`);
         }
       } else {
@@ -260,7 +260,7 @@ const ParentRegistration = () => {
       }, 3000);
       
     } catch (error) {
-      console.error('❌ Registration failed:', error);
+      console.error(' Registration failed:', error);
       setErrors({ submit: error.message || 'Có lỗi xảy ra khi tạo tài khoản' });
     } finally {
       setLoading(false);
@@ -284,7 +284,7 @@ const ParentRegistration = () => {
     <div className="user-registration">
       <div className="registration-container">
         <div className="registration-header">
-          <h2>📝 Tạo tài khoản {registrationType === 'teacher' ? 'giáo viên' : 'phụ huynh'}</h2>
+          <h2> Tạo tài khoản {registrationType === 'teacher' ? 'giáo viên' : 'phụ huynh'}</h2>
           <p>
             {registrationType === 'teacher' 
               ? 'Tạo tài khoản cho giáo viên mới' 
@@ -307,7 +307,7 @@ const ParentRegistration = () => {
 
         {successMessage && (
           <div className="alert alert-success">
-            ✅ {successMessage}
+             {successMessage}
           </div>
         )}
 

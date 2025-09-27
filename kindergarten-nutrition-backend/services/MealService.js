@@ -31,7 +31,7 @@ class MealService {
                 count: meals.length
             };
         } catch (error) {
-            console.error('❌ Get all meals error:', error);
+            console.error('Get all meals error:', error);
             return {
                 success: false,
                 message: 'Lỗi khi lấy danh sách bữa ăn'
@@ -134,7 +134,7 @@ class MealService {
             }
 
         } catch (error) {
-            console.error('❌ Create meal error:', error);
+            console.error('Create meal error:', error);
             return {
                 success: false,
                 message: 'Lỗi server khi tạo bữa ăn'
@@ -189,7 +189,7 @@ class MealService {
                 data: meal
             };
         } catch (error) {
-            console.error('❌ Get meal by ID error:', error);
+            console.error('Get meal by ID error:', error);
             return {
                 success: false,
                 message: 'Lỗi khi lấy thông tin bữa ăn'
@@ -224,7 +224,7 @@ class MealService {
             }
 
         } catch (error) {
-            console.error('❌ Calculate meal nutrition error:', error);
+            console.error('Calculate meal nutrition error:', error);
         }
     }
 
@@ -256,7 +256,7 @@ class MealService {
                 };
             }
         } catch (error) {
-            console.error('❌ Approve meal error:', error);
+            console.error('Approve meal error:', error);
             return {
                 success: false,
                 message: 'Lỗi khi phê duyệt bữa ăn'
@@ -292,7 +292,7 @@ class MealService {
                 count: meals.length
             };
         } catch (error) {
-            console.error('❌ Get meals by date error:', error);
+            console.error('Get meals by date error:', error);
             return {
                 success: false,
                 message: 'Lỗi khi lấy danh sách bữa ăn theo ngày'
@@ -329,7 +329,7 @@ class MealService {
                 data: menuByDate
             };
         } catch (error) {
-            console.error('❌ Get weekly menu error:', error);
+            console.error('Get weekly menu error:', error);
             return {
                 success: false,
                 message: 'Lỗi khi lấy thực đơn tuần'
@@ -362,7 +362,7 @@ class MealService {
                 }
             };
         } catch (error) {
-            console.error('❌ Get meal stats error:', error);
+            console.error('Get meal stats error:', error);
             return {
                 success: false,
                 message: 'Lỗi khi lấy thống kê bữa ăn'

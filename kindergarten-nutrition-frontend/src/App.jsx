@@ -6,6 +6,7 @@ import Report from "./pages/Report";
 import WarehouseForm from "./pages/WarehouseForm";
 import CreateReport from "./pages/CreateReport";
 import HealthManager from "./pages/HealthManager";
+import HealthStudent from "./pages/HealthStudent";
 import Home from "./pages/Home";
 import Menu from "./pages/Menu";
 import Login from "./pages/login";
@@ -15,8 +16,10 @@ import AdminDashboard from "./pages/AdminDashboard";
 import UserRegistration from "./pages/UserRegistration";
 import ParentRegistration from "./pages/ParentRegistration";
 import AccountInfo from "./pages/AccountInfo";
-import About from "./pages/About";
 import ParentCorner from "./pages/ParentCorner";
+import Tre from "./pages/Tre";
+import KitchenMenu from "./pages/KitchenMenu";
+import ListStudent from "./pages/ListStudent";
 
 function App() {
   return (
@@ -49,11 +52,6 @@ function App() {
               <Home />
             </ProtectedRoute>
           } />
-          <Route path="/about" element={
-            <ProtectedRoute>
-              <About />
-            </ProtectedRoute>
-          } />
           <Route path="/warehouse" element={
             <ProtectedRoute>
               <WarehouseForm />
@@ -65,7 +63,12 @@ function App() {
             </ProtectedRoute>
           } />
           <Route path="/health" element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredRole="parent">
+              <HealthStudent />
+            </ProtectedRoute>
+          } />
+          <Route path="/health-manager" element={
+            <ProtectedRoute requiredRole="teacher">
               <HealthManager />
             </ProtectedRoute>
           } />
@@ -75,6 +78,21 @@ function App() {
             </ProtectedRoute>
           } />
           <Route path="/menu" element={<Menu />} />
+          <Route path="/kitchen-menu" element={
+            <ProtectedRoute requiredRole="teacher">
+              <KitchenMenu />
+            </ProtectedRoute>
+          } />
+          <Route path="/tre" element={
+            <ProtectedRoute requiredRole="parent">
+              <Tre />
+            </ProtectedRoute>
+          } />
+          <Route path="/list-students" element={
+            <ProtectedRoute requiredRole="teacher">
+              <ListStudent />
+            </ProtectedRoute>
+          } />
           <Route path="/report" element={<Report />} />
           <Route path="/create" element={<CreateReport />} />
           <Route path="/mon/:id" element={<ChitietMon />} />

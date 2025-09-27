@@ -6,8 +6,7 @@ import {
   LineChart, Line
 } from "recharts";
 import "../styles/CreateReport.css";
-import '../components/header.css';
-import Header from "../components/Header";
+import Header from "../components/common/Header.jsx"; 
 
 const data = [
   { name: "Mục 1", value: 62.4 },

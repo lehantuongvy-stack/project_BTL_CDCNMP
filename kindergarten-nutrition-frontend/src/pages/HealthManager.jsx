@@ -146,12 +146,12 @@ const HealthManager = () => {
                 </div>
 
 
-                {/* <div className="icon-box">🐰</div> */}
+                {/* <div className="icon-box"></div> */}
             </div>
 
-            <div className="form-sections">
+            <div className="hm-cards-container">
                 {/* BMI */}
-                <div className="card">
+                <div className="hm-card">
                     <h3>Tính BMI của trẻ</h3>
                     <input
                         type="number"
@@ -193,14 +193,14 @@ const HealthManager = () => {
 
                     {bmi && (
                         <p>
-                            👉 BMI của bé là <b>{bmi}</b> ({bmiCategory})
+                             BMI của bé là <b>{bmi}</b> ({bmiCategory})
                         </p>
                     )}
 
                 </div>
 
                 {/* Ăn uống */}
-                <div className="card">
+                <div className="hm-card">
                     <h3>Bé có ăn tại trường hôm nay?</h3>
                     <input type="date" defaultValue="2025-08-19" />
                     <div className="checkbox-field">
@@ -217,14 +217,14 @@ const HealthManager = () => {
                         value={mealPercent}
                         onChange={(e) => setMealPercent(Number(e.target.value))}
                     />
-                    <p>👉 Bé đã ăn khoảng <b>{mealPercent}%</b></p>
+                    <p> Bé đã ăn khoảng <b>{mealPercent}%</b></p>
 
                     <h3>Ghi chú bữa ăn</h3>
                     <textarea placeholder="(vd: ăn hết cơm, uống 120ml sữa)"></textarea>
                 </div>
 
                 {/* Dị ứng */}
-                <div className="card">
+                <div className="hm-card">
                     <h3>Bé bị dị ứng với:</h3>
                     <div className="allergy-input">
                         <input

@@ -2,6 +2,7 @@ import React from "react";
 import { useParams, Link } from "react-router-dom";
 import monAn from "../data/monan.js";
 import "../styles/monan.css";
+import BackButton from "../components/BackButton";
 
 function ChitietMon() {
   const { id } = useParams();
@@ -12,7 +13,7 @@ function ChitietMon() {
   return (
     <div className="container">
       <div>
-        <Link to="/thuvienmonan" className="back-btn">← Quay lại</Link>
+        <BackButton />
         <h1>{mon.ten}</h1>
       </div>
       <div className="detail-content">

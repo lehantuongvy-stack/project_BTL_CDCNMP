@@ -20,7 +20,7 @@ const ParentCorner = () => {
 
           <div className="parent-features">
             <div className="feature-category">
-              <h3>📊 Theo dõi dinh dưỡng</h3>
+              <h3> Theo dõi dinh dưỡng</h3>
               <div className="feature-list">
                 <div className="feature-item">
                   <h4>Thực đơn hằng ngày</h4>
@@ -38,7 +38,7 @@ const ParentCorner = () => {
             </div>
 
             <div className="feature-category">
-              <h3>👶 Thông tin trẻ em</h3>
+              <h3> Thông tin trẻ em</h3>
               <div className="feature-list">
                 <div className="feature-item">
                   <h4>Hồ sơ sức khỏe</h4>
@@ -56,7 +56,7 @@ const ParentCorner = () => {
             </div>
 
             <div className="feature-category">
-              <h3>📞 Liên hệ & Hỗ trợ</h3>
+              <h3> Liên hệ & Hỗ trợ</h3>
               <div className="feature-list">
                 <div className="feature-item">
                   <h4>Liên hệ giáo viên</h4>
@@ -78,16 +78,16 @@ const ParentCorner = () => {
             <h3>Thao tác nhanh</h3>
             <div className="action-buttons">
               <button className="action-btn primary">
-                📋 Xem thực đơn hôm nay
+                 Xem thực đơn hôm nay
               </button>
               <button className="action-btn secondary">
-                📊 Báo cáo dinh dưỡng
+                 Báo cáo dinh dưỡng
               </button>
               <button className="action-btn tertiary">
-                👤 Cập nhật thông tin con
+                 Cập nhật thông tin con
               </button>
               <button className="action-btn quaternary">
-                💬 Liên hệ giáo viên
+                 Liên hệ giáo viên
               </button>
             </div>
           </section>
@@ -96,19 +96,19 @@ const ParentCorner = () => {
             <h3>Thông tin liên hệ</h3>
             <div className="contact-grid">
               <div className="contact-item">
-                <h4>📞 Hotline</h4>
+                <h4> Hotline</h4>
                 <p>(08) 38.000.000</p>
               </div>
               <div className="contact-item">
-                <h4>📧 Email</h4>
+                <h4> Email</h4>
                 <p>info@kindergarten-abc.edu.vn</p>
               </div>
               <div className="contact-item">
-                <h4>🕒 Giờ làm việc</h4>
+                <h4> Giờ làm việc</h4>
                 <p>Thứ 2 - Thứ 6: 7:00 - 17:00</p>
               </div>
               <div className="contact-item">
-                <h4>📍 Địa chỉ</h4>
+                <h4> Địa chỉ</h4>
                 <p>123 Đường ABC, Quận XYZ, TP.HCM</p>
               </div>
             </div>

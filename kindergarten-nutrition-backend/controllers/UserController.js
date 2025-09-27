@@ -154,8 +154,8 @@ class UserController extends BaseController {
             const { id } = req.params;
             const updateData = req.body;
 
-            // Kiểm tra quyền
-            if (req.user.role !== 'admin' && req.user.id !== parseInt(id)) {
+            // Kiểm tra quyền - Admin có thể cập nhật bất kỳ user nào, user khác chỉ có thể cập nhật thông tin của chính mình
+            if (req.user.role !== 'admin' && req.user.id !== id) {
                 return this.sendResponse(res, 403, {
                     success: false,
                     message: 'Không có quyền cập nhật user này'
@@ -182,9 +182,11 @@ class UserController extends BaseController {
                 }
             }
 
-            // Chỉ admin mới được cập nhật role
-            if (updateData.role && req.user.role !== 'admin') {
+            // Chỉ admin mới được cập nhật role và is_active
+            if (req.user.role !== 'admin') {
                 delete updateData.role;
+                delete updateData.is_active;
+                delete updateData.username; // username không được thay đổi
             }
 
             const updatedUser = await this.userModel.updateById(id, updateData);
@@ -324,7 +326,7 @@ class UserController extends BaseController {
             const urlParts = url.parse(req.url, true);
             const query = urlParts.query;
             
-            console.log('🔍 Search users with query:', query);
+            console.log(' Search users with query:', query);
             
             const searchTerm = query.q || query.search || '';
             const role = query.role || '';
@@ -349,7 +351,7 @@ class UserController extends BaseController {
                 offset: offset
             };
 
-            console.log('🔍 Search criteria:', searchCriteria);
+            console.log(' Search criteria:', searchCriteria);
 
             const result = await this.searchUsers(searchCriteria);
             
@@ -397,6 +399,94 @@ class UserController extends BaseController {
         } catch (error) {
             console.error('Error searching users:', error);
             throw error;
+        }
+    }
+
+    // Cập nhật mật khẩu user
+    async updatePassword(req, res) {
+        try {
+            const { id } = req.params;
+            const { currentPassword, password } = req.body;
+
+            // Kiểm tra quyền - chỉ user cá nhân hoặc admin mới được đổi mật khẩu
+            if (req.user.role !== 'admin' && req.user.id !== id) {
+                return this.sendResponse(res, 403, {
+                    success: false,
+                    message: 'Không có quyền đổi mật khẩu của user này'
+                });
+            }
+
+            // Validate required fields
+            if (!currentPassword) {
+                return this.sendResponse(res, 400, {
+                    success: false,
+                    message: 'Mật khẩu hiện tại không được để trống'
+                });
+            }
+
+            if (!password) {
+                return this.sendResponse(res, 400, {
+                    success: false,
+                    message: 'Mật khẩu mới không được để trống'
+                });
+            }
+
+            // Validate password format (chỉ số, tối thiểu 6 chữ số)
+            if (!/^[0-9]{6,}$/.test(password)) {
+                return this.sendResponse(res, 400, {
+                    success: false,
+                    message: 'Mật khẩu phải có ít nhất 6 chữ số'
+                });
+            }
+
+            // Kiểm tra user tồn tại và lấy thông tin với password_hash
+            const existingUser = await this.userModel.findByIdWithPassword(id);
+            if (!existingUser) {
+                return this.sendResponse(res, 404, {
+                    success: false,
+                    message: 'Không tìm thấy user'
+                });
+            }
+
+            // Verify current password
+            const bcrypt = require('bcrypt');
+            const isCurrentPasswordValid = await bcrypt.compare(currentPassword, existingUser.password_hash);
+            
+            if (!isCurrentPasswordValid) {
+                return this.sendResponse(res, 400, {
+                    success: false,
+                    message: 'Mật khẩu hiện tại không đúng'
+                });
+            }
+
+            // Check if new password is different from current
+            const isSamePassword = await bcrypt.compare(password, existingUser.password_hash);
+            if (isSamePassword) {
+                return this.sendResponse(res, 400, {
+                    success: false,
+                    message: 'Mật khẩu mới phải khác mật khẩu hiện tại'
+                });
+            }
+
+            // Hash new password
+            const saltRounds = 10;
+            const password_hash = await bcrypt.hash(password, saltRounds);
+
+            // Cập nhật password
+            await this.userModel.updatePassword(id, password_hash);
+
+            this.sendResponse(res, 200, {
+                success: true,
+                message: 'Cập nhật mật khẩu thành công'
+            });
+
+        } catch (error) {
+            console.error('Update password error:', error);
+            this.sendResponse(res, 500, {
+                success: false,
+                message: 'Lỗi server khi cập nhật mật khẩu',
+                error: error.message
+            });
         }
     }
 }

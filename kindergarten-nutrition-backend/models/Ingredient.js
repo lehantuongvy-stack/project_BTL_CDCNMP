@@ -304,7 +304,7 @@ class Ingredient {
                 `;
                 
                 await this.db.query(insertQuery);
-                console.log('✅ Created categories table and inserted sample data');
+                console.log(' Created categories table and inserted sample data');
             }
             
             // Thêm column danh_muc_id vào bảng nguyen_lieu nếu chưa có
@@ -325,10 +325,10 @@ class Ingredient {
                 `;
                 await this.db.query(addFKQuery);
                 
-                console.log('✅ Added danh_muc_id column and foreign key');
+                console.log('Added danh_muc_id column and foreign key');
             } catch (fkError) {
                 // Foreign key có thể đã tồn tại, bỏ qua lỗi này
-                console.log('ℹ️ Column danh_muc_id may already exist');
+                console.log('Column danh_muc_id may already exist');
             }
             
         } catch (error) {

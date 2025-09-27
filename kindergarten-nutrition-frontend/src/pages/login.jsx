@@ -136,7 +136,7 @@ function Login() {
             borderRadius: '4px',
             fontWeight: '500'
           }}>
-            ✅ {successMessage}
+            {successMessage}
           </div>
         )}
 

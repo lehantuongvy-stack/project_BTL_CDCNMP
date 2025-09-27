@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from "react-router-dom";
-import Header from "../components/Header";
-import '../components/header.css';
+import Header from "../components/common/Header.jsx"; 
 import '../styles/background.css';
 import "../styles/Report.css";
 

@@ -140,6 +140,11 @@
   transition: all 0.3s ease;
 }
 
+.action-buttons {
+  display: flex;
+  gap: 10px;
+}
+
 .edit-actions {
   display: flex;
   gap: 10px;
@@ -176,6 +181,12 @@
 
 .form-control.is-invalid {
   border-color: #dc3545;
+}
+
+textarea.form-control {
+  resize: vertical;
+  min-height: 80px;
+  font-family: inherit;
 }
 
 .form-display {
@@ -338,8 +349,51 @@
     font-size: 24px;
   }
   
+  .action-buttons {
+    justify-content: center;
+    width: 100%;
+  }
+  
   .edit-actions {
     justify-content: center;
     width: 100%;
   }
+}
+
+/* Password Change Form */
+.password-change-form {
+  background: #f8f9fa;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px 0;
+}
+
+.password-change-form h4 {
+  margin: 0 0 20px 0;
+  color: #495057;
+  font-size: 18px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.password-change-form h4::before {
+  content: "🔒";
+  font-size: 20px;
+}
+
+.password-change-form .form-group {
+  margin-bottom: 15px;
+}
+
+.password-change-form .form-control {
+  background: white;
+  border: 1px solid #ced4da;
+}
+
+.password-change-form .form-control:focus {
+  border-color: #ffc107;
+  box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25);
 }
