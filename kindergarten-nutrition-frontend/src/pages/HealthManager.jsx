@@ -242,7 +242,7 @@ const HealthManager = () => {
           </div>
 
           <div className="btn-group">
-          
+
             <button
               onClick={() => {
                 if (!weight || !height || !gender || !ageMonths) {
@@ -268,7 +268,7 @@ const HealthManager = () => {
             >
               Lưu
             </button>
-           
+
             <button
               onClick={() => {
                 if (isEditingBMI) {
@@ -382,6 +382,7 @@ const HealthManager = () => {
               </span>
             ))}
           </div>
+          <button>Lưu</button>
         </div>
       </div>
     </div>

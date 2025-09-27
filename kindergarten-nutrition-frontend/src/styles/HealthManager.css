@@ -21,6 +21,8 @@
   gap: 10px;
   align-items: center;
   margin-bottom: 20px;
+  border-radius: 6px;
+  background: #fabbb9 !important;
 }
 
 .title-box {
@@ -35,7 +37,7 @@
 .info-box {
   flex: 1;
   min-width: 200px;
-  background-color: #f3bebe;
+  background-color: #ffccd4;
   padding: 8px;
   border-radius: 10px;
   font-size: 14px;
@@ -67,7 +69,7 @@
   padding: 4px 6px;
   border-radius: 6px;
   border: none;
-  background: #f3bebe;
+  background: #ffeef1;
   outline: none;
   color: #302e2e;
 }
@@ -85,7 +87,7 @@
 
 /* --- Card --- */
 .card {
-  background: #f9a896;
+  background: #fabbb9;
   padding: 12px;          /* vừa phải */
   border-radius: 10px;
   font-size: 14px;
@@ -107,7 +109,7 @@
   border: none;
   border-radius: 6px;
   width: 95%;
-  background: #f3bebe;
+  background: #ffeef1;
   color: black;
 }
 
@@ -127,7 +129,7 @@ textarea {
   font-size: 13px;
   padding: 6px 10px;
   border-radius: 6px;
-  background: #f8b9e3;
+  background: #ec5a75;
   color: black;
   border: none;
   cursor: pointer;

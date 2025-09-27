@@ -33,9 +33,9 @@ export default function ListStudent() {
   return (
     <div className="container home">
       {/* Header */}
-      <header className="header">
+      <header className="list-header">
         {/* Back button */}
-        <BackButton to="/" /> 
+        <BackButton to="/" />
 
         {/* Title */}
         <h1 className="title">Danh sách học sinh</h1>
@@ -75,7 +75,9 @@ export default function ListStudent() {
           <tbody>
             {students.length > 0 ? (
               students.map((s, idx) => (
-                <tr key={idx}>
+                <tr key={idx}
+                  className="row-link"
+                  onClick={() => window.location.href = ``}> 
                   <td>{s.name}</td>
                   <td>{s.gender}</td>
                   <td>{s.parent}</td>
