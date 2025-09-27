@@ -15,7 +15,7 @@ class IngredientRoutes {
     // Xử lý các ingredient routes
     async handleIngredientRoutes(req, res, path, method) {
         try {
-            console.log(`🛤️  Ingredient Route: ${method} ${path}`);
+            console.log(`Ingredient Route: ${method} ${path}`);
             
             // Apply authentication middleware
             const isAuthenticated = await this.applyAuthMiddleware(req, res, this.authController);
@@ -28,7 +28,7 @@ class IngredientRoutes {
 
             // Decode URL và trim spaces
             const cleanPath = decodeURIComponent(path).trim();
-            console.log(`🧹 Clean path: "${cleanPath}"`);
+            console.log(`Clean path: "${cleanPath}"`);
 
             // Parse URL parameters
             const pathParts = cleanPath.split('/').filter(Boolean);
@@ -43,7 +43,7 @@ class IngredientRoutes {
 
                 // POST /api/ingredients - Tạo ingredient mới
                 case (cleanPath === '' || cleanPath === '/') && method === 'POST':
-                    console.log('🔥 POST /api/ingredients route matched!');
+                    console.log(' POST /api/ingredients route matched!');
                     // Chỉ admin, nutritionist, teacher mới được tạo ingredient
                     if (!['admin', 'nutritionist', 'teacher'].includes(req.user.role)) {
                         this.sendResponse(res, 403, {
@@ -52,7 +52,7 @@ class IngredientRoutes {
                         });
                         return;
                     }
-                    console.log('🔥 Calling createIngredient...');
+                    console.log('Calling createIngredient...');
                     await this.ingredientController.createIngredient(req, res);
                     break;
 

@@ -26,7 +26,7 @@ class UserService {
                 count: users.length
             };
         } catch (error) {
-            console.error('❌ Get all users error:', error);
+            console.error('Get all users error:', error);
             return {
                 success: false,
                 message: 'Lỗi khi lấy danh sách người dùng'
@@ -54,7 +54,7 @@ class UserService {
                 data: userInfo
             };
         } catch (error) {
-            console.error('❌ Get user by ID error:', error);
+            console.error('Get user by ID error:', error);
             return {
                 success: false,
                 message: 'Lỗi khi lấy thông tin người dùng'
@@ -98,7 +98,7 @@ class UserService {
                 };
             }
         } catch (error) {
-            console.error('❌ Update user error:', error);
+            console.error('Update user error:', error);
             return {
                 success: false,
                 message: 'Lỗi khi cập nhật thông tin người dùng'
@@ -123,7 +123,7 @@ class UserService {
                 count: users.length
             };
         } catch (error) {
-            console.error('❌ Get users by role error:', error);
+            console.error('Get users by role error:', error);
             return {
                 success: false,
                 message: 'Lỗi khi lấy danh sách người dùng theo vai trò'
@@ -151,7 +151,7 @@ class UserService {
                 };
             }
         } catch (error) {
-            console.error('❌ Deactivate user error:', error);
+            console.error('Deactivate user error:', error);
             return {
                 success: false,
                 message: 'Lỗi khi vô hiệu hóa người dùng'
@@ -179,7 +179,7 @@ class UserService {
                 };
             }
         } catch (error) {
-            console.error('❌ Activate user error:', error);
+            console.error('Activate user error:', error);
             return {
                 success: false,
                 message: 'Lỗi khi kích hoạt người dùng'
@@ -210,7 +210,7 @@ class UserService {
                 count: users.length
             };
         } catch (error) {
-            console.error('❌ Search users error:', error);
+            console.error('Search users error:', error);
             return {
                 success: false,
                 message: 'Lỗi khi tìm kiếm người dùng'
@@ -236,7 +236,7 @@ class UserService {
                 data: stats
             };
         } catch (error) {
-            console.error('❌ Get user stats error:', error);
+            console.error('Get user stats error:', error);
             return {
                 success: false,
                 message: 'Lỗi khi lấy thống kê người dùng'

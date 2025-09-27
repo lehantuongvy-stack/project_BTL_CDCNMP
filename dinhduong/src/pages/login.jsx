@@ -20,7 +20,7 @@ function Login() {
     e.preventDefault();
 
     if (inputCaptcha.toLowerCase() !== captcha.toLowerCase()) {
-      setError("❌ Mã bảo vệ không đúng, vui lòng thử lại.");
+      setError("Mã bảo vệ không đúng, vui lòng thử lại.");
       setCaptcha(generateCaptcha()); // tạo captcha mới
       setInputCaptcha(""); // reset ô nhập
     } else {

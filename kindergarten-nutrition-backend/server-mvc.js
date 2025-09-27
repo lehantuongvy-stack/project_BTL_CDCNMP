@@ -18,6 +18,7 @@ const ChildController = require('./controllers/ChildController');
 const IngredientController = require('./controllers/IngredientController');
 const MealController = require('./controllers/MealController');
 const NutritionController = require('./controllers/NutritionController');
+const ReportController = require('./controllers/ReportController'); //  Thêm ReportControlle
 
 // Routes
 const AuthRoutes = require('./routes/auth');
@@ -26,7 +27,8 @@ const ChildrenRoutes = require('./routes/children');
 const IngredientRoutes = require('./routes/ingredients');
 const MealsRoutes = require('./routes/meals-fixed');
 const NutritionRoutes = require('./routes/nutrition');
-const DishRoutes = require('./routes/dishes'); // ✅ Thêm route mới
+const DishRoutes = require('./routes/dishes'); 
+const ReportRoutes = require('./routes/report');
 
 // Services (for backward compatibility)
 const ReportingService = require('./services/ReportingService');
@@ -36,7 +38,7 @@ const HealthService = require('./services/HealthService');
 // Load environment variables
 require('dotenv').config();
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3002;
 const HOST = process.env.HOST || 'localhost';
 
 class KindergartenServer {
@@ -69,9 +71,10 @@ class KindergartenServer {
 
     // Set CORS headers
     setCorsHeaders(res) {
-        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Origin', '*'); // Allow all origins for development
         res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
         res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
         res.setHeader('Access-Control-Max-Age', '3600');
     }
 
@@ -127,7 +130,7 @@ class KindergartenServer {
     // Khởi tạo server
     async start() {
         try {
-            console.log('🚀 Starting Kindergarten Nutrition Management Server...');
+            console.log('Starting Kindergarten Nutrition Management Server...');
             
             // Kết nối database
             await this.db.initialize();
@@ -145,28 +148,28 @@ class KindergartenServer {
 
             // Lắng nghe trên port
             this.server.listen(PORT, HOST, () => {
-                console.log(`🚀 Server is running on http://${HOST}:${PORT}`);
-                console.log(`📍 Health check: http://${HOST}:${PORT}/api/health`);
-                console.log('🎯 MVC API endpoints available:');
-                console.log('   GET  /api/health');
-                console.log('   POST /api/auth/login');
-                console.log('   GET  /api/auth/me');
-                console.log('   GET  /api/users');
-                console.log('   POST /api/users (Admin)');
-                console.log('   GET  /api/children');
-                console.log('   POST /api/children');
-                console.log('   GET  /api/ingredients');
-                console.log('   POST /api/ingredients');
-                console.log('   GET  /api/meals');
-                console.log('   POST /api/meals');
-                console.log('   GET  /api/nutrition/records');
-                console.log('   POST /api/nutrition/records');
-                console.log('   GET  /api/reports');
-                console.log('   Static files: /public/*');
+                console.log(`Server is running on http://${HOST}:${PORT}`);
+                console.log(`Health check: http://${HOST}:${PORT}/api/health`);
+                console.log('MVC API endpoints available:');
+                console.log('GET  /api/health');
+                console.log('POST /api/auth/login');
+                console.log('GET  /api/auth/me');
+                console.log('GET  /api/users');
+                console.log('POST /api/users (Admin)');
+                console.log('GET  /api/children');
+                console.log('POST /api/children');
+                console.log('GET  /api/ingredients');
+                console.log('POST /api/ingredients');
+                console.log('GET  /api/meals');
+                console.log('POST /api/meals');
+                console.log('GET  /api/nutrition/records');
+                console.log('POST /api/nutrition/records');
+                console.log('GET  /api/reports');
+                console.log('Static files: /public/*');
             });
 
         } catch (error) {
-            console.error('❌ Failed to start server:', error);
+            console.error('Failed to start server:', error);
             process.exit(1);
         }
     }
@@ -192,7 +195,7 @@ class KindergartenServer {
             // Add query to request object
             req.query = query;
 
-            console.log(`📝 ${method} ${pathname}`);
+            console.log(`${method} ${pathname}`);
 
             // Route handling
             if (pathname === '/') {
@@ -271,24 +274,24 @@ class KindergartenServer {
     // Xử lý trang chủ API
     async handleHome(req, res) {
         const home = {
-            message: "🏫 Kindergarten Nutrition Management API",
+            message: "Kindergarten Nutrition Management API",
             version: "3.0.0 - MVC Architecture",
             status: "running",
             timestamp: new Date().toISOString(),
             architecture: "Model-View-Controller (MVC)",
             database: "MySQL Schema with XAMPP",
             features: [
-                "✅ Pure Node.js Server",
-                "✅ MVC Architecture", 
-                "✅ Role-based Authorization",
-                "✅ RESTful API Design",
-                "✅ Comprehensive Models",
-                "✅ Structured Controllers",
-                "✅ Clean Route Organization",
-                "✅ Ingredient Management",
-                "✅ Menu Planning",
-                "✅ Health Assessment",
-                "✅ Reporting System"
+                "Pure Node.js Server",
+                "MVC Architecture", 
+                "Role-based Authorization",
+                "RESTful API Design",
+                "Comprehensive Models",
+                "Structured Controllers",
+                "Clean Route Organization",
+                "Ingredient Management",
+                "Menu Planning",
+                "Health Assessment",
+                "Reporting System"
             ],
             api_structure: {
                 models: "Database models with ORM-like functionality",
@@ -458,12 +461,11 @@ class KindergartenServer {
             });
         }
     }
-
     // Graceful shutdown
     async stop() {
         if (this.server) {
             this.server.close();
-            console.log('🛑 Server stopped');
+            console.log('Server stopped');
         }
         
         if (this.db) {
@@ -477,13 +479,13 @@ const server = new KindergartenServer();
 
 // Handle process termination
 process.on('SIGTERM', async () => {
-    console.log('🛑 SIGTERM received');
+    console.log('SIGTERM received');
     await server.stop();
     process.exit(0);
 });
 
 process.on('SIGINT', async () => {
-    console.log('🛑 SIGINT received');
+    console.log('SIGINT received');
     await server.stop();
     process.exit(0);
 });

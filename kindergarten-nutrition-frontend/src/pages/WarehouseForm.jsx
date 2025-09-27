@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
-// import Header from "../components/Header";
-// import '../components/header.css';
-import '../styles/background.css';
+import Header from '../components/common/Header.jsx';
 import '../styles/WarehouseForm.css';
 
 function WarehouseForm() {
@@ -48,9 +46,10 @@ function WarehouseForm() {
   };
 
   return (
-    <div className="home">
-      {/* <Header /> */}
-      <div className='form-box'>
+    <div className="warehouse-page">
+      <Header />
+      <div className='warehouse-content'>
+        <div className='form-box'>
 
           <label>Loại nguyên liệu</label>
           <input name="loaiNguyenLieu" value={form.loaiNguyenLieu} onChange={handleChange} />
@@ -91,6 +90,7 @@ function WarehouseForm() {
         {/* Thông báo */}
         {message && <p className="message">{message}</p>}
 
+        </div>
         </div>
       </div>
   );

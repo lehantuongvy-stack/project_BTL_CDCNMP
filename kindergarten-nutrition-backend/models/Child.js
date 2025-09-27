@@ -76,9 +76,17 @@ class Child {
         `;
 
         // Convert arrays/objects to JSON strings và handle undefined values
-        const allergiesJson = allergies ? (Array.isArray(allergies) ? JSON.stringify(allergies) : allergies) : null;
-        const medicalConditionsJson = medical_conditions ? (Array.isArray(medical_conditions) ? JSON.stringify(medical_conditions) : medical_conditions) : null;
-        const emergencyContactJson = emergency_contact ? (typeof emergency_contact === 'object' ? JSON.stringify(emergency_contact) : emergency_contact) : null;
+        const allergiesJson = allergies ? 
+            (Array.isArray(allergies) ? JSON.stringify(allergies) : 
+             typeof allergies === 'string' ? allergies : JSON.stringify([allergies])) : 
+            null; // Set to null for JSON fields instead of empty string
+        const medicalConditionsJson = medical_conditions ? 
+            (Array.isArray(medical_conditions) ? JSON.stringify(medical_conditions) : 
+             typeof medical_conditions === 'string' ? medical_conditions : JSON.stringify([medical_conditions])) : 
+            null; // Set to null for JSON fields
+        const emergencyContactJson = emergency_contact ? 
+            (typeof emergency_contact === 'object' ? JSON.stringify(emergency_contact) : emergency_contact) : 
+            null; // Set to null for JSON fields
 
         const values = [
             childId, // UUID
@@ -101,6 +109,9 @@ class Child {
         console.log('🔧 Executing query:', query);
         console.log('🔧 With values:', values);
         console.log('🔧 Generated child ID:', childId);
+        console.log('🔧 Processed allergies:', allergiesJson);
+        console.log('🔧 Processed medical_conditions:', medicalConditionsJson);
+        console.log('🔧 Processed emergency_contact:', emergencyContactJson);
         
         try {
             const result = await this.db.query(query, values);
@@ -112,7 +123,48 @@ class Child {
             return newChild;
         } catch (error) {
             console.error('❌ Create child database error:', error);
-            throw error;
+            console.error('❌ Error details:', error.message);
+            console.error('❌ SQL State:', error.sqlState);
+            console.error('❌ Error Number:', error.errno);
+            
+            // Provide more specific error message
+            if (error.message.includes('allergies')) {
+                throw new Error(`Database constraint error for allergies field: ${error.message}`);
+            } else if (error.message.includes('CONSTRAINT')) {
+                throw new Error(`Database constraint violation: ${error.message}`);
+            } else {
+                throw error;
+            }
+        }
+    }
+
+    // Lấy tất cả children với phân trang và join với parent/teacher names
+    async findAll(limit = 50, offset = 0) {
+        const query = `
+            SELECT c.*,
+                   p.full_name as parent_name,
+                   p.phone as parent_phone,
+                   t.full_name as teacher_name,
+                   FLOOR(DATEDIFF(CURDATE(), c.date_of_birth) / 365.25) as age
+            FROM ${this.tableName} c
+            LEFT JOIN users p ON c.parent_id = p.id
+            LEFT JOIN users t ON c.teacher_id = t.id
+            WHERE c.is_active = 1
+            ORDER BY c.full_name
+            LIMIT ? OFFSET ?
+        `;
+        
+        try {
+            const result = await this.db.query(query, [limit, offset]);
+            // Handle different MySQL2 response formats
+            if (Array.isArray(result)) {
+                const rows = result.length > 0 && Array.isArray(result[0]) ? result[0] : result;
+                return this.parseJsonFields(rows);
+            }
+            return this.parseJsonFields(result) || [];
+        } catch (error) {
+            console.error('Database query error:', error);
+            return [];
         }
     }
 
@@ -314,8 +366,8 @@ class Child {
     // Cập nhật child
     async updateById(id, updateData) {
         const allowedFields = [
-            'full_name', 'date_of_birth', 'gender', 'class_id', 'weight', 
-            'height', 'allergies', 'medical_notes', 'emergency_contact', 'is_active'
+            'full_name', 'date_of_birth', 'gender', 'class_name', 'weight', 
+            'height', 'allergies', 'medical_conditions', 'emergency_contact', 'is_active'
         ];
         const setClause = [];
         const values = [];
@@ -323,7 +375,23 @@ class Child {
         for (const [key, value] of Object.entries(updateData)) {
             if (allowedFields.includes(key)) {
                 setClause.push(`${key} = ?`);
-                values.push(value);
+                
+                // Handle JSON fields properly
+                if (['allergies', 'medical_conditions', 'emergency_contact'].includes(key)) {
+                    if (value) {
+                        if (typeof value === 'string') {
+                            values.push(value);
+                        } else if (Array.isArray(value) || typeof value === 'object') {
+                            values.push(JSON.stringify(value));
+                        } else {
+                            values.push(JSON.stringify([value]));
+                        }
+                    } else {
+                        values.push(null); // Use null for empty JSON fields
+                    }
+                } else {
+                    values.push(value);
+                }
             }
         }
 
@@ -365,7 +433,7 @@ class Child {
                    FLOOR(DATEDIFF(CURDATE(), c.date_of_birth) / 365.25) as age
             FROM ${this.tableName} c
             LEFT JOIN users u ON c.parent_id = u.id
-            WHERE c.allergies IS NOT NULL AND c.allergies != '' AND c.is_active = 1
+            WHERE c.allergies IS NOT NULL AND c.is_active = 1
             ORDER BY c.full_name
         `;
         

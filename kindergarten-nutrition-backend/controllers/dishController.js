@@ -74,8 +74,8 @@ class DishController {
 
     async createDish(req, res) {
         try {
-            console.log('🐛 DEBUG - req.body:', req.body);
-            console.log('🐛 DEBUG - req.user:', req.user);
+            console.log('DEBUG - req.body:', req.body);
+            console.log('DEBUG - req.user:', req.user);
 
             const { 
                 ten_mon_an, 
@@ -92,8 +92,8 @@ class DishController {
                 is_vegetarian 
             } = req.body;
 
-            console.log('🐛 DEBUG - ten_mon_an:', ten_mon_an);
-            console.log('🐛 DEBUG - loai_mon:', loai_mon);
+            console.log('DEBUG - ten_mon_an:', ten_mon_an);
+            console.log('DEBUG - loai_mon:', loai_mon);
 
             if (!ten_mon_an || !loai_mon) {
                 return this.sendResponse(res, 400, {
@@ -118,7 +118,7 @@ class DishController {
                 created_by: req.user?.id || 'd37fd91e-8ab8-11f0-913c-a036bc312358'
             };
 
-            console.log('🐛 DEBUG - dishData:', dishData);
+            console.log('DEBUG - dishData:', dishData);
 
             const newDish = await this.foodModel.create(dishData);
 
@@ -140,8 +140,8 @@ class DishController {
     async updateDish(req, res) {
         try {
             const { id } = req.params;
-            console.log('🔄 UPDATE request for ID:', id);
-            console.log('🔄 Request body:', req.body);
+            console.log('UPDATE request for ID:', id);
+            console.log('Request body:', req.body);
             
             const existingDish = await this.foodModel.findById(id);
             if (!existingDish) {
@@ -165,7 +165,7 @@ class DishController {
                 }
             });
 
-            console.log('🔄 Filtered updateData:', updateData);
+            console.log('Filtered updateData:', updateData);
 
             if (Object.keys(updateData).length === 0) {
                 return this.sendResponse(res, 400, {
@@ -194,10 +194,10 @@ class DishController {
     async deleteDish(req, res) {
         try {
             const { id } = req.params;
-            console.log('🗑️ DELETE request for ID:', id);
+            console.log('DELETE request for ID:', id);
             
             const existingDish = await this.foodModel.findById(id);
-            console.log('🔍 Found dish:', existingDish);
+            console.log('Found dish:', existingDish);
             
             if (!existingDish) {
                 return this.sendResponse(res, 404, {
@@ -206,7 +206,7 @@ class DishController {
                 });
             }
 
-            console.log('🗑️ Deleting dish with ID:', id);
+            console.log('Deleting dish with ID:', id);
             await this.foodModel.delete(id);
 
             this.sendResponse(res, 200, {

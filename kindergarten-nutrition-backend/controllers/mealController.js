@@ -68,7 +68,7 @@ class MealController extends BaseController {
         try {
             const mealData = req.body;
             
-            console.log('📝 Creating meal with data:', mealData);
+            console.log('Creating meal with data:', mealData);
 
             // Mapping từ API format sang database format
             const dbMealData = {
@@ -92,7 +92,7 @@ class MealController extends BaseController {
 
             const newMeal = await this.mealModel.create(dbMealData);
             
-            console.log('✅ Created meal:', newMeal);
+            console.log('Created meal:', newMeal);
 
             this.sendResponse(res, 201, {
                 success: true,
@@ -298,7 +298,7 @@ class MealController extends BaseController {
             const pathParts = req.url.split('/').filter(Boolean);
             const mealId = pathParts[pathParts.length - 1];
 
-            console.log('🔄 Updating meal with ID:', mealId);
+            console.log('Updating meal with ID:', mealId);
 
             if (!mealId) {
                 return this.sendResponse(res, 400, {
@@ -649,9 +649,9 @@ class MealController extends BaseController {
             // Extract date from URL path
             const urlParts = req.url.split('/');
             const date = urlParts[urlParts.length - 1]; // Get last part as date
-            
-            console.log('📅 Getting meals for date:', date);
-            
+
+            console.log('Getting meals for date:', date);
+
             // Validate date format (YYYY-MM-DD)
             const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
             if (!dateRegex.test(date)) {

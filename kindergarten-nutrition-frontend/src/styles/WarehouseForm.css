@@ -1,9 +1,29 @@
-.background {
+/* Full viewport warehouse page */
+.warehouse-page {
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 100vw;
   height: 100vh;
+  background: #ffeef1;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 0;
+}
+
+.warehouse-content {
+  background: white;
+  min-height: calc(100vh - 80px);
+  width: 100vw;
+  padding: 60px 40px 40px;
+  margin: 0;
+  margin-top: 80px; /* Account for header height */
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
+  box-sizing: border-box;
 }
 
 .form-box {
@@ -18,8 +38,8 @@
   gap: 15px;
   align-items: center;
   backdrop-filter: blur(5px);
-  margin: auto; /* để đảm bảo căn giữa */
-  margin-top: 80px;
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 }
 
 

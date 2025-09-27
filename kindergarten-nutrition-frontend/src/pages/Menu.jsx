@@ -1,21 +1,18 @@
 import React, { useState } from "react";
 import "../styles/background.css";
 import "./../styles/Menu.css"; // import css riêng cho Menu
-
-import BackButton from "../components/BackButton"; // 👈 import nút back riêng
-
-
+import Header from "../components/common/Header.jsx"; 
 
 function Menu() {
   const [activeTab, setActiveTab] = useState("ngay");
 
-  // ✅ Hàm lấy ngày hôm nay ở định dạng yyyy-mm-dd
+  // Hàm lấy ngày hôm nay ở định dạng yyyy-mm-dd
   const getToday = () => {
     const today = new Date();
     return today.toISOString().split("T")[0];
   };
 
-  // ✅ Hàm chuyển ngày sang thứ
+  //  Hàm chuyển ngày sang thứ
   const getDayOfWeek = (dateString) => {
     const days = [
       "Chủ Nhật",
@@ -30,10 +27,10 @@ function Menu() {
     return days[date.getDay()];
   };
 
-  // ✅ State lưu ngày đang chọn
+  // State lưu ngày đang chọn
   const [selectedDate, setSelectedDate] = useState(getToday());
 
-  // ✅ Dữ liệu mẫu theo từng ngày
+  // Dữ liệu mẫu theo từng ngày
   const weeklyMealData = {
     "Thứ Hai": {
       "Nhà Trẻ": [
@@ -97,7 +94,7 @@ function Menu() {
     },
   };
 
-  // ✅ Hàm render nhóm (theo ngày)
+  //  Hàm render nhóm (theo ngày)
   const renderGroup = (groupName, meals) => (
     <div className="group-box" key={groupName}>
       <h3>Nhóm {groupName}</h3>
@@ -113,7 +110,7 @@ function Menu() {
     </div>
   );
 
-  // ✅ Hàm render bảng tuần
+  //  Hàm render bảng tuần
   const renderWeekTable = (data) => (
     <table className="menu-table">
       <thead>
@@ -152,10 +149,7 @@ function Menu() {
   return (
 
     <div className="menu-container home">
-
-      {/* <Header /> */}
-      <BackButton />
-
+      <Header />
       <div className="menu-header">
         <div className="menu-title">Thực đơn</div>
         <div className="tabs">

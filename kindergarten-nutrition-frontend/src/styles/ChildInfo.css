@@ -1,0 +1,487 @@
+        .child-page {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          background: #ffced2;
+          margin: 0;
+          padding: 0;
+          overflow-y: auto;
+          overflow-x: hidden;
+          z-index: 0;
+        }
+
+        .child-content {
+          background: white;
+          min-height: calc(100vh - 80px);
+          width: 100vw;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: flex-start;
+          padding: 60px 20px 40px;
+          box-sizing: border-box;
+          margin: 0;
+          margin-top: 80px;
+        }
+
+        .child-content h1 {
+          font-size: 32px;
+          font-weight: bold;
+          margin-bottom: 2rem;
+          color: #333;
+          text-align: center;
+          background: linear-gradient(135deg, #ffced2, white);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+
+        .child-container {
+          background: white;
+          border-radius: 20px;
+          padding: 30px;
+          margin-bottom: 40px;
+          box-shadow: 0 8px 32px rgba(255, 206, 210, 0.3);
+          max-width: 1200px;
+          width: 100%;
+          border: 2px solid #ffced2;
+        }
+
+        .child-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 30px;
+          padding-bottom: 20px;
+          border-bottom: 3px solid #ffced2;
+        }
+
+        .child-header h2 {
+          color: #333;
+          font-size: 24px;
+          margin: 0;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .student-id {
+          background: #ffced2;
+          color: #333;
+          padding: 8px 16px;
+          border-radius: 20px;
+          font-weight: bold;
+          font-size: 14px;
+        }
+
+        .info-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+          gap: 20px;
+          margin-bottom: 30px;
+        }
+
+        .info-card {
+          background: #ffced2;
+          border-radius: 15px;
+          padding: 20px;
+          box-shadow: 0 4px 16px rgba(255, 206, 210, 0.4);
+        }
+
+        .info-card h3 {
+          color: #333;
+          font-size: 18px;
+          margin: 0 0 15px 0;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .info-row {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 10px;
+          padding: 8px 0;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .info-row:last-child {
+          border-bottom: none;
+          margin-bottom: 0;
+        }
+
+        .label {
+          font-weight: 600;
+          color: #555;
+        }
+
+        .value {
+          color: #333;
+          font-weight: 500;
+        }
+
+        .schedule-section {
+          margin-bottom: 30px;
+        }
+
+        .schedule-section h3 {
+          color: #333;
+          font-size: 20px;
+          margin-bottom: 20px;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .schedule-table {
+          background: #ffced2;
+          border-radius: 15px;
+          overflow: hidden;
+          box-shadow: 0 4px 16px rgba(255, 206, 210, 0.4);
+        }
+
+        .schedule-header {
+          display: grid;
+          grid-template-columns: 1fr 2fr 2fr 2fr 2fr;
+          background: #333;
+          color: white;
+          font-weight: bold;
+          padding: 15px 10px;
+          gap: 10px;
+        }
+
+        .schedule-header div {
+          text-align: center;
+        }
+
+        .schedule-row {
+          display: grid;
+          grid-template-columns: 1fr 2fr 2fr 2fr 2fr;
+          padding: 12px 10px;
+          gap: 10px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+          transition: background 0.3s;
+        }
+
+        .schedule-row:hover {
+          background: rgba(255, 255, 255, 0.2);
+        }
+
+        .schedule-row:last-child {
+          border-bottom: none;
+        }
+
+        .day {
+          font-weight: bold;
+          color: #333;
+          text-align: center;
+        }
+
+        .meal {
+          text-align: center;
+          padding: 8px;
+          border-radius: 8px;
+          background: rgba(255, 255, 255, 0.5);
+          color: #333;
+          font-size: 14px;
+        }
+
+        .health-section {
+          margin-bottom: 20px;
+        }
+
+        .health-section h3 {
+          color: #333;
+          font-size: 20px;
+          margin-bottom: 20px;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .bmi-chart {
+          display: flex;
+          justify-content: space-around;
+          align-items: flex-end;
+          background: #ffced2;
+          border-radius: 15px;
+          padding: 30px 20px 20px;
+          margin-bottom: 20px;
+          min-height: 200px;
+        }
+
+        .bmi-item {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .bmi-bar-container {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .bmi-bar {
+          width: 40px;
+          border-radius: 6px 6px 0 0;
+          transition: all 0.3s ease;
+          cursor: pointer;
+        }
+
+        .bmi-bar:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .bmi-value {
+          font-weight: bold;
+          color: #333;
+          font-size: 14px;
+        }
+
+        .week-label {
+          font-weight: 600;
+          color: #333;
+          font-size: 12px;
+        }
+
+        .health-details {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+          gap: 15px;
+        }
+
+        .health-card {
+          background: #ffced2;
+          border-radius: 12px;
+          padding: 20px;
+          box-shadow: 0 4px 16px rgba(255, 206, 210, 0.4);
+        }
+
+        .health-card h4 {
+          color: #333;
+          margin: 0 0 15px 0;
+          font-size: 16px;
+          text-align: center;
+          padding-bottom: 10px;
+          border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .health-info {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .health-row {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+
+        .health-label {
+          font-weight: 600;
+          color: #555;
+          font-size: 13px;
+        }
+
+        .health-value {
+          color: #333;
+          font-weight: 500;
+          padding: 4px 8px;
+          border-radius: 6px;
+          background: rgba(255, 255, 255, 0.5);
+          font-size: 14px;
+        }
+
+        .health-value.status {
+          background: #4ecdc4;
+          color: white;
+        }
+
+        .health-value.conclusion {
+          background: #45b7d1;
+          color: white;
+        }
+
+        .health-value.recommendation {
+          background: #96ceb4;
+          color: white;
+        }
+
+        .loading {
+          text-align: center;
+          padding: 50px;
+          font-size: 18px;
+          color: #666;
+          background-color: #ffced2;
+          min-height: calc(100vh - 80px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .no-data {
+          text-align: center;
+          padding: 50px;
+          background: white;
+          border-radius: 20px;
+          color: #666;
+          box-shadow: 0 8px 32px rgba(255, 206, 210, 0.3);
+        }
+
+        @media (max-width: 768px) {
+          .child-content {
+            padding: 20px 10px;
+          }
+          
+          .info-grid {
+            grid-template-columns: 1fr;
+          }
+          
+          .schedule-header,
+          .schedule-row {
+            grid-template-columns: 1fr;
+            text-align: left;
+          }
+          
+          .schedule-header div,
+          .schedule-row div {
+            padding: 8px;
+          }
+          
+          .bmi-chart {
+            flex-wrap: wrap;
+            gap: 15px;
+          }
+          
+          .health-details {
+            grid-template-columns: 1fr;
+          }
+        }
+
+/* Styles to match thuvienmonan layout */
+.background-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #ffeef1;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 0;
+}
+
+.content-container {
+  background: white;
+  min-height: calc(100vh - 80px);
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 60px 40px 40px;
+  box-sizing: border-box;
+  text-align: center;
+  margin: 0;
+  margin-top: 80px;
+}
+
+.content-container h1 {
+  font-size: 28px;
+  font-weight: bold;
+  margin-bottom: 2rem;
+  color: #333;
+}
+
+.child-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  max-width: 1200px;
+  width: 100%;
+  gap: 2.5rem;
+  justify-items: center;
+}
+
+.child-card {
+  background: #f9dcdc;
+  border-radius: 10px;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 350px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  text-align: left;
+}
+
+.child-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.child-card p {
+  margin: 8px 0;
+  font-size: 16px;
+  color: #333;
+  line-height: 1.4;
+}
+
+.child-card strong {
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+/* Loading and error states */
+.loading-message, .error-message {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+  background: #f9dcdc;
+  border-radius: 10px;
+  margin: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.error-message h2 {
+  color: #e74c3c;
+  margin-bottom: 15px;
+}
+
+.spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #ff6b6b;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .child-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .content-container {
+    padding: 40px 20px 20px;
+  }
+  
+  .content-container h1 {
+    font-size: 24px;
+  }
+}

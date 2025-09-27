@@ -39,7 +39,7 @@ class FoodService {
                 count: processedFoods.length
             };
         } catch (error) {
-            console.error('❌ Get all foods error:', error);
+            console.error(' Get all foods error:', error);
             return {
                 success: false,
                 message: 'Lỗi khi lấy danh sách thực phẩm'
@@ -124,7 +124,7 @@ class FoodService {
             }
 
         } catch (error) {
-            console.error('❌ Create food error:', error);
+            console.error('Create food error:', error);
             return {
                 success: false,
                 message: 'Lỗi server khi tạo thực phẩm'
@@ -160,7 +160,7 @@ class FoodService {
                 data: food
             };
         } catch (error) {
-            console.error('❌ Get food by ID error:', error);
+            console.error('Get food by ID error:', error);
             return {
                 success: false,
                 message: 'Lỗi khi lấy thông tin thực phẩm'
@@ -213,7 +213,7 @@ class FoodService {
                 };
             }
         } catch (error) {
-            console.error('❌ Update food error:', error);
+            console.error('Update food error:', error);
             return {
                 success: false,
                 message: 'Lỗi khi cập nhật thông tin thực phẩm'
@@ -235,7 +235,7 @@ class FoodService {
                 count: foods.length
             };
         } catch (error) {
-            console.error('❌ Get foods by category error:', error);
+            console.error('Get foods by category error:', error);
             return {
                 success: false,
                 message: 'Lỗi khi lấy danh sách thực phẩm theo danh mục'
@@ -263,7 +263,7 @@ class FoodService {
                 count: foods.length
             };
         } catch (error) {
-            console.error('❌ Search foods error:', error);
+            console.error('Search foods error:', error);
             return {
                 success: false,
                 message: 'Lỗi khi tìm kiếm thực phẩm'
@@ -289,7 +289,7 @@ class FoodService {
                 data: categories
             };
         } catch (error) {
-            console.error('❌ Get food categories error:', error);
+            console.error('Get food categories error:', error);
             return {
                 success: false,
                 message: 'Lỗi khi lấy danh sách danh mục thực phẩm'
@@ -317,7 +317,7 @@ class FoodService {
                 };
             }
         } catch (error) {
-            console.error('❌ Delete food error:', error);
+            console.error('Delete food error:', error);
             return {
                 success: false,
                 message: 'Lỗi khi xóa thực phẩm'
@@ -350,7 +350,7 @@ class FoodService {
                 }
             };
         } catch (error) {
-            console.error('❌ Get food stats error:', error);
+            console.error('Get food stats error:', error);
             return {
                 success: false,
                 message: 'Lỗi khi lấy thống kê thực phẩm'

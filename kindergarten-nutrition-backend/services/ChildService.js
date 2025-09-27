@@ -44,7 +44,7 @@ class ChildService {
                 message: userRole === 'parent' ? 'Danh sách con em của bạn' : 'Danh sách trẻ em'
             };
         } catch (error) {
-            console.error('❌ Get all children error:', error);
+            console.error('Get all children error:', error);
             return {
                 success: false,
                 message: 'Lỗi khi lấy danh sách trẻ em'
@@ -147,7 +147,7 @@ class ChildService {
             }
 
         } catch (error) {
-            console.error('❌ Create child error:', error);
+            console.error('Create child error:', error);
             return {
                 success: false,
                 message: 'Lỗi server khi tạo hồ sơ trẻ em'
@@ -206,7 +206,7 @@ class ChildService {
                 data: child
             };
         } catch (error) {
-            console.error('❌ Get child by ID error:', error);
+            console.error('Get child by ID error:', error);
             return {
                 success: false,
                 message: 'Lỗi khi lấy thông tin trẻ em'
@@ -257,7 +257,7 @@ class ChildService {
                 };
             }
         } catch (error) {
-            console.error('❌ Update child error:', error);
+            console.error('Update child error:', error);
             return {
                 success: false,
                 message: 'Lỗi khi cập nhật thông tin trẻ em'
@@ -279,7 +279,7 @@ class ChildService {
                 count: children.length
             };
         } catch (error) {
-            console.error('❌ Get children by class error:', error);
+            console.error('Get children by class error:', error);
             return {
                 success: false,
                 message: 'Lỗi khi lấy danh sách trẻ em theo lớp'
@@ -301,7 +301,7 @@ class ChildService {
                 count: children.length
             };
         } catch (error) {
-            console.error('❌ Get children by parent error:', error);
+            console.error('Get children by parent error:', error);
             return {
                 success: false,
                 message: 'Lỗi khi lấy danh sách trẻ em theo phụ huynh'
@@ -335,7 +335,7 @@ class ChildService {
                 count: children.length
             };
         } catch (error) {
-            console.error('❌ Search children error:', error);
+            console.error('Search children error:', error);
             return {
                 success: false,
                 message: 'Lỗi khi tìm kiếm trẻ em'
@@ -367,7 +367,7 @@ class ChildService {
                 }
             };
         } catch (error) {
-            console.error('❌ Get children stats error:', error);
+            console.error('Get children stats error:', error);
             return {
                 success: false,
                 message: 'Lỗi khi lấy thống kê trẻ em'
