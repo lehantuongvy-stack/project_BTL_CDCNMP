@@ -1,0 +1,4 @@
+node_modules/
+.env
+NUL
+backend-nutrition@1.0.0
