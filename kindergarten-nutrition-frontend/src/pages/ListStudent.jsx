@@ -57,15 +57,15 @@ export default function ListStudent() {
     }
   };
 
-  // Hàm format giới tính
-  const formatGender = (gender) => {
-    return gender === 'male' ? 'Nam' : gender === 'female' ? 'Nữ' : gender;
-  };
+
 
   return (
     <div className="list-student-page">
-      <Header />
-      <div className="container">
+      <div className="container home">
+      {/* Header */}
+      <header className="list-header">
+        {/* Back button */}
+        <BackButton to="/" />
         {/* Title */}
         <h1 className="title">Danh sách học sinh</h1>
 
@@ -116,10 +116,28 @@ export default function ListStudent() {
       )}
 
       {/* Table */}
-      {!loading && !error && (
-        <main className="main">
-          <table className="student-table">
-            <thead>
+
+      <main className="main">
+        <table className="student-table">
+          <thead>
+            <tr>
+              <th>Tên học sinh</th>
+              <th>Giới tính</th>
+              <th>Tên phụ huynh</th>
+            </tr>
+          </thead>
+          <tbody>
+            {students.length > 0 ? (
+              students.map((s, idx) => (
+                <tr key={idx}
+                  className="row-link"
+                  onClick={() => window.location.href = ``}> 
+                  <td>{s.name}</td>
+                  <td>{s.gender}</td>
+                  <td>{s.parent}</td>
+                </tr>
+              ))
+            ) : (
               <tr>
                 <th>Tên học sinh</th>
                 <th>Giới tính</th>
