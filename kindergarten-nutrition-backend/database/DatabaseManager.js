@@ -38,12 +38,12 @@ class DatabaseManager {
             connection.release();
             
             this.isConnected = true;
-            console.log('✅ Connected to Enhanced MySQL database successfully');
-            console.log(`📍 Database: ${this.config.database} at ${this.config.host}:${this.config.port}`);
+            console.log(' Connected to Enhanced MySQL database successfully');
+            console.log(` Database: ${this.config.database} at ${this.config.host}:${this.config.port}`);
             
             return true;
         } catch (error) {
-            console.error('❌ Enhanced Database connection failed:', error.message);
+            console.error(' Enhanced Database connection failed:', error.message);
             this.isConnected = false;
             throw error;
         }
@@ -576,24 +576,24 @@ class DatabaseManager {
     // Test database với sample data
     async testDatabase() {
         try {
-            console.log('🧪 Testing Enhanced Database...');
+            console.log(' Testing Enhanced Database...');
             
             // Test users
             const users = await this.getAllUsers();
-            console.log(`👥 Found ${users.length} users`);
+            console.log(` Found ${users.length} users`);
             
             // Test nguyên liệu
             const nguyenLieu = await this.getAllNguyenLieu();
-            console.log(`🥬 Found ${nguyenLieu.length} ingredients`);
+            console.log(` Found ${nguyenLieu.length} ingredients`);
             
             // Test nhà cung cấp
             const nhaCungCap = await this.getAllNhaCungCap();
-            console.log(`🏪 Found ${nhaCungCap.length} suppliers`);
+            console.log(` Found ${nhaCungCap.length} suppliers`);
             
-            console.log('✅ Enhanced Database test completed successfully!');
+            console.log(' Enhanced Database test completed successfully!');
             return true;
         } catch (error) {
-            console.error('❌ Enhanced Database test failed:', error.message);
+            console.error(' Enhanced Database test failed:', error.message);
             return false;
         }
     }

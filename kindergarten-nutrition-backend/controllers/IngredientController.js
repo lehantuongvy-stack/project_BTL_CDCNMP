@@ -93,11 +93,11 @@ class IngredientController extends BaseController {
                 }
             }
 
-            console.log('📝 Creating ingredient with data:', ingredientData);
+            console.log('Creating ingredient with data:', ingredientData);
 
             const newIngredient = await this.ingredientModel.create(ingredientData);
 
-            console.log('✅ Created ingredient:', newIngredient);
+            console.log('Created ingredient:', newIngredient);
 
             this.sendResponse(res, 201, {
                 success: true,

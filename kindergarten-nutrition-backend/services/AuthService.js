@@ -96,7 +96,7 @@ class AuthService {
             }
 
         } catch (error) {
-            console.error('❌ Registration error:', error);
+            console.error('Registration error:', error);
             return {
                 success: false,
                 message: 'Lỗi server khi đăng ký'
@@ -166,7 +166,7 @@ class AuthService {
             };
 
         } catch (error) {
-            console.error('❌ Login error:', error);
+            console.error('Login error:', error);
             return {
                 success: false,
                 message: 'Lỗi server khi đăng nhập'
@@ -224,7 +224,7 @@ class AuthService {
                 };
             }
 
-            console.error('❌ Get profile error:', error);
+            console.error('Get profile error:', error);
             return {
                 success: false,
                 message: 'Lỗi server khi lấy thông tin profile'
@@ -323,7 +323,7 @@ class AuthService {
             };
 
         } catch (error) {
-            console.error('❌ Change password error:', error);
+            console.error('Change password error:', error);
             return {
                 success: false,
                 message: 'Lỗi server khi đổi mật khẩu'

@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from "react-router-dom";
-// import Header from "../components/Header";
-// import '../components/header.css';
-import BackButton from "../components/BackButton";
-// import '../styles/background.css';
+import Header from "../components/common/Header.jsx"; 
+import '../styles/background.css';
 import "../styles/Report.css";
 
 function Report() {
@@ -23,8 +21,8 @@ function Report() {
 
   return (
     <div className="home">
-      {/* <Header /> */}
-<BackButton />
+      <Header />
+
       <div className="box">
         <div>
           {/* Tên báo cáo */}

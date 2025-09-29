@@ -6,10 +6,7 @@ import {
   LineChart, Line
 } from "recharts";
 import "../styles/CreateReport.css";
-// import '../components/header.css';
-// import Header from "../components/Header";
-import BackButton from "../components/BackButton"; // 👈 import nút back riêng
-
+import Header from "../components/common/Header.jsx"; 
 
 const data = [
   { name: "Mục 1", value: 62.4 },
@@ -80,8 +77,7 @@ function CreateReport() {
 
   return (
     <div className="report-container">
-      {/* <Header /> */}
-      {/* <BackButton /> */}
+      <Header />
       <div className="report-header">
         {isSaved ?(
           <span>{title || "Chưa nhập tên báo cáo"}</span>

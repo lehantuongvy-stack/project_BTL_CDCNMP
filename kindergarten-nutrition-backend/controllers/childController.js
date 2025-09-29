@@ -104,13 +104,13 @@ class ChildController extends BaseController {
     async createChild(req, res) {
         try {
             const childData = req.body;
-            console.log('📝 Creating child with data:', childData);
+            console.log('Creating child with data:', childData);
 
             // Validate required fields
             const requiredFields = ['full_name', 'date_of_birth', 'gender'];
             for (const field of requiredFields) {
                 if (!childData[field]) {
-                    console.log(`❌ Missing required field: ${field}`);
+                    console.log(`Missing required field: ${field}`);
                     return this.sendResponse(res, 400, {
                         success: false,
                         message: `Trường ${field} là bắt buộc`
@@ -121,28 +121,28 @@ class ChildController extends BaseController {
             // Kiểm tra quyền và set parent_id
             if (req.user.role === 'parent') {
                 childData.parent_id = req.user.id;
-                console.log('👤 Set parent_id from user:', req.user.id);
+                console.log('Set parent_id from user:', req.user.id);
             } else if (req.user.role === 'admin' || req.user.role === 'teacher') {
                 // Admin/teacher có thể tạo child cho parent khác
                 if (!childData.parent_id) {
-                    console.log('❌ Missing parent_id for admin/teacher');
+                    console.log('Missing parent_id for admin/teacher');
                     return this.sendResponse(res, 400, {
                         success: false,
                         message: 'parent_id là bắt buộc'
                     });
                 }
-                console.log('👤 Using provided parent_id:', childData.parent_id);
+                console.log('Using provided parent_id:', childData.parent_id);
             } else {
-                console.log('❌ Unauthorized role:', req.user.role);
+                console.log('Unauthorized role:', req.user.role);
                 return this.sendResponse(res, 403, {
                     success: false,
                     message: 'Không có quyền tạo child'
                 });
             }
 
-            console.log('🔧 Calling childModel.create...');
+            console.log('Calling childModel.create...');
             const newChild = await this.childModel.create(childData);
-            console.log('✅ Child created:', newChild);
+            console.log('Child created:', newChild);
 
             this.sendResponse(res, 201, {
                 success: true,
@@ -151,7 +151,7 @@ class ChildController extends BaseController {
             });
 
         } catch (error) {
-            console.error('❌ Create child error:', error);
+            console.error('Create child error:', error);
             this.sendResponse(res, 500, {
                 success: false,
                 message: 'Lỗi server khi tạo child',
@@ -227,9 +227,7 @@ class ChildController extends BaseController {
                     message: 'Không có quyền xóa child'
                 });
             }
-
             await this.childModel.deleteById(id);
-
             this.sendResponse(res, 200, {
                 success: true,
                 message: 'Xóa child thành công'
@@ -252,7 +250,7 @@ class ChildController extends BaseController {
             const urlParts = url.parse(req.url, true);
             const query = urlParts.query;
             
-            console.log('🔍 Search children with query:', query);
+            console.log('Search children with query:', query);
             
             const searchTerm = query.q || query.search || '';
             const className = query.class || query.lop || '';
@@ -280,11 +278,8 @@ class ChildController extends BaseController {
                 limit: limit,
                 offset: offset
             };
-
-            console.log('🔍 Search criteria:', searchCriteria);
-
+            console.log('Search criteria:', searchCriteria);
             const result = await this.searchChildren(searchCriteria);
-
             this.sendResponse(res, 200, {
                 success: true,
                 message: `Tìm kiếm trẻ em thành công. Tìm thấy ${result.total} kết quả`,
@@ -421,7 +416,7 @@ class ChildController extends BaseController {
             const urlParts = url.parse(req.url, true);
             const query = urlParts.query;
             
-            console.log('🔍 Search children with query:', query);
+            console.log('Search children with query:', query);
             
             const searchTerm = query.q || query.search || '';
             const className = query.class || query.lop || '';
@@ -450,7 +445,7 @@ class ChildController extends BaseController {
                 offset: offset
             };
 
-            console.log('🔍 Search criteria:', searchCriteria);
+            console.log('Search criteria:', searchCriteria);
 
             const result = await this.searchChildren(searchCriteria);
 
@@ -494,6 +489,125 @@ class ChildController extends BaseController {
         } catch (error) {
             console.error('Error searching children:', error);
             throw error;
+        }
+    }
+    // API endpoint chỉ lấy thông tin cá nhân từ bảng children
+    async getChildrenBasicInfo(req, res) {
+        try {
+            console.log(' getChildrenBasicInfo called for parent:', req.user.id);
+            
+            const parentId = req.user.id;
+
+            // Query đơn giản - chỉ lấy thông tin từ bảng children
+            const query = `
+                SELECT 
+                    c.id as child_id,
+                    c.student_id,
+                    c.full_name,
+                    c.date_of_birth,
+                    c.gender,
+                    c.class_name,
+                    c.height,
+                    c.weight,
+                    c.allergies,
+                    c.medical_conditions,
+                    c.created_at,
+                    c.updated_at
+                FROM children c
+                WHERE c.parent_id = ? AND c.is_active = true
+                ORDER BY c.full_name ASC
+            `;
+
+            console.log(' Executing query with parentId:', parentId);
+            const children = await this.db.query(query, [parentId]);
+            console.log(' Query result:', children);
+
+            if (!children || children.length === 0) {
+                console.log(' No children found for parent');
+                return this.sendResponse(res, 200, {
+                    success: true,
+                    data: { children: [] },
+                    message: 'Không tìm thấy thông tin trẻ nào'
+                });
+            }
+
+            console.log(' Found', children.length, 'children');
+            this.sendResponse(res, 200, {
+                success: true,
+                data: { children: children }
+            });
+
+        } catch (error) {
+            console.error(' Error in getChildrenBasicInfo:', error);
+            this.sendResponse(res, 500, {
+                success: false,
+                message: 'Lỗi server khi lấy thông tin trẻ',
+                error: error.message
+            });
+        }
+    }
+
+    // API GET /api/children/my-class - Lấy danh sách học sinh của teacher đang đăng nhập
+    async getMyClassChildren(req, res) {
+        try {
+            console.log(' getMyClassChildren called for teacher:', req.user.id);
+            
+            // Chỉ teacher mới được gọi API này
+            if (req.user.role !== 'teacher') {
+                return this.sendResponse(res, 403, {
+                    success: false,
+                    message: 'Chỉ giáo viên mới có quyền xem danh sách lớp của mình'
+                });
+            }
+
+            const teacherId = req.user.id;
+
+            // Query lấy danh sách học sinh của teacher với join bảng users để lấy thông tin phủ huynh
+            const query = `
+                SELECT 
+                    c.id as child_id,
+                    c.student_id,
+                    c.full_name,
+                    c.date_of_birth,
+                    c.gender,
+                    c.class_name,
+                    FLOOR(DATEDIFF(CURDATE(), c.date_of_birth) / 365.25) as age,
+                    p.full_name as parent_name,
+                    p.phone as parent_phone
+                FROM children c
+                LEFT JOIN users p ON c.parent_id = p.id
+                WHERE c.teacher_id = ? AND c.is_active = true
+                ORDER BY c.class_name ASC, c.full_name ASC
+            `;
+
+            console.log(' Executing query with teacherId:', teacherId);
+            const result = await this.db.query(query, [teacherId]);
+            
+            // Handle different MySQL2 response formats
+            let children = [];
+            if (Array.isArray(result)) {
+                children = result.length > 0 && Array.isArray(result[0]) ? result[0] : result;
+            } else {
+                children = result || [];
+            }
+
+            console.log(` Found ${children.length} children for teacher ${teacherId}`);
+
+            this.sendResponse(res, 200, {
+                success: true,
+                data: { 
+                    children: children,
+                    count: children.length
+                }
+            });
+
+        } catch (error) {
+            console.error(' Error in getMyClassChildren:', error);
+            this.sendResponse(res, 500, {
+                success: false,
+                message: 'Lỗi server khi lấy danh sách học sinh',
+                error: error.message
+            });
         }
     }
 }

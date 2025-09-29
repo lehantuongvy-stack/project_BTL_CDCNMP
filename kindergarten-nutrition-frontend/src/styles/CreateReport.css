@@ -1,11 +1,9 @@
 .report-container {
   min-height: 100vh; /* Đảm bảo chiếm đủ chiều cao màn hình */
-    padding: 0 20px;
-  width: 100vw;      
+  width: 100vw;      /* Chiếm đủ chiều rộng màn hình */
   box-sizing: border-box;
   padding: 0 20px;
   margin-right: 20px;
-
   background: white;
 }
 

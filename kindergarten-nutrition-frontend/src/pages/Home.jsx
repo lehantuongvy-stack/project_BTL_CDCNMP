@@ -1,4 +1,7 @@
-import {Link} from "react-router-dom";
+import React from 'react';
+import { useAuth } from '../context/AuthContext.jsx';
+import { useNavigate } from 'react-router-dom';
+import Header from '../components/common/Header.jsx';
 import '../styles/background.css';
 import '../styles/Home.css';
 
@@ -21,7 +24,7 @@ const menuData = [
   }
 ];
 
-function MenuSection({ title, meals }) {
+function MenuSection({ title, meals, userRole, navigate }) {
   return (
     <div className="menu-section-home">
       <h4>{title}</h4>
@@ -36,37 +39,25 @@ function MenuSection({ title, meals }) {
 }
 
 export default function Home() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
   return (
     <div className="home">
+      <Header />
       <div className="home-container">
-        {/* Menu */}
-        <nav>
-          <ul className="menu-home">
-            <li>Trang chủ</li>            
-            <li>Giới thiệu</li>
-            <li>Kho nguyên liệu</li>
-            <li>Góc phụ huynh</li>
-
-            <li ><Link to="/healthstudent" style={{ color: 'inherit', textDecoration: 'inherit'}}>Quản lý sức khỏe</Link></li>
-
-            <li><Link to="/menu" style={{ color: 'inherit', textDecoration: 'inherit' }}>Thư viện món ăn </Link></li>
-            <li className="logout-item"><img 
-            src="/images/icon.png" 
-            alt="Đăng xuất" 
-            className="logout-icon" 
-          /> ĐĂNG XUẤT</li>
-          </ul>
-        </nav>
-
         <div className="content-home">
-          {/* Sidebar trái */}
+          {/* Sidebar trái - hiển thị cho cả phụ huynh và giáo viên */}
           <aside className="sidebar-left-home">
             <div className="contact-home">
               <h3>Điện thoại</h3>
               <p>Trường mầm non ABC</p>
               <p>(08) 38.000.000</p>
             </div>
-            <button className="report-btn-home">BÁO CÁO</button>
+            {/* Nút báo cáo chỉ hiển thị cho giáo viên */}
+            {user?.role === 'teacher' && (
+              <button className="report-btn-home">BÁO CÁO</button>
+            )}
           </aside>
 
           {/* Khu vực chính */}
@@ -110,8 +101,30 @@ export default function Home() {
           <aside className="sidebar-right-home">
             <h3>THỰC ĐƠN HÔM NAY</h3>
             {menuData.map((menu, index) => (
-              <MenuSection key={index} title={menu.title} meals={menu.meals} />
+              <MenuSection 
+                key={index} 
+                title={menu.title} 
+                meals={menu.meals}
+                userRole={user?.role}
+                navigate={navigate}
+              />
             ))}
+            
+            {/* Nút Chi tiết Thực đơn */}
+            <button 
+              className="menu-detail-btn"
+              onClick={() => {
+                if (user?.role === 'parent') {
+                  navigate('/menu');
+                } else if (user?.role === 'teacher') {
+                  navigate('/kitchen-menu');
+                } else {
+                  navigate('/menu'); // Default cho admin
+                }
+              }}
+            >
+              Chi tiết Thực đơn
+            </button>
           </aside>
         </div>
       </div>

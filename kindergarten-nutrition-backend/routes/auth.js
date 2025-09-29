@@ -14,9 +14,12 @@ class AuthRoutes {
     // Xử lý các auth routes
     async handleAuthRoutes(req, res, path, method) {
         try {
-            // Parse request body cho POST requests
-            if (method === 'POST') {
+            // Parse request body cho POST requests (except logout which may have empty body)
+            if (method === 'POST' && path !== '/logout') {
                 req.body = await this.parseRequestBody(req);
+            } else if (method === 'POST' && path === '/logout') {
+                // For logout, we don't need body parsing, just set empty object
+                req.body = {};
             }
 
             // Route mapping
@@ -47,7 +50,7 @@ class AuthRoutes {
                     break;
 
                 case path === '/logout' && method === 'POST':
-                    console.log('🚪 Logout route matched');
+                    console.log(' Logout route matched');
                     // Apply authentication middleware
                     const authLogout = await this.applyAuthMiddleware(req, res, this.authController);
                     if (!authLogout) return;
@@ -55,7 +58,7 @@ class AuthRoutes {
                     break;
 
                 case path === '/logout' && method === 'GET':
-                    console.log('🚪 Logout GET route matched');
+                    console.log(' Logout GET route matched');
                     const authLogoutGet = await this.applyAuthMiddleware(req, res, this.authController);
                     if (!authLogoutGet) return;
                     await this.authController.logoutHandler(req, res);
@@ -102,6 +105,13 @@ class AuthRoutes {
             req.on('end', () => {
                 try {
                     const contentType = req.headers['content-type'] || '';
+                    
+                    // If body is empty, resolve with empty object
+                    if (!body || body.trim() === '') {
+                        resolve({});
+                        return;
+                    }
+                    
                     if (contentType.includes('application/json')) {
                         resolve(JSON.parse(body));
                     } else if (contentType.includes('application/x-www-form-urlencoded')) {
@@ -110,7 +120,9 @@ class AuthRoutes {
                         resolve({});
                     }
                 } catch (error) {
-                    reject(error);
+                    console.error('Error parsing request body:', error, 'Body:', body);
+                    // Return empty object instead of rejecting to avoid crashes
+                    resolve({});
                 }
             });
             req.on('error', reject);
@@ -127,10 +139,10 @@ class AuthRoutes {
     async applyAuthMiddleware(req, res, controller) {
         try {
             const authHeader = req.headers.authorization;
-            console.log('🔍 Auth Header:', authHeader);
+            console.log(' Auth Header:', authHeader);
             
             if (!authHeader || !authHeader.startsWith('Bearer ')) {
-                console.log('❌ No Bearer token found');
+                console.log(' No Bearer token found');
                 this.sendResponse(res, 401, {
                     success: false,
                     message: 'Access token is required'
@@ -139,13 +151,13 @@ class AuthRoutes {
             }
 
             const token = authHeader.substring(7);
-            console.log('🎫 Extracted token (first 50 chars):', token.substring(0, 50));
+            console.log(' Extracted token (first 50 chars):', token.substring(0, 50));
             
             const user = await controller.verifyToken(token);
-            console.log('👤 User from token:', user);
+            console.log(' User from token:', user);
 
             if (!user) {
-                console.log('❌ Token verification failed');
+                console.log(' Token verification failed');
                 this.sendResponse(res, 401, {
                     success: false,
                     message: 'Invalid or expired token'

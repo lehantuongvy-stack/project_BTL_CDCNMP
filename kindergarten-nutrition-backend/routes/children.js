@@ -15,39 +15,46 @@ class ChildrenRoutes {
     // Xử lý các children routes
     async handleChildrenRoutes(req, res, path, method) {
         try {
-            console.log('📝 ChildrenRoutes handling:', method, path);
+            console.log('CHILDREN ROUTES CALLED:', method, path);
+            console.log('ChildrenRoutes handling:', method, path);
             
             // Apply authentication middleware
             const isAuthenticated = await this.applyAuthMiddleware(req, res, this.authController);
             if (!isAuthenticated) {
-                console.log('❌ Authentication failed');
+                console.log('Authentication failed');
                 return;
             }
-            console.log('✅ Authentication passed');
+            console.log('Authentication passed');
 
             // Parse request body cho POST/PUT requests
             if (['POST', 'PUT', 'PATCH'].includes(method)) {
                 req.body = await this.parseRequestBody(req);
-                console.log('📝 Parsed body:', req.body);
+                console.log('Parsed body:', req.body);
             }
 
             // Parse URL parameters
             const pathParts = path.split('/').filter(Boolean);
             const childId = pathParts[0];
 
-            console.log('🔧 Route matching - path:', path, 'method:', method);
+            console.log('Route matching - path:', path, 'method:', method);
 
             // Route mapping
             switch (true) {
                 // GET /api/children - Lấy danh sách children
                 case (path === '' || path === '/') && method === 'GET':
-                    console.log('📝 Calling getChildren');
+                    console.log('Calling getChildren');
+                    await this.childController.getChildren(req, res);
+                    break;
+
+                // GET /api/children/list - Lấy danh sách children (alias)
+                case path === '/list' && method === 'GET':
+                    console.log('Calling getChildren via /list');
                     await this.childController.getChildren(req, res);
                     break;
 
                 // POST /api/children - Tạo child mới
                 case (path === '' || path === '/') && method === 'POST':
-                    console.log('📝 Calling createChild');
+                    console.log('Calling createChild');
                     await this.childController.createChild(req, res);
                     break;
 
@@ -66,9 +73,23 @@ class ChildrenRoutes {
                     await this.childController.getBirthdaysInMonth(req, res);
                     break;
 
+                // GET /api/children/my-class - Lấy danh sách học sinh của teacher đang đăng nhập
+                case path === '/my-class' && method === 'GET':
+                    console.log('MY-CLASS ROUTE MATCHED!');
+                    console.log('Calling getMyClassChildren');
+                    await this.childController.getMyClassChildren(req, res);
+                    break;
+
+                // GET /api/children/basic-info - Lấy thông tin cơ bản trẻ cho phụ huynh (chỉ từ bảng children)
+                case path === '/basic-info' && method === 'GET':
+                    console.log('BASIC-INFO ROUTE MATCHED!');
+                    console.log('Calling getChildrenBasicInfo');
+                    await this.childController.getChildrenBasicInfo(req, res);
+                    break;
+
                 // GET /api/children/search - Tìm kiếm children
                 case path === '/search' && method === 'GET':
-                    console.log('🔍 Children search route matched');
+                    console.log(' Children search route matched');
                     // Apply authentication middleware
                     const authSearch = await this.applyAuthMiddleware(req, res, this.authController);
                     if (!authSearch) return;
@@ -77,7 +98,7 @@ class ChildrenRoutes {
 
                 // GET /api/children/:id - Lấy child theo ID
                 case childId && this.isValidUUID(childId) && method === 'GET':
-                    console.log('📝 Calling getChildById with ID:', childId);
+                    console.log('Calling getChildById with ID:', childId);
                     req.params = { id: childId };
                     await this.childController.getChildById(req, res);
                     break;
@@ -90,7 +111,7 @@ class ChildrenRoutes {
 
                 // DELETE /api/children/:id - Xóa child
                 case childId && this.isValidUUID(childId) && method === 'DELETE':
-                    console.log('📝 Calling deleteChild with ID:', childId);
+                    console.log('Calling deleteChild with ID:', childId);
                     req.params = { id: childId };
                     await this.childController.deleteChild(req, res);
                     break;
@@ -105,6 +126,8 @@ class ChildrenRoutes {
                             'GET /api/children/allergies - Children có dị ứng',
                             'GET /api/children/stats - Thống kê theo class',
                             'GET /api/children/birthdays?month=1 - Sinh nhật trong tháng',
+                            'GET /api/children/my-class - Lấy học sinh của teacher',
+                            'GET /api/children/basic-info - Thông tin cơ bản trẻ',
                             'GET /api/children/search?q=keyword - Tìm kiếm children',
                             'GET /api/children/:id - Lấy child theo ID',
                             'PUT /api/children/:id - Cập nhật child',
