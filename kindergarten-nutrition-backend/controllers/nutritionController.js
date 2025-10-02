@@ -17,9 +17,19 @@ class NutritionController extends BaseController {
      */
     async createNutritionRecord(recordData) {
         try {
+            console.log('🔧 Validation - Record data received:', recordData);
+            
             // Validation - hỗ trợ cả 2 tên field
             const dateField = recordData.ngay_danh_gia || recordData.ngay_ghi_nhan;
+            console.log('🔧 Validation check:', {
+                child_id: recordData.child_id,
+                dateField: dateField,
+                ngay_danh_gia: recordData.ngay_danh_gia,
+                ngay_ghi_nhan: recordData.ngay_ghi_nhan
+            });
+            
             if (!recordData.child_id || !dateField) {
+                console.log('🔧 Validation failed: Missing required fields');
                 throw new Error('Thiếu thông tin bắt buộc: child_id, ngay_danh_gia');
             }
 
@@ -47,17 +57,39 @@ class NutritionController extends BaseController {
                 recordData.ngay_danh_gia || recordData.ngay_ghi_nhan  // Hỗ trợ cả 2 tên field
             );
 
-            if (existingRecord) {
-                throw new Error('Đã có hồ sơ dinh dưỡng cho ngày này');
-            }
-
             // Lấy thông tin tuổi của trẻ
             const childInfo = await this.getChildAge(recordData.child_id);
             if (childInfo) {
                 recordData.age = childInfo.age_months;
             }
 
-            const record = await this.nutritionModel.create(recordData);
+            let record;
+            if (existingRecord) {
+                // Nếu đã tồn tại, UPDATE thay vì tạo mới
+                console.log(' Updating existing record:', existingRecord.id);
+                
+                // Filter chỉ các field có trong database
+                const allowedFields = {
+                    child_id: recordData.child_id,
+                    teacher_id: recordData.teacher_id,
+                    ngay_danh_gia: recordData.ngay_danh_gia,
+                    chieu_cao: recordData.chieu_cao,
+                    can_nang: recordData.can_nang,
+                    tinh_trang_suc_khoe: recordData.tinh_trang_suc_khoe,
+                    ket_luan: recordData.ket_luan,
+                    khuyen_cao: recordData.khuyen_cao,
+                    an_uong: recordData.an_uong,
+                    hoat_dong: recordData.hoat_dong,
+                    tinh_than: recordData.tinh_than
+                };
+                
+                record = await this.nutritionModel.update(existingRecord.id, allowedFields);
+            } else {
+                // Tạo mới nếu chưa tồn tại
+                console.log(' Creating new record');
+                record = await this.nutritionModel.create(recordData);
+            }
+            
             return record;
 
         } catch (error) {
@@ -494,11 +526,11 @@ class NutritionController extends BaseController {
             const childQuery = 'SELECT * FROM children WHERE id = ?';
             const childResult = await this.db.query(childQuery, [childId]);
             
-            console.log('🔍 Child query result:', childResult);
+            console.log(' Child query result:', childResult);
             
             // Database trả về array, lấy phần tử đầu tiên
             const child = Array.isArray(childResult) ? childResult[0] : childResult;
-            console.log('👶 Child found:', child);
+            console.log(' Child found:', child);
             
             if (!child || !child.id) {
                 throw new Error('Không tìm thấy thông tin trẻ em');

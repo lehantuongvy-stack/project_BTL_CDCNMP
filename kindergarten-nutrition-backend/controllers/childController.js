@@ -26,7 +26,7 @@ class ChildController extends BaseController {
                 children = await this.childModel.findByClassId(class_id) || [];
             } else if (parent_id) {
                 // Kiểm tra quyền: chỉ parent hoặc admin/teacher mới xem được children theo parent_id
-                if (req.user.role === 'parent' && req.user.id !== parseInt(parent_id)) {
+                if (req.user.role === 'parent' && req.user.id !== parent_id) {
                     return this.sendResponse(res, 403, {
                         success: false,
                         message: 'Không có quyền xem thông tin này'
@@ -59,6 +59,51 @@ class ChildController extends BaseController {
             this.sendResponse(res, 500, {
                 success: false,
                 message: 'Lỗi server khi lấy danh sách children',
+                error: error.message
+            });
+        }
+    }
+
+    // Lấy thông tin cơ bản của children (cho parent filtering)
+    async getBasicInfo(req, res) {
+        try {
+            console.log(' getBasicInfo called by user:', req.user);
+
+            // Chỉ parent mới được gọi API này
+            if (req.user.role !== 'parent') {
+                return this.sendResponse(res, 403, {
+                    success: false,
+                    message: 'Chỉ phụ huynh mới có thể truy cập API này'
+                });
+            }
+
+            const children = await this.childModel.findByParentId(req.user.id) || [];
+            console.log(` Found ${children.length} children for parent ${req.user.id}`);
+
+            // Chỉ trả về thông tin cần thiết cho filtering
+            const basicInfo = children.map(child => ({
+                id: child.id,
+                full_name: child.full_name,
+                class_id: child.class_id,
+                nhom: child.nhom || 'nha_tre', // Map nhom_lop to nhom field và default nha_tre nếu null
+                birth_date: child.birth_date
+            }));
+
+            console.log(' Basic info:', basicInfo);
+
+            this.sendResponse(res, 200, {
+                success: true,
+                data: {
+                    children: basicInfo,
+                    count: basicInfo.length
+                }
+            });
+
+        } catch (error) {
+            console.error('Get basic info error:', error);
+            this.sendResponse(res, 500, {
+                success: false,
+                message: 'Lỗi server khi lấy thông tin cơ bản children',
                 error: error.message
             });
         }

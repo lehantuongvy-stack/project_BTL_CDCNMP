@@ -1,0 +1,118 @@
+{
+  "success": true,
+  "data": {
+    "foods": [
+      {
+        "id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+        "name": "Cháo gà",
+        "kcal": 150,
+        "mo_ta": "Cháo gà thơm ngon bổ dưỡng cho trẻ",
+        "loai_mon": "mon_chinh",
+        "do_tuoi_phu_hop": "1-5 tuổi",
+        "total_protein": 8,
+        "total_fat": 4,
+        "total_carbs": 20
+      },
+      {
+        "id": "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
+        "name": "Chả cá",
+        "kcal": 120,
+        "mo_ta": "Chả cá tươi ngon, giàu protein",
+        "loai_mon": "mon_chinh", 
+        "do_tuoi_phu_hop": "2-5 tuổi",
+        "total_protein": 15,
+        "total_fat": 6,
+        "total_carbs": 2
+      },
+      {
+        "id": "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
+        "name": "Cơm trắng",
+        "kcal": 200,
+        "mo_ta": "Cơm trắng dẻo thơm",
+        "loai_mon": "tinh_bot",
+        "do_tuoi_phu_hop": "1-5 tuổi",
+        "total_protein": 4,
+        "total_fat": 1,
+        "total_carbs": 42
+      },
+      {
+        "id": "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
+        "name": "Thịt kho",
+        "kcal": 250,
+        "mo_ta": "Thịt kho tàu đậm đà",
+        "loai_mon": "mon_chinh",
+        "do_tuoi_phu_hop": "2-5 tuổi",
+        "total_protein": 20,
+        "total_fat": 18,
+        "total_carbs": 5
+      },
+      {
+        "id": "e5f6a7b8-c9d0-4e1f-2a3b-4c5d6e7f8a9b",
+        "name": "Cháo đậu xanh",
+        "kcal": 140,
+        "mo_ta": "Cháo đậu xanh bổ dưỡng",
+        "loai_mon": "mon_chinh",
+        "do_tuoi_phu_hop": "1-5 tuổi",
+        "total_protein": 6,
+        "total_fat": 2,
+        "total_carbs": 25
+      },
+      {
+        "id": "f6a7b8c9-d0e1-4f2a-3b4c-5d6e7f8a9b0c",
+        "name": "Canh chua cá",
+        "kcal": 180,
+        "mo_ta": "Canh chua cá thanh mát",
+        "loai_mon": "canh",
+        "do_tuoi_phu_hop": "2-5 tuổi",
+        "total_protein": 12,
+        "total_fat": 8,
+        "total_carbs": 10
+      },
+      {
+        "id": "7",
+        "name": "Rau bắp cải luộc",
+        "kcal": 25,
+        "mo_ta": "Rau bắp cải luộc giàu vitamin",
+        "loai_mon": "rau",
+        "do_tuoi_phu_hop": "1-5 tuổi",
+        "total_protein": 1,
+        "total_fat": 0,
+        "total_carbs": 5
+      },
+      {
+        "id": "8e9f0a1b-2c3d-4e5f-6a7b-8c9d0e1f2a3b",
+        "name": "Trứng rán",
+        "kcal": 155,
+        "mo_ta": "Trứng rán thơm phức",
+        "loai_mon": "mon_chinh",
+        "do_tuoi_phu_hop": "1-5 tuổi",
+        "total_protein": 13,
+        "total_fat": 11,
+        "total_carbs": 1
+      },
+      {
+        "id": "9f0a1b2c-3d4e-5f6a-7b8c-9d0e1f2a3b4c",
+        "name": "Giá xào thịt bò",
+        "kcal": 180,
+        "mo_ta": "Giá xào thịt bò giòn ngon",
+        "loai_mon": "mon_chinh",
+        "do_tuoi_phu_hop": "2-5 tuổi",
+        "total_protein": 14,
+        "total_fat": 12,
+        "total_carbs": 6
+      },
+      {
+        "id": "0a1b2c3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d",
+        "name": "Bánh mì",
+        "kcal": 265,
+        "mo_ta": "Bánh mì tươi ngon",
+        "loai_mon": "tinh_bot",
+        "do_tuoi_phu_hop": "2-5 tuổi",
+        "total_protein": 9,
+        "total_fat": 4,
+        "total_carbs": 49
+      }
+    ],
+    "total": 10
+  }
+}

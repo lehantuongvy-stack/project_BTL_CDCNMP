@@ -16,11 +16,6 @@ export default function ListStudent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch dữ liệu từ API khi component mount
-  useEffect(() => {
-    fetchStudents();
-  }, []);
-
   const fetchStudents = async () => {
     try {
       setLoading(true);
@@ -46,16 +41,48 @@ export default function ListStudent() {
   // Hàm tìm kiếm
   const handleSearch = () => {
     if (searchTerm.trim() === "") {
-      setStudents(allStudents); // reset lại danh sách nếu không nhập
-    } else {
-      const filtered = allStudents.filter((s) =>
-        s.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        s.parent_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        s.class_name?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setStudents(filtered);
+      setStudents(allStudents);
+      return;
     }
+    
+    const searchTermLower = searchTerm.toLowerCase();
+    const filtered = allStudents.filter((s) => {
+      // Tìm kiếm theo tên học sinh
+      const nameMatch = s.full_name?.toLowerCase().includes(searchTermLower);
+      
+      // Tìm kiếm theo giới tính 
+      const genderVietnamese = s.gender === 'male' ? 'nam' : s.gender === 'female' ? 'nữ' : s.gender?.toLowerCase();
+      const genderMatch = s.gender?.toLowerCase().includes(searchTermLower) || 
+                         genderVietnamese?.includes(searchTermLower);
+      
+      // Tìm kiếm theo tên phụ huynh
+      const parentMatch = s.parent_name?.toLowerCase().includes(searchTermLower);
+      
+      // Tìm kiếm theo tuổi (chuyển số thành chuỗi để tìm kiếm)
+      const ageMatch = s.age?.toString().includes(searchTerm.trim());
+      
+      // Tìm kiếm theo lớp
+      const classMatch = s.class_name?.toLowerCase().includes(searchTermLower);
+      
+      return nameMatch || genderMatch || parentMatch || ageMatch || classMatch;
+    });
+    
+    setStudents(filtered);
   };
+
+  // Fetch dữ liệu từ API khi component mount
+  useEffect(() => {
+    fetchStudents();
+  }, []);
+
+  // Tự động tìm kiếm khi searchTerm thay đổi
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      handleSearch();
+    }, 300);
+    
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm, allStudents]);
 
   // Hàm format giới tính
   const formatGender = (gender) => {
@@ -69,23 +96,35 @@ export default function ListStudent() {
         {/* Title */}
         <h1 className="title">Danh sách học sinh</h1>
 
-        {/* Content area */}
-        <div className="content-wrapper">
-
-        {/*  Search box */}
-        <div className="search-box">
+        {/* Search Box */}
+        <div style={{ textAlign: 'center', marginBottom: '30px' }}>
           <input
             type="text"
-            placeholder="Tìm kiếm học sinh..."
+            placeholder="Nhập từ khóa tìm kiếm"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSearch()} // bấm Enter để tìm
+            onChange={(e) => {
+              console.log('Search input change:', e.target.value);
+              setSearchTerm(e.target.value);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                console.log('Enter pressed');
+                handleSearch();
+              }
+            }}
+            onFocus={() => console.log('Search input focused')}
+            style={{ 
+              padding: '12px 15px', 
+              fontSize: '16px', 
+              border: '2px solid #ddd', 
+              borderRadius: '8px',
+              width: '400px',
+              outline: 'none'
+            }}
           />
-          <button className="search-btn" onClick={handleSearch}>
-            <FaSearch />
-          </button>
         </div>
-      </div>
+
+
 
       {/* Loading/Error States */}
       {loading && (
@@ -112,6 +151,18 @@ export default function ListStudent() {
           >
             Thử lại
           </button>
+        </div>
+      )}
+
+      {/* Search results count */}
+      {!loading && !error && (
+        <div className="search-results-info">
+          {searchTerm.trim() !== "" && (
+            <p style={{ textAlign: "center", color: "#666", marginBottom: "20px" }}>
+              Tìm thấy <strong>{students.length}</strong> học sinh 
+              {searchTerm.trim() && ` với từ khóa "${searchTerm}"`}
+            </p>
+          )}
         </div>
       )}
 

@@ -254,7 +254,7 @@ const ChildrenManagement = () => {
 
         {loading ? (
           <div className="loading-container">
-            <div className="loading-spinner">⏳</div>
+            <div className="loading-spinner"></div>
             <p>Đang tải danh sách trẻ em...</p>
           </div>
         ) : children.length > 0 ? (
@@ -296,7 +296,7 @@ const ChildrenManagement = () => {
                       <td style={{ color: '#333' }}>
                         {child.allergies ? (
                           <span className="allergy-badge has-allergy" title={child.allergies} style={{ color: '#333' }}>
-                            ⚠️ {child.allergies}
+                             {child.allergies}
                           </span>
                         ) : (
                           <span className="allergy-badge no-allergy" style={{ color: '#333' }}>
@@ -307,7 +307,7 @@ const ChildrenManagement = () => {
                       <td className="medical-conditions" style={{ color: '#333' }}>
                         {child.medical_conditions ? (
                           <span className="medical-note" title={child.medical_conditions} style={{ color: '#333' }}>
-                            🏥 {child.medical_conditions}
+                             {child.medical_conditions}
                           </span>
                         ) : (
                           <span style={{ color: '#333' }}>NULL</span>
@@ -369,7 +369,7 @@ const ChildrenManagement = () => {
           </>
         ) : (
           <div className="no-results">
-            <div className="no-results-icon">👶</div>
+            <div className="no-results-icon"></div>
             <h3>Không tìm thấy trẻ em nào</h3>
             <p>Hãy thử thay đổi điều kiện tìm kiếm</p>
           </div>

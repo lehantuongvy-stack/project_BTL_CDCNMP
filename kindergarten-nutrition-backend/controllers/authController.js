@@ -307,7 +307,7 @@ class AuthController {
     // Verify token from request - used by route handlers
     async verifyTokenFromRequest(req) {
         try {
-            console.log('🔍 Auth headers:', req.headers.authorization);
+            console.log(' Auth headers:', req.headers.authorization);
             const authHeader = req.headers.authorization;
             
             if (!authHeader || !authHeader.startsWith('Bearer ')) {

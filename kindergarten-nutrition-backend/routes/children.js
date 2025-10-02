@@ -46,6 +46,12 @@ class ChildrenRoutes {
                     await this.childController.getChildren(req, res);
                     break;
 
+                // GET /api/children/basic-info - Lấy thông tin cơ bản cho parent filtering
+                case path === '/basic-info' && method === 'GET':
+                    console.log('🔍 Calling getBasicInfo');
+                    await this.childController.getBasicInfo(req, res);
+                    break;
+
                 // GET /api/children/list - Lấy danh sách children (alias)
                 case path === '/list' && method === 'GET':
                     console.log('Calling getChildren via /list');

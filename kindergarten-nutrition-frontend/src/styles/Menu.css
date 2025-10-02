@@ -42,6 +42,55 @@
 
 
 
+/* Loading and Error States */
+.loading-message {
+    text-align: center;
+    padding: 40px;
+    font-size: 16px;
+    color: #666;
+    background: #f0f8ff;
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
+.error-message {
+    text-align: center;
+    padding: 20px;
+    background: #ffebee;
+    border: 1px solid #f8d7da;
+    border-radius: 8px;
+    color: #721c24;
+    margin: 20px 0;
+}
+
+.error-message p {
+    margin-bottom: 15px;
+}
+
+.retry-button {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.retry-button:hover {
+    background: #c82333;
+}
+
+.no-data-message {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+    font-style: italic;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
 /* Tabs có nền */
 .tabs {
     background: #b7c7f3;

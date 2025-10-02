@@ -14,10 +14,10 @@ const DatabaseManager = require('./database/DatabaseManager');
 // Controllers
 const AuthController = require('./controllers/authController');
 const UserController = require('./controllers/UserController');
-const ChildController = require('./controllers/ChildController');
+const ChildController = require('./controllers/childController');
 const IngredientController = require('./controllers/IngredientController');
-const MealController = require('./controllers/MealController');
-const NutritionController = require('./controllers/NutritionController');
+const MealController = require('./controllers/mealController');
+const NutritionController = require('./controllers/nutritionController');
 const ReportController = require('./controllers/ReportController'); //  Thêm ReportControlle
 
 // Routes
@@ -25,7 +25,7 @@ const AuthRoutes = require('./routes/auth');
 const UserRoutes = require('./routes/users');
 const ChildrenRoutes = require('./routes/children');
 const IngredientRoutes = require('./routes/ingredients');
-const MealsRoutes = require('./routes/meals-fixed');
+const MealsRoutes = require('./routes/meals');
 const NutritionRoutes = require('./routes/nutrition');
 const DishRoutes = require('./routes/dishes'); 
 const ReportRoutes = require('./routes/report');
@@ -214,6 +214,8 @@ class KindergartenServer {
                 await this.dishRoutes.handleDishRoutes(req, res, pathname.replace('/api/dishes', ''), method);
             } else if (pathname.startsWith('/api/meals')) {
                 await this.mealsRoutes.handleMealsRoutes(req, res, pathname.replace('/api/meals', ''), method);
+            } else if (pathname === '/api/foods' && method === 'GET') {
+                await this.handleFoodsLibrary(req, res);
             } else if (pathname.startsWith('/api/nutrition')) {
                 await this.nutritionRoutes.handleNutritionRoutes(req, res);
             } else if (pathname.startsWith('/api/reports')) {
@@ -386,6 +388,49 @@ class KindergartenServer {
         };
 
         this.sendResponse(res, dbHealthy ? 200 : 503, health);
+    }
+
+    // Xử lý Foods Library API
+    async handleFoodsLibrary(req, res) {
+        try {
+            // Apply authentication
+            const authHeader = req.headers.authorization;
+            if (!authHeader || !authHeader.startsWith('Bearer ')) {
+                this.sendResponse(res, 401, {
+                    success: false,
+                    message: 'Token không hợp lệ'
+                });
+                return;
+            }
+
+            // Verify token
+            const token = authHeader.split(' ')[1];
+            try {
+                const decoded = await this.authController.verifyToken(token);
+                req.user = decoded;
+            } catch (error) {
+                this.sendResponse(res, 401, {
+                    success: false,
+                    message: 'Token không hợp lệ'
+                });
+                return;
+            }
+
+            // Get query parameters
+            const urlObj = new URL(req.url, `http://${req.headers.host}`);
+            req.query = Object.fromEntries(urlObj.searchParams);
+
+            // Call meal controller
+            await this.mealController.getFoodLibrary(req, res);
+
+        } catch (error) {
+            console.error('Error in handleFoodsLibrary:', error);
+            this.sendResponse(res, 500, {
+                success: false,
+                message: 'Lỗi server',
+                error: error.message
+            });
+        }
     }
 
     // Xử lý reports (backward compatibility với Services)

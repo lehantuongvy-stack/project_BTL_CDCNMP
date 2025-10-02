@@ -77,7 +77,11 @@ function App() {
               <ThuvienMonan />
             </ProtectedRoute>
           } />
-          <Route path="/menu" element={<Menu />} />
+          <Route path="/menu" element={
+            <ProtectedRoute requiredRole="parent">
+              <Menu />
+            </ProtectedRoute>
+          } />
           <Route path="/kitchen-menu" element={
             <ProtectedRoute requiredRole="teacher">
               <KitchenMenu />
