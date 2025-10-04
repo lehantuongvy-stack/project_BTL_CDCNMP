@@ -2,7 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useNavigate } from 'react-router-dom';
 import childService from '../services/childService.js';
+import userService from '../services/userService.js';
 import ChildrenManagement from '../components/children/ChildrenManagement.jsx';
+import TeacherManagement from '../components/teachers/TeacherManagement.jsx';
+import ParentManagement from '../components/parents/ParentManagement.jsx';
 import '../styles/AdminDashboard.css';
 
 function AdminDashboard() {
@@ -25,24 +28,35 @@ function AdminDashboard() {
     const loadDashboardData = async () => {
       try {
         setLoading(true);
-        console.log(' Loading dashboard data...');
+        console.log('📊 Loading dashboard data...');
         
         // Lấy tổng số trẻ em từ API
         const childrenResponse = await childService.getAllChildren();
-        console.log(' Children API response:', childrenResponse);
+        console.log('👶 Children API response:', childrenResponse);
         
         const totalChildren = childrenResponse.data?.children?.length || 0;
-        console.log(' Total children count:', totalChildren);
+        console.log('👶 Total children count:', totalChildren);
+        
+        // Lấy thống kê users từ API
+        const userStatsResponse = await userService.getUserStats();
+        console.log('👥 User stats API response:', userStatsResponse);
+        
+        // Parse user stats để lấy số lượng giáo viên
+        const userStats = userStatsResponse.data?.stats || [];
+        const teacherStats = userStats.find(stat => stat.role === 'teacher');
+        const totalTeachers = teacherStats ? teacherStats.count : 0;
+        console.log('👩‍🏫 Total teachers count:', totalTeachers);
         
         setDashboardData(prev => ({
           ...prev,
-          totalChildren
+          totalChildren,
+          totalTeachers
         }));
         
-        console.log(' Dashboard data loaded successfully');
+        console.log('✅ Dashboard data loaded successfully');
         
       } catch (error) {
-        console.error(' Error loading dashboard data:', error);
+        console.error('❌ Error loading dashboard data:', error);
       } finally {
         setLoading(false);
       }
@@ -105,6 +119,11 @@ function AdminDashboard() {
       // Navigate to children management section
       setActiveSection('children');
       console.log(' activeSection set, current value:', 'children');
+    } else if (statType === 'teachers') {
+      console.log(' Setting activeSection to teachers');
+      // Navigate to teachers management section
+      setActiveSection('teachers');
+      console.log(' activeSection set, current value:', 'teachers');
     }
   };
 
@@ -125,9 +144,10 @@ function AdminDashboard() {
     },
     { 
       title: 'Giáo viên', 
-      value: dashboardData.totalTeachers,  
+      value: loading ? '...' : dashboardData.totalTeachers,  
       color: 'orange', 
-      description: 'Đội ngũ giáo viên' 
+      description: 'Đội ngũ giáo viên',
+      moreInfo: true 
     },
     { 
       title: 'Bữa ăn phục vụ', 
@@ -149,17 +169,15 @@ function AdminDashboard() {
     { id: 'dashboard', name: 'Dashboard' },
     { id: 'children', name: 'Quản lý trẻ em'},
     { id: 'teachers', name: 'Quản lý giáo viên'},
+    { id: 'parents', name: 'Quản lý phụ huynh'},
     { id: 'meals', name: 'Quản lý bữa ăn'},
     { id: 'nutrition', name: 'Dinh dưỡng' },
     { id: 'reports', name: 'Báo cáo' },
     { id: 'warehouse', name: 'Kho hàng' },
-    { id: 'settings', name: 'Cài đặt' }
   ];
 
   const userMenuItems = [
-    { id: 'profile', name: 'Profile' },
     { id: 'create-account', name: 'Tạo tài khoản' },
-    { id: 'settings', name: 'Settings' },
     { id: 'logout', name: 'Logout' }
   ];
 
@@ -197,11 +215,16 @@ function AdminDashboard() {
                       className="more-info" 
                       onClick={() => {
                         console.log(' More info clicked for:', stat.title);
-                        if (stat.moreInfo && stat.title === 'Tổng số trẻ em') {
-                          console.log(' Condition met, calling handleMoreInfo');
-                          handleMoreInfo('children');
+                        if (stat.moreInfo) {
+                          if (stat.title === 'Tổng số trẻ em') {
+                            console.log(' Navigating to children management');
+                            handleMoreInfo('children');
+                          } else if (stat.title === 'Giáo viên') {
+                            console.log(' Navigating to teachers management');
+                            handleMoreInfo('teachers');
+                          }
                         } else {
-                          console.log(' Condition not met, stat.moreInfo:', stat.moreInfo, 'title:', stat.title);
+                          console.log(' No moreInfo available for:', stat.title);
                         }
                       }}
                       style={{ cursor: stat.moreInfo ? 'pointer' : 'default' }}
@@ -240,6 +263,14 @@ function AdminDashboard() {
       case 'children':
         console.log(' Rendering ChildrenManagement component');
         return <ChildrenManagement />;
+
+      case 'teachers':
+        console.log(' Rendering TeacherManagement component');
+        return <TeacherManagement />;
+
+      case 'parents':
+        console.log(' Rendering ParentManagement component');
+        return <ParentManagement />;
       
       case 'meals':
         return (
@@ -290,12 +321,6 @@ function AdminDashboard() {
           </div>
         </div>
         <div className="navbar-actions">
-          <div className="notification-badge">
-            <span className="badge badge-danger">8</span>
-          </div>
-          <div className="notification-badge">
-            <span className="badge badge-success">6</span>
-          </div>
           <div className="user-dropdown" onClick={() => setShowCreateAccountDropdown(!showCreateAccountDropdown)}>
             <div 
               className="dynamic-avatar" 
@@ -334,7 +359,6 @@ function AdminDashboard() {
                 >
                   <span className="nav-icon">{item.icon}</span>
                   <span className="nav-text">{item.name}</span>
-                  {item.id === 'dashboard' && <span className="badge badge-primary">14</span>}
                 </div>
               ))}
             </nav>
@@ -351,7 +375,6 @@ function AdminDashboard() {
                   >
                     <span className="nav-icon">{item.icon}</span>
                     <span className="nav-text">{item.name}</span>
-                    {item.id === 'profile' && <span className="badge badge-info">3</span>}
                     {item.id === 'create-account' && (
                       <span className="dropdown-arrow">
                         {showCreateAccountDropdown ? '▲' : '▼'}

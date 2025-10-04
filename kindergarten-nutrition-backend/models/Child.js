@@ -106,26 +106,26 @@ class Child {
             is_active !== undefined ? is_active : true
         ];
         
-        console.log('🔧 Executing query:', query);
-        console.log('🔧 With values:', values);
-        console.log('🔧 Generated child ID:', childId);
-        console.log('🔧 Processed allergies:', allergiesJson);
-        console.log('🔧 Processed medical_conditions:', medicalConditionsJson);
-        console.log('🔧 Processed emergency_contact:', emergencyContactJson);
+        console.log(' Executing query:', query);
+        console.log(' With values:', values);
+        console.log(' Generated child ID:', childId);
+        console.log(' Processed allergies:', allergiesJson);
+        console.log(' Processed medical_conditions:', medicalConditionsJson);
+        console.log(' Processed emergency_contact:', emergencyContactJson);
         
         try {
             const result = await this.db.query(query, values);
-            console.log('✅ Database query result:', result);
+            console.log(' Database query result:', result);
             
             // Use the generated UUID to retrieve the created child
             const newChild = await this.findById(childId);
-            console.log('✅ Retrieved created child:', newChild);
+            console.log(' Retrieved created child:', newChild);
             return newChild;
         } catch (error) {
-            console.error('❌ Create child database error:', error);
-            console.error('❌ Error details:', error.message);
-            console.error('❌ SQL State:', error.sqlState);
-            console.error('❌ Error Number:', error.errno);
+            console.error(' Create child database error:', error);
+            console.error(' Error details:', error.message);
+            console.error(' SQL State:', error.sqlState);
+            console.error(' Error Number:', error.errno);
             
             // Provide more specific error message
             if (error.message.includes('allergies')) {
@@ -313,18 +313,26 @@ class Child {
         }
         
         return children.map(child => {
+            // Handle allergies - could be JSON array or plain text
             if (child.allergies && typeof child.allergies === 'string') {
                 try {
+                    // Try to parse as JSON first
                     child.allergies = JSON.parse(child.allergies);
                 } catch (e) {
-                    child.allergies = [];
+                    // If not JSON, treat as plain text and split by comma
+                    child.allergies = child.allergies.split(',').map(a => a.trim()).filter(a => a);
                 }
             }
+            
+            // Handle medical_conditions - keep as string for display
             if (child.medical_conditions && typeof child.medical_conditions === 'string') {
                 try {
-                    child.medical_conditions = JSON.parse(child.medical_conditions);
+                    // Try to parse as JSON first
+                    const parsed = JSON.parse(child.medical_conditions);
+                    child.medical_conditions = Array.isArray(parsed) ? parsed.join(', ') : parsed;
                 } catch (e) {
-                    child.medical_conditions = [];
+                    // If not JSON, keep as plain text
+                    // child.medical_conditions stays as is
                 }
             }
             if (child.emergency_contact && typeof child.emergency_contact === 'string') {

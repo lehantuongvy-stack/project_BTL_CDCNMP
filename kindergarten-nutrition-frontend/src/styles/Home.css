@@ -2,9 +2,9 @@
 .home-container {
   display: flex;
   flex-direction: column;
-  min-height: calc(100vh - 80px); /* Trừ đi chiều cao header */
+  min-height: calc(100vh - 130px); /* Trừ đi chiều cao header và padding */
   z-index: 1;
-  padding-top: 20px; /* Thêm padding top */
+  padding-top: 10px; /* Giảm padding vì đã có padding lớn ở .home */
 }
 
 /* Ẩn menu cũ vì đã chuyển lên Header */

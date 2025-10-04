@@ -31,10 +31,6 @@ const HealthManager = () => {
     const [bmi, setBmi] = useState(null);
     const [bmiCategory, setBmiCategory] = useState("");
 
-
-
-
-
     // Gợi ý nhanh
     const quickSuggestions = ["Mè (vừng)", "Trứng", "Hải sản", "Lúa mì", "Đậu nành", "Đậu phộng"];
 
@@ -189,7 +185,7 @@ const HealthManager = () => {
             const response = await healthService.createHealthAssessment(assessmentData);
             
             if (response.success) {
-                alert(`✅ Đã lưu đánh giá sức khỏe cho ${selectedChild.full_name || selectedChild.name} thành công!`);
+                alert(` Đã lưu đánh giá sức khỏe cho ${selectedChild.full_name || selectedChild.name} thành công!`);
                 
                 // Reset form sau khi lưu thành công
                 setWeight("");
@@ -203,12 +199,12 @@ const HealthManager = () => {
                 setMealNote("");
                 setRecommendation("");
             } else {
-                alert('❌ Có lỗi khi lưu đánh giá: ' + response.message);
+                alert(' Có lỗi khi lưu đánh giá: ' + response.message);
             }
             
         } catch (error) {
             console.error('Error saving assessment:', error);
-            alert('❌ Có lỗi xảy ra khi lưu đánh giá sức khỏe!');
+            alert(' Có lỗi xảy ra khi lưu đánh giá sức khỏe!');
         }
     };
 

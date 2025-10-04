@@ -18,8 +18,8 @@
   border-radius: 12px;
   background: white;
   margin: 0;
-  margin-top: 80px; 
-  min-height: calc(100vh - 80px);
+  margin-top: 130px; 
+  min-height: calc(100vh - 130px);
   width: 100vw;
   box-sizing: border-box;
 }

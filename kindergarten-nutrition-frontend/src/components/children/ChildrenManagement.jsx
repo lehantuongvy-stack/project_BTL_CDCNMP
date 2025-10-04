@@ -65,8 +65,8 @@ const ChildrenManagement = () => {
       }
       
       if (response.success) {
-        console.log('📊 Children response data:', response.data);
-        console.log('📊 First child data:', response.data.children?.[0]);
+        console.log(' Children response data:', response.data);
+        console.log(' First child data:', response.data.children?.[0]);
         
         // Process children data to handle emergency_contact if it's JSON
         const processedChildren = (response.data.children || []).map(child => {
@@ -320,7 +320,7 @@ const ChildrenManagement = () => {
                               ? `${child.emergency_contact.name} - ${child.emergency_contact.phone} (${child.emergency_contact.relationship})`
                               : child.emergency_contact
                           } style={{ color: '#333' }}>
-                            📞 {
+                             {
                               typeof child.emergency_contact === 'object'
                                 ? `${child.emergency_contact.name} - ${child.emergency_contact.phone}`
                                 : child.emergency_contact

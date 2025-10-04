@@ -151,9 +151,9 @@ const ParentRegistration = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    console.log('🚀 Form submission started');
-    console.log('👤 Current user role:', user?.role);
-    console.log('🔑 Auth token exists:', !!localStorage.getItem('authToken'));
+    console.log(' Form submission started');
+    console.log(' Current user role:', user?.role);
+    console.log(' Auth token exists:', !!localStorage.getItem('authToken'));
     
     // Check if user is admin
     if (!user || user.role !== 'admin') {
@@ -175,7 +175,7 @@ const ParentRegistration = () => {
       // Prepare data for API (remove confirmPassword)
       const { confirmPassword, ...registerData } = formData;
       
-      console.log('📤 Sending registration data:', registerData);
+      console.log(' Sending registration data:', registerData);
       
       // Create user account
       const userResponse = await authService.register(registerData);
@@ -409,7 +409,6 @@ const ParentRegistration = () => {
               {/* Right Column - Child Information Section */}
               <div className="form-section right-column">
                 <h3>Thông tin trẻ em</h3>
-                
                 <div className="form-row">
                   <div className="form-group">
                     <label htmlFor="child_id">Mã trẻ *</label>

@@ -153,6 +153,9 @@ class UserController extends BaseController {
         try {
             const { id } = req.params;
             const updateData = req.body;
+            
+            console.log('🔧 Update data received:', updateData);
+            console.log('🔧 Update data keys:', Object.keys(updateData));
 
             // Kiểm tra quyền - Admin có thể cập nhật bất kỳ user nào, user khác chỉ có thể cập nhật thông tin của chính mình
             if (req.user.role !== 'admin' && req.user.id !== id) {
@@ -171,6 +174,17 @@ class UserController extends BaseController {
                 });
             }
 
+            // Kiểm tra username trùng lặp (nếu có cập nhật username)
+            if (updateData.username) {
+                const usernameExists = await this.userModel.isUsernameExists(updateData.username, id);
+                if (usernameExists) {
+                    return this.sendResponse(res, 400, {
+                        success: false,
+                        message: 'Username đã tồn tại'
+                    });
+                }
+            }
+
             // Kiểm tra email trùng lặp (nếu có cập nhật email)
             if (updateData.email) {
                 const emailExists = await this.userModel.isEmailExists(updateData.email, id);
@@ -182,11 +196,11 @@ class UserController extends BaseController {
                 }
             }
 
-            // Chỉ admin mới được cập nhật role và is_active
+            // Chỉ admin mới được cập nhật role, is_active và username
             if (req.user.role !== 'admin') {
                 delete updateData.role;
                 delete updateData.is_active;
-                delete updateData.username; // username không được thay đổi
+                delete updateData.username; // username không được thay đổi bởi user thường
             }
 
             const updatedUser = await this.userModel.updateById(id, updateData);

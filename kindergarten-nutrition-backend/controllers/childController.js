@@ -80,13 +80,21 @@ class ChildController extends BaseController {
             const children = await this.childModel.findByParentId(req.user.id) || [];
             console.log(` Found ${children.length} children for parent ${req.user.id}`);
 
-            // Chỉ trả về thông tin cần thiết cho filtering
+            // Trả về thông tin đầy đủ cho trang thông tin trẻ
             const basicInfo = children.map(child => ({
                 id: child.id,
+                student_id: child.student_id,
                 full_name: child.full_name,
-                class_id: child.class_id,
-                nhom: child.nhom || 'nha_tre', // Map nhom_lop to nhom field và default nha_tre nếu null
-                birth_date: child.birth_date
+                date_of_birth: child.date_of_birth,
+                gender: child.gender,
+                class_name: child.class_name,
+                height: child.height,
+                weight: child.weight,
+                allergies: child.allergies,
+                medical_conditions: child.medical_conditions,
+                emergency_contact: child.emergency_contact,
+                nhom: child.nhom || 'nha_tre', 
+                age: child.age
             }));
 
             console.log(' Basic info:', basicInfo);

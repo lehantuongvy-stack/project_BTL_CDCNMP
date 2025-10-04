@@ -2,8 +2,10 @@
 .modern-header {
   background: #f4a6b6;
   box-shadow: 0 4px 20px rgba(244, 166, 182, 0.4);
-  position: sticky; /* Trở lại sticky */
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 1001;
   width: 100%;
   border-bottom: 3px solid #f18b9d;

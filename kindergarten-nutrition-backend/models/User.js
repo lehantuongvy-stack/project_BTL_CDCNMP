@@ -145,31 +145,45 @@ class User {
     // Lấy users theo role
     async findByRole(role) {
         const query = `
-            SELECT id, username, full_name, email, phone, role, address, is_active, created_at, updated_at
+            SELECT id, username, full_name, email, phone, role, address, chuc_vu, is_active, created_at, updated_at
             FROM ${this.tableName} 
             WHERE role = ? AND is_active = 1
             ORDER BY created_at DESC
         `;
         
+        console.log(' Finding users by role:', role);
         const result = await this.db.query(query, [role]);
+        console.log(' Raw DB result:', result);
+        
         if (Array.isArray(result) && result.length > 0) {
-            return Array.isArray(result[0]) ? result[0][0] : result[0];
+            const users = Array.isArray(result[0]) ? result[0] : result;
+            console.log(' Processed users:', users);
+            console.log(' Users count:', users.length);
+            return users;
         }
-        return null;
+        console.log(' No users found, returning empty array');
+        return [];
     }
 
     // Cập nhật user
     async updateById(id, updateData) {
-        const allowedFields = ['full_name', 'email', 'phone', 'address', 'role', 'is_active'];
+        const allowedFields = ['username', 'full_name', 'email', 'phone', 'address', 'role', 'is_active'];
         const setClause = [];
         const values = [];
 
+        console.log(' User.updateById - updateData:', updateData);
+        console.log(' User.updateById - allowedFields:', allowedFields);
+
         for (const [key, value] of Object.entries(updateData)) {
+            console.log(` Checking field: ${key} = ${value}, allowed: ${allowedFields.includes(key)}`);
             if (allowedFields.includes(key)) {
                 setClause.push(`${key} = ?`);
                 values.push(value);
             }
         }
+
+        console.log(' Valid fields for update:', setClause);
+        console.log(' Values for update:', values);
 
         if (setClause.length === 0) {
             throw new Error('No valid fields to update');

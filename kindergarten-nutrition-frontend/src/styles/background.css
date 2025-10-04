@@ -13,18 +13,15 @@
 
   .home {
     position: relative;
-    height: 100vh;   /* cao full màn hình */
+    min-height: 100vh;   /* min-height thay vì height để tránh overflow */
     width: 100vw;        /* rộng full màn hình */
     background-color: #ffced2; 
-
-
-    /* background-image: linear-gradient(to bottom, #fc7c87, white); */
-    /* fixed */
     background-size: cover;
     margin: 0;
     padding: 0;
-    overflow: hidden;
-    z-index: 0;     /* chặn tràn trong div này */
+    padding-top: 200px;  /* Tăng padding để nội dung không bị header che (header + khoảng cách an toàn) */
+    overflow-x: hidden;  
+
   }
 
   html, body {

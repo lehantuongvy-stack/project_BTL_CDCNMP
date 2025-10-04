@@ -22,7 +22,6 @@ function Report() {
   return (
     <div className="home">
       <Header />
-
       <div className="box">
         <div>
           {/* Tên báo cáo */}

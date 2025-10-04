@@ -180,6 +180,34 @@ class UserRoutes {
         }
     }
 
+    // Parse request body
+    async parseRequestBody(req) {
+        return new Promise((resolve, reject) => {
+            let body = '';
+            req.on('data', chunk => {
+                body += chunk.toString();
+            });
+            req.on('end', () => {
+                try {
+                    resolve(body ? JSON.parse(body) : {});
+                } catch (error) {
+                    console.error('Error parsing request body:', error);
+                    resolve({});
+                }
+            });
+            req.on('error', error => {
+                console.error('Request body error:', error);
+                resolve({});
+            });
+        });
+    }
+
+    // Send JSON response
+    sendResponse(res, statusCode, data) {
+        res.writeHead(statusCode, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(data));
+    }
+
     // Helper method to validate UUID format
     isValidUUID(uuid) {
         const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
