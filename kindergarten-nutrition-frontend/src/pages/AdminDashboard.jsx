@@ -3,6 +3,8 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { useNavigate } from 'react-router-dom';
 import childService from '../services/childService.js';
 import ChildrenManagement from '../components/children/ChildrenManagement.jsx';
+import reportService from '../services/nutritionrpService.js'
+import CreateReport from './CreateReport.jsx';
 import '../styles/AdminDashboard.css';
 
 function AdminDashboard() {
@@ -19,6 +21,64 @@ function AdminDashboard() {
   const [childrenDetails, setChildrenDetails] = useState([]);
   const [showChildrenModal, setShowChildrenModal] = useState(false);
   const [showCreateAccountDropdown, setShowCreateAccountDropdown] = useState(false);
+
+  // phần báo cáo
+  const [reports, setReports] = useState([]);
+  const [loadingReports, setLoadingReports] = useState(false);
+  const [showCreateReport, setShowCreateReport] = useState(false);
+  const [showViewReport, setShowViewReport] = useState(false);
+  const [selectedReport, setSelectedReport] = useState(null);
+
+  // Load báo cáo ngay khi component mount
+  useEffect(() => {
+    loadReports();
+  }, []);
+
+  //hiển thị báo cáo
+  useEffect(() => {
+  if (activeSection === 'reports') {
+    loadReports();
+  }
+  }, [activeSection]);
+
+  const loadReports = async () => {
+    try {
+      setLoadingReports(true);
+      console.log('🔄 Loading reports...'); // Debug log
+      const res = await reportService.getAllReports();
+      console.log('📊 Reports response:', res); // Debug log
+      console.log('📊 Response data:', res.data); // Debug log
+      console.log('📊 Data type:', typeof res.data); // Debug log
+      console.log('📊 Is Array?:', Array.isArray(res.data)); // Debug log
+      
+      // Xử lý data - nếu là object thì chuyển thành array
+      let reportsData = res.data || [];
+      if (!Array.isArray(reportsData)) {
+        console.log('⚠️ Data is not array, converting...', reportsData);
+        reportsData = [reportsData]; // Chuyển object thành array
+      }
+      
+      setReports(reportsData);
+      console.log('Reports set to:', reportsData); // Debug log
+    } catch (err) {
+      console.error('Error loading reports:', err);
+    } finally {
+      setLoadingReports(false);
+    }
+  };
+  // Tạo báo cáo mới
+  const handleCreateReport = async (reportData) => {
+  try {
+    console.log('📝 Creating report with data:', reportData); // Debug log
+    const result = await reportService.createReport(reportData);
+    console.log('✅ Report created successfully:', result); // Debug log
+    setShowCreateReport(false);
+    loadReports(); // refresh danh sách
+  } catch (err) {
+    console.error('Error creating report:', err);
+  }
+};
+
 
   // Load dashboard data
   useEffect(() => {
@@ -253,15 +313,103 @@ function AdminDashboard() {
         );
       
       case 'reports':
-        return (
-          <div className="section-content">
-            <h2>Báo cáo</h2>
-            <p>Tạo và xem các báo cáo dinh dưỡng...</p>
-            <button className="btn-primary" onClick={() => navigate('/report')}>
-              Xem báo cáo
-            </button>
+  return (
+    <div className="section-content">
+      <h2>Báo cáo</h2>
+      <p>Tạo và xem các báo cáo dinh dưỡng...</p>
+
+      {/* Nút mở form tạo báo cáo */}
+      <button className="btn-primary" onClick={() => setShowCreateReport(true)}>
+        + Tạo báo cáo
+      </button>
+
+      {/* Hiển thị danh sách báo cáo */}
+      {loadingReports ? (
+        <p>Đang tải báo cáo...</p>
+      ) : reports.length > 0 ? (
+        <table className="report-table">
+          <thead>
+            <tr>
+              <th>Tên báo cáo</th>
+              <th>Tên trường</th>
+              <th>Ngày báo cáo</th>
+              <th>Số trẻ</th>
+              <th>Số suất/ngày</th>
+              <th>Người tạo</th>
+              <th>Hành động</th>
+            </tr>
+          </thead>
+          <tbody>
+            {reports.map((r) => (
+              <tr key={r.id}>
+                <td>{r.report_name}</td>
+                <td>{r.school_name}</td>
+                <td>{r.report_date}</td>
+                <td>{r.num_children}</td>
+                <td>{r.meals_per_day}</td>
+                <td>{r.created_by}</td>
+                <td>
+                  <button 
+                    onClick={() => {
+                      setSelectedReport(r);
+                      setShowViewReport(true);
+                    }}
+                  >
+                    Xem
+                  </button>
+                  <button 
+                    onClick={async () => {
+                      if (window.confirm('Bạn có chắc muốn xóa báo cáo này?')) {
+                        try {
+                          console.log('Deleting report with ID:', r.id);
+                          await reportService.deleteReport(r.id);
+                          console.log('Delete successful, reloading reports...');
+                          loadReports();
+                        } catch (error) {
+                          console.error('Error deleting report:', error);
+                          alert('Có lỗi khi xóa báo cáo: ' + error.message);
+                        }
+                      }
+                    }}
+                  >
+                    Xóa
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : (
+        <p>Chưa có báo cáo nào</p>
+      )}
+
+      {/* Modal tạo báo cáo */}
+      {showCreateReport && (
+        <div className="modal-overlay" onClick={() => setShowCreateReport(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <CreateReport
+              onSave={handleCreateReport}
+              onCancel={() => setShowCreateReport(false)}
+            />
           </div>
-        );
+        </div>
+      )}
+
+      {/* Modal xem báo cáo */}
+      {showViewReport && selectedReport && (
+        <div className="modal-overlay" onClick={() => setShowViewReport(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <CreateReport
+              reportData={selectedReport}
+              readOnly={true}
+              onCancel={() => setShowViewReport(false)}
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
       
       default:
         return (

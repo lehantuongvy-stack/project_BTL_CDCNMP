@@ -55,9 +55,15 @@ export default function Home() {
               <p>(08) 38.000.000</p>
             </div>
             {/* Nút báo cáo chỉ hiển thị cho giáo viên */}
-            {user?.role === 'teacher' && (
-              <button className="report-btn-home">BÁO CÁO</button>
-            )}
+            <div className="report-btn-home">
+              {user?.role === 'teacher' && (
+                <button
+                  onClick={() => navigate('/report')}
+                >
+                  Báo cáo
+                </button>
+              )}
+            </div>
           </aside>
 
           {/* Khu vực chính */}

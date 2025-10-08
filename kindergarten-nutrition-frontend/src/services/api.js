@@ -24,27 +24,65 @@ class ApiService {
       };
     }
 
-    console.log(' API Request:', {
+    console.log('🔍 API Request:', {
       url,
-      method: config.method,
+      method: config.method || 'GET',
       headers: config.headers,
-      body: config.body
+      body: config.body || null
     });
 
     try {
       const response = await fetch(url, config);
       
-      console.log(' Response status:', response.status);
-      console.log(' Response headers:', response.headers);
+      console.log('📡 Response status:', response.status);
+      console.log('📡 Response ok:', response.ok);
+      console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(' Response error text:', errorText);
+        console.error('❌ Response error text:', errorText);
         throw new Error(`HTTP ${response.status}: ${errorText || 'Server error'}`);
       }
 
-      const data = await response.json();
-      console.log(' Response data:', data);
+      // Check content type before parsing JSON
+      const contentType = response.headers.get('content-type');
+      console.log('📡 Content-Type:', contentType);
+      
+      if (!contentType || !contentType.includes('application/json')) {
+        const responseText = await response.text();
+        console.error('❌ Response is not JSON:', responseText);
+        throw new Error('Server did not return JSON');
+      }
+
+      const responseText = await response.text();
+      console.log('📡 Raw response text:', responseText.substring(0, 500));
+      
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('❌ JSON Parse Error:', parseError);
+        console.error('❌ Raw response that failed to parse:', responseText);
+        throw new Error(`Invalid JSON response: ${parseError.message}`);
+      }
+      
+      console.log('✅ Response data:', data);
+      
+      // Debug specific fields if it's a report
+      if (data.success && data.data) {
+        if (Array.isArray(data.data)) {
+          console.log('📊 Reports array length:', data.data.length);
+          if (data.data.length > 0) {
+            console.log('📊 First report sample:', data.data[0]);
+          }
+        } else {
+          console.log('📊 Single report data:', data.data);
+          if (data.data.nutrition_data) {
+            console.log('📊 Nutrition data type:', typeof data.data.nutrition_data);
+            console.log('📊 Nutrition data:', data.data.nutrition_data);
+          }
+        }
+      }
 
       return data;
     } catch (error) {

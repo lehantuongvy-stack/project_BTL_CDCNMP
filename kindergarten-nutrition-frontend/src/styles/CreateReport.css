@@ -1,12 +1,49 @@
-.report-container {
-  min-height: 100vh; /* Đảm bảo chiếm đủ chiều cao màn hình */
-  width: 100vw;      /* Chiếm đủ chiều rộng màn hình */
-  box-sizing: border-box;
-  padding: 0 20px;
-  margin-right: 20px;
-  background: white;
+/* page wrapper */
+.report-page {
+  font-family: "Segoe UI", Roboto, Arial, sans-serif;
+  background: #f7f7f7;
+  padding: 28px;
+  min-height: 100vh;
 }
 
+/* card */
+.report-card {
+  max-width: 980px;
+  margin: 0 auto;
+  background: white;
+  padding: 28px;
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+}
+
+/* nút quay lại */
+.back {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: pink;   
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  transition: background 0.2s;
+}
+
+.back:hover {
+  background: #ff3366;
+}
+
+.header-actions {
+  width: 100%;
+  display: flex;
+  justify-content: flex-start; /* giữ nút back ở góc trái */
+  margin-bottom: 10px;
+}
+
+/* header */
 .report-header {
   display: flex;
   justify-content: space-between;
@@ -16,62 +53,93 @@
   padding: 0 20px;
 }
 
-.input-title {
-  flex: 1;
-  font-size: 18px;
+.report-header >span {
+  font-size:18px;
+  font-weight:bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.report-title {
+  flex:1;
+  text-align: center;
+  font-size: 33px;
   font-weight: bold;
-  padding: 6px 10px;
-  border: none;
-  border-bottom: 2px solid #000;
-  outline: none;
-}
-
-.input-location {
-  flex: 1;
-  font-size: 14px;
-  text-align: right;
-  padding: 6px 10px;
-  border: none;
-  border-bottom: 1px solid #555;
-  outline: none;
-}
-
-.report-content {
-  border: 1px solid pink;
-  border-radius: 12px;
-  padding: 20px;
-  margin-top: 20px;
-  min-height: 150px;
-}
-
-.input-content {
+  gap: 10px;
   width: 100%;
-  min-height: 120px;
-  border: none;
-  outline: none;
-  font-size: 15px;
-  resize: none;
-  background-color: transparent;
 }
 
-.report-chart {
-  margin-top: 30px;
-}
-
-.chart-select {
-  margin-bottom: 20px;
-  padding: 6px 10px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  cursor: pointer;
-}
-
-.report-footer {
-  text-align: right;
-  margin-top: 30px;
+.input-title {
+  flex:1;
+  font-size: 28px;
   font-weight: bold;
+  padding: 6px 10px;
+  border: none;
+  border-bottom: 2px solid #ff9999;
+  outline: none;
+  text-align: center;
+  background: transparent;
 }
 
+
+/* sections */
+.section { margin-top:18px; padding-top:12px; border-top:1px solid #eee; }
+.section h2 { font-size:18px; margin-bottom:10px; }
+
+/* info list */
+.info-list { list-style: disc; padding-left: 1.6rem; color:#222; }
+.info-list input { margin-left:8px; padding:6px; border-radius:6px; border:1px solid #ddd; }
+
+/* tables */
+.table-wrap { overflow:auto; margin-bottom:12px; }
+.simple-table { width:100%; border-collapse:collapse; }
+.simple-table th, .simple-table td {
+  padding:12px 10px; border-bottom:1px solid #f0f0f0; text-align:left;
+}
+.simple-table thead th { background:#fafafa; }
+
+/* chart area */
+.chart-controls { display:flex; gap:10px; align-items:center; margin-bottom:10px; }
+.chart-area { display:flex; justify-content:center; align-items:center; }
+
+.input-underline {
+  border: none;
+  border-bottom: 1px solid #ff9999; /* gạch chân */
+  outline: none;
+  width: 800px;
+  font-size: 14px;
+  padding: 2px;
+  background: transparent;
+  outline: none;
+}
+
+.input-underline:focus {
+  border-bottom: 2px solid #ff6a6a; /* khi focus đổi màu */
+}
+
+.btn-delete {
+  margin-left: 8px;
+  background: #ff4d4d;
+  color: white;
+  border: none;
+  padding: 4px 10px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.btn-add {
+  margin-top: 8px;
+  background: #fa8072;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+/* footer */
+.report-footer { display:flex; align-items:center; justify-content:space-between; margin-top:20px; }
 .input-creator {
   margin-left: 10px;
   padding: 5px 10px;
@@ -79,28 +147,70 @@
   border: none;
   border-bottom: 1px solid #555;
   outline: none;
+  background: transparent;
 }
 
-.report-actions {
+.actions button {
+  padding:8px 12px; border-radius:6px; border:none; cursor:pointer; margin-left:8px;
+}
+.actions .save { background:#2e7d32; color:#fff; }
+.actions .edit { background:#1976d2; color:#fff; }
+.actions button:hover { opacity:0.95; }
+
+/* toast */
+.toast {
+  margin-top:12px;
+  background:#e8f5e9; color:#2e7d32;
+  padding:8px 12px; border-radius:6px;
+  display:inline-block;
+}
+
+/* responsive */
+@media(max-width:760px){
+  .chart-area { transform:scale(0.9); }
+  .input-title { width:100%; }
+  .report-card { padding:16px; }
+}
+
+/* Loading overlay */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.loading-spinner {
   text-align: center;
-  margin-top: 20px;
+  background: white;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
-.btn-save, .btn-edit {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 15px;
-  font-weight: bold;
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #f4a1a1;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 15px;
 }
 
-.btn-save {
-  background-color: #4caf50;
-  color: white;
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
-.btn-edit {
-  background-color: #2196f3;
-  color: white;
+.loading-spinner p {
+  margin: 0;
+  color: #666;
+  font-weight: 500;
 }

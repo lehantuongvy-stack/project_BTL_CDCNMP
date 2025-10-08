@@ -73,8 +73,41 @@ class DatabaseManager {
         }
 
         try {
-            const [results] = await this.pool.execute(sql, params);
-            return results;
+            console.log('🔧 DatabaseManager.query() called');
+            console.log('🔧 SQL:', sql);
+            console.log('🔧 Params:', params);
+            
+            const rawResult = await this.pool.execute(sql, params);
+            console.log('🔧 Raw pool.execute() result type:', typeof rawResult);
+            console.log('🔧 Raw pool.execute() result isArray:', Array.isArray(rawResult));
+            console.log('🔧 Raw pool.execute() result length:', rawResult ? rawResult.length : 'null/undefined');
+            
+            if (rawResult && rawResult.length >= 1) {
+                console.log('🔧 rawResult[0] type:', typeof rawResult[0]);
+                console.log('🔧 rawResult[0] isArray:', Array.isArray(rawResult[0]));
+                console.log('🔧 rawResult[0] length:', rawResult[0] ? rawResult[0].length : 'null/undefined');
+                
+                if (Array.isArray(rawResult[0]) && rawResult[0].length > 0) {
+                    console.log('🔧 rawResult[0][0] sample:', JSON.stringify(rawResult[0][0], null, 2));
+                }
+            }
+            
+            const [results, metadata] = rawResult;
+            console.log('🔧 After destructuring [results, metadata]:');
+            console.log('🔧 results type:', typeof results);
+            console.log('🔧 results isArray:', Array.isArray(results));
+            console.log('🔧 results length:', results ? results.length : 'null/undefined');
+            console.log('🔧 metadata type:', typeof metadata);
+            
+            // For SELECT queries, return results array
+            // For INSERT/UPDATE/DELETE, return metadata (which has affectedRows, insertId, etc.)
+            if (Array.isArray(results)) {
+                console.log('🔧 DatabaseManager returning:', results.length, 'records (SELECT)');
+                return results;
+            } else {
+                console.log('🔧 DatabaseManager returning metadata (INSERT/UPDATE/DELETE):', JSON.stringify(results, null, 2));
+                return results; // This is actually the metadata for non-SELECT queries
+            }
         } catch (error) {
             console.error('Query error:', error.message);
             console.error('SQL:', sql);

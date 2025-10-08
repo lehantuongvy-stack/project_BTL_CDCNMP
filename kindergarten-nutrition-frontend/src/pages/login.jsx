@@ -59,24 +59,31 @@ function Login() {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Handle form submit
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('🔐 Login form submitted with:', { username: formData.username, password: '***' });
     
-    if (!validateForm()) {
+    // Validate form
+    const formErrors = validateForm();
+    if (Object.keys(formErrors).length > 0) {
+      setErrors(formErrors);
       return;
     }
-    
+
     try {
       setLoading(true);
       setErrors({});
       setSuccessMessage("");
       
+      console.log('🔐 Calling login API...');
       // Call login API
       const response = await login({
         username: formData.username,
         password: formData.password
       });
+      
+      console.log('🔐 Login API response:', response);
       
       // Show success message
       const userRole = response.data.user.role;
@@ -86,6 +93,7 @@ function Login() {
       
       setSuccessMessage(`Đăng nhập thành công! Chào mừng ${roleText}: ${response.data.user.full_name}`);
       
+      console.log('🔐 Redirecting to dashboard...');
       // Redirect after showing success message
       setTimeout(() => {
         if (userRole === 'admin') {
@@ -96,16 +104,14 @@ function Login() {
       }, 1500); // Wait 1.5 seconds to show success message
       
     } catch (error) {
-      console.error("Login error:", error);
+      console.error("🔐 Login error:", error);
       setErrors({
         general: error.message || "Đăng nhập thất bại. Vui lòng thử lại."
       });
     } finally {
       setLoading(false);
     }
-  };
-
-  return (
+  };  return (
     <div className="login-page">
       <div className="login-box">
         <h2 className="title">Quản lý</h2>

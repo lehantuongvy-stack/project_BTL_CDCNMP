@@ -3,6 +3,16 @@
  * Pure Node.js với Database Schema và XAMPP MySQL
  */
 
+// Load environment variables
+require('dotenv').config();
+
+// Debug environment variables
+console.log('🔧 Environment Variables:');
+console.log('DB_HOST:', process.env.DB_HOST);
+console.log('DB_PORT:', process.env.DB_PORT);
+console.log('DB_USER:', process.env.DB_USER);
+console.log('DB_NAME:', process.env.DB_NAME);
+
 const http = require('http');
 const url = require('url');
 const path = require('path');
@@ -19,6 +29,7 @@ const IngredientController = require('./controllers/IngredientController');
 const MealController = require('./controllers/MealController');
 const NutritionController = require('./controllers/NutritionController');
 const ReportController = require('./controllers/ReportController'); //  Thêm ReportControlle
+const NutritionReportController = require('./controllers/NutritionrpController');
 
 // Routes
 const AuthRoutes = require('./routes/auth');
@@ -53,6 +64,7 @@ class KindergartenServer {
         this.ingredientController = new IngredientController(this.db);
         this.mealController = new MealController(this.db);
         this.nutritionController = new NutritionController(this.db);
+        this.nutritionReportController = new NutritionReportController(this.db);
         
         // Initialize Routes
         this.authRoutes = new AuthRoutes(this.authController);
@@ -83,6 +95,28 @@ class KindergartenServer {
         this.setCorsHeaders(res);
         res.writeHead(statusCode, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(data));
+    }
+
+    // Parse request body
+    parseBody(req) {
+        return new Promise((resolve, reject) => {
+            let body = '';
+            req.on('data', chunk => {
+                body += chunk.toString();
+            });
+            req.on('end', () => {
+                try {
+                    if (body.trim() === '') {
+                        resolve({});
+                    } else {
+                        resolve(JSON.parse(body));
+                    }
+                } catch (error) {
+                    reject(error);
+                }
+            });
+            req.on('error', reject);
+        });
     }
 
     // Serve static files
@@ -164,6 +198,11 @@ class KindergartenServer {
                 console.log('POST /api/meals');
                 console.log('GET  /api/nutrition/records');
                 console.log('POST /api/nutrition/records');
+                console.log('GET  /api/nutritionrp');
+                console.log('POST /api/nutritionrp');
+                console.log('GET  /api/nutritionrp/:id');
+                console.log('PUT  /api/nutritionrp/:id');
+                console.log('DELETE /api/nutritionrp/:id');
                 console.log('GET  /api/reports');
                 console.log('Static files: /public/*');
             });
@@ -214,8 +253,10 @@ class KindergartenServer {
                 await this.dishRoutes.handleDishRoutes(req, res, pathname.replace('/api/dishes', ''), method);
             } else if (pathname.startsWith('/api/meals')) {
                 await this.mealsRoutes.handleMealsRoutes(req, res, pathname.replace('/api/meals', ''), method);
-            } else if (pathname.startsWith('/api/nutrition')) {
+            } else if (pathname.startsWith('/api/nutrition') && !pathname.startsWith('/api/nutritionrp')) {
                 await this.nutritionRoutes.handleNutritionRoutes(req, res);
+            } else if (pathname.startsWith('/api/nutritionrp')) {
+                await this.handleNutritionReports(req, res, pathname.replace('/api/nutritionrp', ''), method);
             } else if (pathname.startsWith('/api/reports')) {
                 await this.handleReports(req, res, pathname.replace('/api/reports', ''), method, query);
             } else if (pathname.startsWith('/public/') || pathname.startsWith('/api/docs')) {
@@ -386,6 +427,117 @@ class KindergartenServer {
         };
 
         this.sendResponse(res, dbHealthy ? 200 : 503, health);
+    }
+
+    // Xử lý nutrition reports
+    async handleNutritionReports(req, res, path, method) {
+        try {
+            console.log('🔐 handleNutritionReports - path:', path, 'method:', method);
+            
+            // Apply authentication
+            const authHeader = req.headers.authorization;
+            console.log('🔐 Auth header:', authHeader ? 'Present' : 'Missing');
+            
+            if (!authHeader || !authHeader.startsWith('Bearer ')) {
+                console.log('❌ Missing or invalid auth header');
+                this.sendResponse(res, 401, {
+                    success: false,
+                    message: 'Access token is required'
+                });
+                return;
+            }
+
+            const token = authHeader.substring(7);
+            console.log('🔐 Token length:', token.length);
+            
+            const user = await this.authController.verifyToken(token);
+            console.log('🔐 User verification result:', user ? 'Success' : 'Failed');
+            
+            if (!user) {
+                console.log('❌ Token verification failed');
+                this.sendResponse(res, 401, {
+                    success: false,
+                    message: 'Invalid or expired token'
+                });
+                return;
+            }
+
+            req.user = user;
+
+            // Route handling
+            if (method === 'GET') {
+                if (path === '' || path === '/') {
+                    // GET /api/nutritionrp - Lấy tất cả báo cáo
+                    await this.nutritionReportController.getAllReports(req, res);
+                } else if (path === '/test') {
+                    // GET /api/nutritionrp/test - Tạo test data
+                    await this.nutritionReportController.createTestReports(req, res);
+                } else if (path.match(/^\/[a-f0-9-]+$/)) {
+                    // GET /api/nutritionrp/:id - Lấy báo cáo theo ID
+                    console.log('🔍 Matched UUID pattern for path:', path);
+                    const id = path.substring(1);
+                    console.log('🔍 Extracted ID:', id);
+                    req.params = { id };
+                    await this.nutritionReportController.getReportById(req, res);
+                } else {
+                    this.sendResponse(res, 404, {
+                        success: false,
+                        message: 'Nutrition report endpoint not found'
+                    });
+                }
+            } else if (method === 'POST') {
+                if (path === '' || path === '/') {
+                    // POST /api/nutritionrp - Tạo báo cáo mới
+                    // Parse request body first
+                    req.body = await this.parseBody(req);
+                    await this.nutritionReportController.createReport(req, res);
+                } else {
+                    this.sendResponse(res, 404, {
+                        success: false,
+                        message: 'Nutrition report endpoint not found'
+                    });
+                }
+            } else if (method === 'PUT') {
+                if (path.match(/^\/[a-f0-9-]+$/)) {
+                    // PUT /api/nutritionrp/:id - Cập nhật báo cáo
+                    const id = path.substring(1);
+                    req.params = { id };
+                    // Parse request body first
+                    req.body = await this.parseBody(req);
+                    await this.nutritionReportController.updateReport(req, res);
+                } else {
+                    this.sendResponse(res, 404, {
+                        success: false,
+                        message: 'Nutrition report endpoint not found'
+                    });
+                }
+            } else if (method === 'DELETE') {
+                if (path.match(/^\/[a-f0-9-]+$/)) {
+                    // DELETE /api/nutritionrp/:id - Xóa báo cáo
+                    const id = path.substring(1);
+                    req.params = { id };
+                    await this.nutritionReportController.deleteReport(req, res);
+                } else {
+                    this.sendResponse(res, 404, {
+                        success: false,
+                        message: 'Nutrition report endpoint not found'
+                    });
+                }
+            } else {
+                this.sendResponse(res, 405, {
+                    success: false,
+                    message: 'Method not allowed'
+                });
+            }
+
+        } catch (error) {
+            console.error('Nutrition Reports Error:', error);
+            this.sendResponse(res, 500, {
+                success: false,
+                message: 'Internal server error',
+                error: error.message
+            });
+        }
     }
 
     // Xử lý reports (backward compatibility với Services)

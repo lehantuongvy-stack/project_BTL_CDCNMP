@@ -730,13 +730,11 @@
 }
 
 .modal-content {
-  background: white;
-  border-radius: 8px;
-  width: 90%;
-  max-width: 800px;
-  max-height: 80vh;
-  overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  max-height: 90vh;       /* không vượt quá chiều cao màn hình */
+  overflow-y: auto;       /* bật cuộn dọc */
+  border-radius: 12px;
+  background: #fff;
+  padding: 20px;
 }
 
 .modal-header {
@@ -754,14 +752,12 @@
 }
 
 .modal-close {
-  background: none;
+  background: transparent;
   border: none;
-  color: white;
-  font-size: 1.5rem;
+  font-size: 24px;
   cursor: pointer;
-  padding: 0.25rem;
-  border-radius: 4px;
-  transition: background-color 0.2s;
+  color: #e74c3c;  /* đỏ để dễ nhận */
+  margin-left: auto; /* đẩy sang phải */
 }
 
 .modal-close:hover {

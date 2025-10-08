@@ -4,19 +4,23 @@ class AuthService {
   // Đăng nhập
   async login(credentials) {
     try {
+      console.log('🔐 AuthService.login called with:', credentials);
       const response = await apiService.post('/api/auth/login', credentials);
+      console.log('🔐 AuthService login response:', response);
       
       if (response.success && response.data) {
+        console.log('🔐 Login successful, saving token and user data');
         // Lưu token và thông tin user vào localStorage
         localStorage.setItem('authToken', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
         
         return response;
       } else {
+        console.error('🔐 Login failed:', response);
         throw new Error(response.message || 'Đăng nhập thất bại');
       }
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('🔐 Login error:', error);
       throw error;
     }
   }
