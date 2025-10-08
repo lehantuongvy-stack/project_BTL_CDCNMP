@@ -113,4 +113,87 @@
   cursor: not-allowed;
 }
 
+/* Styles for multiple dishes display */
+.meal-editor {
+  min-height: 60px;
+}
+
+.selected-dishes {
+  margin-bottom: 8px;
+}
+
+.selected-dish-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #e7f3ff;
+  border: 1px solid #b3d9ff;
+  border-radius: 4px;
+  padding: 4px 8px;
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+
+.selected-dish-item .dish-name {
+  font-weight: 500;
+  color: #333;
+  flex: 1;
+}
+
+.selected-dish-item .dish-kcal {
+  color: #666;
+  font-size: 11px;
+  margin: 0 8px;
+}
+
+.dish-selector {
+  width: 100%;
+  padding: 4px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 12px;
+  background: white;
+}
+
+/* Styles for viewing mode */
+.meal-display {
+  min-height: 40px;
+}
+
+.dishes-list {
+  text-align: left;
+}
+
+.dish-item {
+  margin-bottom: 2px;
+  padding: 2px 0;
+}
+
+.dish-item .dish-name {
+  font-weight: 500;
+  color: #333;
+  font-size: 13px;
+}
+
+.dish-item .dish-kcal {
+  color: #666;
+  font-size: 11px;
+  margin-left: 8px;
+}
+
+.total-kcal {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid #eee;
+  font-weight: 600;
+  color: #007bff;
+  font-size: 12px;
+}
+
+.no-menu {
+  color: #999;
+  font-style: italic;
+  font-size: 13px;
+}
+
 

@@ -239,48 +239,94 @@ class MealController extends BaseController {
     async getMealsByDateForAPI(req, res) {
         try {
             const { date, nhom, class_id } = req.query;
-            console.log(` getMealsByDateForAPI request params:`, req.query);
-            console.log(` Security filter: { class_id: ${class_id}, nhom: ${nhom} }`);
+            console.log("📅 API gọi lấy thực đơn ngày:", date, "| nhóm:", nhom, "| lớp:", class_id);
 
-            // Validate required parameters
-            if (!date) {
-                return this.sendResponse(res, 400, {
-                    success: false,
-                    message: 'Thiếu tham số date (YYYY-MM-DD)'
+            const menuData = await this.mealModel.getMealsByDateForAPI(date, nhom, class_id);
+
+            // ✅ Nếu không có dữ liệu, vẫn trả 200 (frontend sẽ xử lý hiển thị 'Không có thực đơn')
+            if (!menuData) {
+                console.warn("⚠️ menuData là null hoặc undefined");
+                return res.status(200).json({
+                    success: true,
+                    data: [],
+                    message: `Không có thực đơn cho ngày ${date}`
                 });
             }
 
-            // Validate date format
-            const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-            if (!dateRegex.test(date)) {
-                return this.sendResponse(res, 400, {
-                    success: false,
-                    message: 'Định dạng ngày không hợp lệ. Sử dụng YYYY-MM-DD'
+            if (Object.keys(menuData).length === 0) {
+                console.warn("⚠️ menuData rỗng");
+                return res.status(200).json({
+                    success: true,
+                    data: [],
+                    message: `Không có thực đơn cho ngày ${date}`
                 });
             }
 
-            // Validate nhom if provided
-            if (nhom && !['nha_tre', 'mau_giao'].includes(nhom)) {
-                return this.sendResponse(res, 400, {
-                    success: false,
-                    message: 'nhom phải là nha_tre hoặc mau_giao'
-                });
-            }
-
-            const mealsData = await this.mealModel.getMealsByDateForAPI(date, nhom, class_id);
-
-            this.sendResponse(res, 200, {
+            // ✅ Nếu có dữ liệu
+            console.log("✅ Trả dữ liệu thực đơn ngày:", date);
+            return res.status(200).json({
                 success: true,
-                data: mealsData,
+                data: menuData,
                 message: `Lấy thực đơn ngày ${date} thành công`
             });
 
         } catch (error) {
-            console.error('Error in getMealsByDateForAPI:', error);
-            this.sendResponse(res, 500, {
+            console.error("❌ Lỗi getMealsByDateForAPI:", error);
+            return res.status(500).json({
                 success: false,
-                message: 'Lỗi server',
-                error: 'Lỗi khi lấy thực đơn theo ngày: ' + error.message
+                message: "Lỗi server khi lấy thực đơn theo ngày",
+                error: error.message
+            });
+        }
+    }
+
+    /**
+     * Lấy thực đơn cho slide-right-home component
+     * GET /api/meals/slide-right-home?date=YYYY-MM-DD
+     */
+    async getSlideRightHomeMeals(req, res) {
+        try {
+            // Lấy ngày từ query, nếu không có thì dùng ngày hiện tại
+            const { date } = req.query;
+            const targetDate = date || new Date().toISOString().split('T')[0];
+            
+            console.log("🏠 API slide-right-home gọi lấy thực đơn ngày:", targetDate);
+
+            const menuData = await this.mealModel.getMealsByDateForAPI(targetDate);
+
+            // ✅ Nếu không có dữ liệu, vẫn trả 200 (frontend sẽ xử lý hiển thị 'Không có thực đơn')
+            if (!menuData) {
+                console.warn("⚠️ slide-right-home: menuData là null hoặc undefined");
+                return res.status(200).json({
+                    success: true,
+                    data: [],
+                    message: `Không có thực đơn cho ngày ${targetDate}`
+                });
+            }
+
+            if (Object.keys(menuData).length === 0) {
+                console.warn("⚠️ slide-right-home: menuData rỗng");
+                return res.status(200).json({
+                    success: true,
+                    data: [],
+                    message: `Không có thực đơn cho ngày ${targetDate}`
+                });
+            }
+
+            // ✅ Nếu có dữ liệu
+            console.log("✅ slide-right-home: Trả dữ liệu thực đơn ngày:", targetDate);
+            return res.status(200).json({
+                success: true,
+                data: menuData,
+                message: `Lấy thực đơn ngày ${targetDate} thành công`
+            });
+
+        } catch (error) {
+            console.error("❌ Lỗi getSlideRightHomeMeals:", error);
+            return res.status(500).json({
+                success: false,
+                message: "Lỗi server khi lấy thực đơn cho slide-right-home",
+                error: error.message
             });
         }
     }
@@ -487,6 +533,41 @@ class MealController extends BaseController {
                 success: false,
                 message: 'Lỗi server',
                 error: 'Lỗi khi cập nhật thực đơn: ' + error.message
+            });
+        }
+    }
+
+    /**
+     * Xóa thực đơn
+     */
+    async deleteMeal(req, res) {
+        try {
+            console.log(' req.params:', req.params);
+            console.log(' req.pathParams:', req.pathParams);
+            const menuId = (req.params && req.params.id) || (req.pathParams && req.pathParams.id);
+            console.log(' Extracted menuId:', menuId);
+            
+            if (!menuId) {
+                this.sendResponse(res, 400, {
+                    success: false,
+                    message: 'Thiếu ID thực đơn'
+                });
+                return;
+            }
+
+            const result = await this.mealModel.deleteMenuWithDetails(menuId);
+            
+            this.sendResponse(res, 200, {
+                success: true,
+                data: result,
+                message: 'Xóa thực đơn thành công'
+            });
+
+        } catch (error) {
+            console.error('Error in deleteMeal:', error);
+            this.sendResponse(res, 500, {
+                success: false,
+                message: 'Lỗi khi xóa thực đơn: ' + error.message
             });
         }
     }

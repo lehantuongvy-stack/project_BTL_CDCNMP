@@ -3,7 +3,6 @@ import "../styles/background.css";
 import "./../styles/Menu.css";
 import "./../styles/KitchenMenu.css";
 import BackButton from "../components/BackButton";
-import mealService from "../services/mealService.js";
 
 function KitchenMenu() {
   const getToday = () => {
@@ -14,7 +13,7 @@ function KitchenMenu() {
   const getDayOfWeek = (dateString) => {
     const days = [
       "Chủ Nhật",
-      "Thứ Hai",
+      "Thứ Hai", 
       "Thứ Ba",
       "Thứ Tư",
       "Thứ Năm",
@@ -25,364 +24,545 @@ function KitchenMenu() {
     return days[date.getDay()];
   };
 
-  // Lấy ngày đầu tuần (Thứ 2)
-  const getWeekStart = (dateString) => {
-    const date = new Date(dateString);
-    const dayOfWeek = date.getDay(); // 0 = Chủ Nhật, 1 = Thứ 2, ...
-    const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Nếu Chủ Nhật thì lùi 6 ngày
-    
-    const weekStart = new Date(date);
-    weekStart.setDate(date.getDate() - daysToSubtract);
-    return weekStart.toISOString().split("T")[0];
-  };
-
-  // Lấy ngày cuối tuần (Chủ Nhật)
-  const getWeekEnd = (weekStart) => {
-    const date = new Date(weekStart);
-    date.setDate(date.getDate() + 6);
-    return date.toISOString().split("T")[0];
-  };
-
-  // Format ngày hiển thị
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
-  };
-
   const [selectedDate, setSelectedDate] = useState(getToday());
-  const [currentWeekStart, setCurrentWeekStart] = useState(() => getWeekStart(getToday()));
   const [isEditing, setIsEditing] = useState(false);
+  const [dishList, setDishList] = useState([]); // Danh sách món ăn từ database
   const [weeklyMealData, setWeeklyMealData] = useState({});
-  const [foodsDropdown, setFoodsDropdown] = useState([]);
+  const [tempMealData, setTempMealData] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [saving, setSaving] = useState(false);
+  const [userInfo, setUserInfo] = useState(null); // Thông tin user đăng nhập
+  
+  // States for delete functionality
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteSelection, setDeleteSelection] = useState({
+    mealType: 'breakfast', // breakfast, lunch, dinner
+    groupType: 'Nhà Trẻ'   // Nhà Trẻ, Mẫu Giáo
+  });
 
-  // Load dữ liệu từ API
-  useEffect(() => {
-    loadWeeklyMeals(currentWeekStart);
-    loadFoodsDropdown();
-  }, [currentWeekStart]);
+  // API base URL
+  const API_BASE_URL = 'http://localhost:3002/api';
 
-  // Transform API response to frontend expected format
-  const transformAPIResponse = (apiData) => {
-    console.log('🔧 Transform input:', apiData);
-    
-    if (!apiData || !apiData.thuc_don) {
-      console.log('❌ No thuc_don data found');
-      return {};
-    }
-
-    const transformed = {
-      "Nhà Trẻ": {},
-      "Mẫu Giáo": {}
+  // Helper function để lấy headers với token
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('authToken'); // Sửa key từ 'token' thành 'authToken'
+    console.log('🔍 Getting token from localStorage:', token); // Debug log
+    return {
+      'Content-Type': 'application/json',
+      ...(token && { 'Authorization': `Bearer ${token}` })
     };
-
-    // Initialize empty structure for all days
-    const daysOfWeek = ["Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu"];
-    daysOfWeek.forEach(day => {
-      transformed["Nhà Trẻ"][day] = [];
-      transformed["Mẫu Giáo"][day] = [];
-    });
-
-    // Simple day mapping by date
-    const getDayName = (dateStr) => {
-      const date = new Date(dateStr);
-      const day = date.getDay(); // 0=Sunday, 1=Monday, etc.
-      const dayNames = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
-      return dayNames[day];
-    };
-
-    console.log('🔄 Processing', apiData.thuc_don.length, 'meal sessions');
-
-    apiData.thuc_don.forEach((mealSession, index) => {
-      const vietnameseDay = getDayName(mealSession.ngay);
-      console.log(`📅 Processing meal ${index}: ${mealSession.ngay} -> ${vietnameseDay}, buoi: ${mealSession.buoi}`);
-
-      // Map nhom từ API sang group names (backend có thể trả về nhom hoặc nhom_lop)
-      const groupMapping = {
-        'nha_tre': 'Nhà Trẻ',
-        'mau_giao': 'Mẫu Giáo'
-      };
-      
-      // Check both nhom and nhom_lop fields for backward compatibility
-      const nhomValue = mealSession.nhom || mealSession.nhom_lop;
-      const group = groupMapping[nhomValue] || 'Nhà Trẻ';
-      console.log(`🏫 Meal session nhom: "${mealSession.nhom}", nhom_lop: "${mealSession.nhom_lop}" → nhomValue: "${nhomValue}" → group: "${group}"`);
-      
-      if (!transformed[group][vietnameseDay]) {
-        transformed[group][vietnameseDay] = [];
-      }
-
-      // Transform each food item to expected format
-      if (mealSession.mon_an && mealSession.mon_an.length > 0) {
-        mealSession.mon_an.forEach(food => {
-          // Map API meal types to frontend expected types
-          let mealType = mealSession.buoi;
-          if (mealType === 'xen') {
-            mealType = 'xe'; 
-          }
-          
-          const mealItem = {
-            food_id: food.id,
-            food_name: food.ten_mon_an,
-            kcal: food.kcal,
-            meal_type: mealType,
-            nhom: nhomValue // Use consistent field name
-          };
-          
-          console.log(`🍽️ Adding meal item for ${group}:`, mealItem);
-          transformed[group][vietnameseDay].push(mealItem);
-        });
-      }
-    });
-
-    console.log('✅ Transform result:', transformed);
-    
-    // Debug: Check if both groups have data
-    const nhaTreCount = Object.values(transformed["Nhà Trẻ"]).flat().length;
-    const mauGiaoCount = Object.values(transformed["Mẫu Giáo"]).flat().length;
-    console.log(` Data summary: Nhà Trẻ: ${nhaTreCount} meals, Mẫu Giáo: ${mauGiaoCount} meals`);
-    
-    return transformed;
   };
 
-  const loadWeeklyMeals = async (weekStart = currentWeekStart) => {
+  // Lấy thông tin user từ token
+  const fetchUserInfo = async () => {
     try {
-      setLoading(true);
-      setError(null);
+      const token = localStorage.getItem('authToken'); // Sửa từ 'token' thành 'authToken'
+      console.log('Token from localStorage:', token ? 'exists' : 'not found');
       
-      const weekEnd = getWeekEnd(weekStart);
-      // KitchenMenu (teacher) should see ALL data, không pass security filters
-      const response = await mealService.getWeeklyMeals(weekStart, weekEnd, null, null);
-      console.log(` KitchenMenu API call: ${weekStart} to ${weekEnd} (no filters for teacher)`);
+      if (!token) {
+        console.log('No token found, user not logged in');
+        return;
+      }
+
+      console.log('Fetching user info...');
+      const response = await fetch(`${API_BASE_URL}/auth/me`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       
-      if (response.success) {
-        console.log(' Raw API Response:', response.data);
-        
-        // Debug: Check nhom values in raw data
-        if (response.data && response.data.thuc_don) {
-          const nhomValues = [...new Set(response.data.thuc_don.map(meal => meal.nhom || meal.nhom_lop))];
-          console.log(' Unique nhom values in API response:', nhomValues);
-          
-          // Count meals by nhom
-          const nhomCounts = {};
-          response.data.thuc_don.forEach(meal => {
-            const nhom = meal.nhom || meal.nhom_lop;
-            nhomCounts[nhom] = (nhomCounts[nhom] || 0) + 1;
-          });
-          console.log('🔢 Meal count by nhom:', nhomCounts);
-          
-          // If only nha_tre data exists, create some mau_giao data for testing
-          if (nhomValues.length === 1 && nhomValues[0] === 'nha_tre') {
-            console.log('🔧 Creating mock Mẫu Giáo data for testing...');
-            const mauGiaoMockData = response.data.thuc_don.map(meal => ({
-              ...meal,
-              nhom: 'mau_giao',
-              nhom_lop: 'mau_giao'
-            }));
-            response.data.thuc_don = [...response.data.thuc_don, ...mauGiaoMockData];
-            console.log('✅ Added mock Mẫu Giáo data. Total meals:', response.data.thuc_don.length);
-          }
-        }
-        
-        const transformedData = transformAPIResponse(response.data);
-        console.log('🔄 Transformed Data:', transformedData);
-        
-        // Additional debug: check specific day data
-        if (transformedData["Nhà Trẻ"] && transformedData["Nhà Trẻ"]["Thứ Hai"]) {
-          console.log('🎯 Monday data for Nhà Trẻ:', transformedData["Nhà Trẻ"]["Thứ Hai"]);
-        }
-        setWeeklyMealData(transformedData);
+      const result = await response.json();
+      console.log('User info response:', result);
+      
+      if (result.success) {
+        setUserInfo(result.data);
+        console.log('User info set:', result.data);
       } else {
-        setError(response.message || 'Không thể tải thực đơn');
+        console.error('Failed to get user info:', result.message);
       }
     } catch (error) {
-      console.error('Error loading weekly meals:', error);
-      setError(error.message || 'Lỗi kết nối API');
+      console.error('Error fetching user info:', error);
+    }
+  };
+
+  // Lấy danh sách món ăn từ API
+  const fetchDishes = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/meals/dishes`, {
+        headers: getAuthHeaders()
+      });
+      const result = await response.json();
+      
+      if (result.success) {
+        setDishList(result.data);
+      } else {
+        console.error('Failed to fetch dishes:', result.message);
+        if (result.message?.includes('Token') || result.message?.includes('đăng nhập')) {
+          alert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching dishes:', error);
+      alert('Lỗi khi lấy danh sách món ăn');
+    }
+  };
+
+  // Lấy thực đơn theo ngày
+  const fetchMenuByDate = async (date) => {
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_BASE_URL}/meals/by-date/${date}`, {
+        headers: getAuthHeaders()
+      });
+      const result = await response.json();
+      
+      console.log('🍽️ API Response for date:', date, result);
+      
+      if (result.success) {
+        console.log('📊 API Data:', result.data);
+        // Convert API data to component format
+        const convertedData = convertApiDataToComponentFormat(result.data);
+        console.log('🔄 Converted Data:', convertedData);
+        
+        const dayName = getDayOfWeek(date);
+        setWeeklyMealData(prev => {
+          const newWeeklyMealData = {
+            ...prev,
+            [dayName]: convertedData
+          };
+          
+          console.log('📅 Setting weeklyMealData for day:', dayName);
+          console.log('🗂️ New weeklyMealData:', newWeeklyMealData);
+          
+          return newWeeklyMealData;
+        });
+        
+
+      } else {
+        console.error('Failed to fetch menu:', result.message);
+        if (result.message?.includes('Token') || result.message?.includes('đăng nhập')) {
+          alert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching menu by date:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const loadFoodsDropdown = async () => {
-    try {
-      const response = await mealService.getFoods();
-      if (response.success) {
-        setFoodsDropdown(response.data || []);
-      }
-    } catch (error) {
-      console.error('Error loading foods:', error);
-    }
-  };
+  // Convert API data format to component format
+  const convertApiDataToComponentFormat = (apiData) => {
+    const converted = {
+      "Nhà Trẻ": [
+        { title: "Bữa sáng", dish: "", kcal: 0, menuId: null, dishes: [] },
+        { title: "Bữa trưa", dish: "", kcal: 0, menuId: null, dishes: [] },
+        { title: "Bữa xế", dish: "", kcal: 0, menuId: null, dishes: [] }
+      ],
+      "Mẫu Giáo": [
+        { title: "Bữa sáng", dish: "", kcal: 0, menuId: null, dishes: [] },
+        { title: "Bữa trưa", dish: "", kcal: 0, menuId: null, dishes: [] },
+        { title: "Bữa xế", dish: "", kcal: 0, menuId: null, dishes: [] }
+      ]
+    };
 
-  // Chuyển tuần
-  const goToPreviousWeek = () => {
-    const prevWeek = new Date(currentWeekStart);
-    prevWeek.setDate(prevWeek.getDate() - 7);
-    const prevWeekStart = prevWeek.toISOString().split("T")[0];
-    setCurrentWeekStart(prevWeekStart);
-  };
-
-  const goToNextWeek = () => {
-    const nextWeek = new Date(currentWeekStart);
-    nextWeek.setDate(nextWeek.getDate() + 7);
-    const nextWeekStart = nextWeek.toISOString().split("T")[0];
-    setCurrentWeekStart(nextWeekStart);
-  };
-
-
-
-  const [tempMealData, setTempMealData] = useState(null);
-
-  // Helper function to get consistent food ID from meal object
-  const getMealFoodId = (meal) => {
-    if (!meal) return '';
-    
-    // Try different possible ID fields and ensure it's a string
-    const id = meal.food_id || meal.id_mon_an || meal.mon_an_id || meal.id || '';
-    console.log(`🆔 getMealFoodId for meal:`, meal, `→ ID: "${id}"`);
-    return String(id); // Ensure it's always a string for comparison
-  };
-
-  // Handle meal update
-  const handleMealUpdate = async (day, groupName, mealType, foodId) => {
-    try {
-      setSaving(true);
-      console.log(`🔄 handleMealUpdate: ${day} ${groupName} ${mealType} → foodId: "${foodId}"`);
+    // Process API data and map to component format
+    console.log('🔍 Processing API Data keys:', Object.keys(apiData));
+    Object.keys(apiData).forEach(key => {
+      const menu = apiData[key];
+      console.log(`📋 Processing menu key: ${key}`, menu);
       
-      if (!foodId) {
-        console.log(`🗑️ Empty foodId, deleting meal`);
-        // TODO: Implement delete meal logic here
-        // For now, just reload data to refresh the UI
-        await loadWeeklyMeals(currentWeekStart);
+      // Kiểm tra xem menu có dữ liệu không
+      if (!menu || !menu.thuc_don_info) {
+        console.log('❌ Menu data not found for key:', key);
         return;
       }
       
-      // Convert day name to date
-      const dayIndex = ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"].indexOf(day);
-      const targetDate = new Date(currentWeekStart);
-      targetDate.setDate(targetDate.getDate() + (dayIndex === 0 ? 6 : dayIndex - 1));
-      const dateStr = targetDate.toISOString().split('T')[0];
+      const { loai_bua_an, nhom_lop, mon_an_list = [] } = menu.thuc_don_info;
+      console.log(`📝 Menu details - loai_bua_an: ${loai_bua_an}, nhom_lop: "${nhom_lop}"`);
+      console.log(`🍱 mon_an_list:`, menu.mon_an_list);
       
-      // Find selected food to get kcal and name (check both field structures)
-      const selectedFood = foodsDropdown.find(f => f.id === foodId || f.id === String(foodId));
-      const kcal = selectedFood ? selectedFood.kcal : 0;
-      const foodName = selectedFood ? (selectedFood.name || selectedFood.ten_mon_an || `Food ${foodId}`) : `Food ${foodId}`;
+      const lopGroup = nhom_lop === 'nha_tre' ? 'Nhà Trẻ' : 'Mẫu Giáo';
+      console.log(`🔄 nhom_lop "${nhom_lop}" === 'nha_tre'? ${nhom_lop === 'nha_tre'}`);
+      console.log(`➡️ Final lopGroup: "${lopGroup}"`);
+      console.log(`🎯 DEBUG CRITICAL - Raw nhom_lop value: [${typeof nhom_lop}] "${nhom_lop}"`);
+      console.log(`🎯 DEBUG CRITICAL - String comparison 'nha_tre': ${JSON.stringify(nhom_lop)} === ${JSON.stringify('nha_tre')}`);
+      console.log(`🎯 DEBUG CRITICAL - Will be mapped to: "${lopGroup}"`);
+      const mealIndex = loai_bua_an === 'breakfast' ? 0 : 
+                       loai_bua_an === 'lunch' ? 1 : 
+                       loai_bua_an === 'dinner' ? 2 : 0;
+      console.log(`🎯 Mapping to lopGroup: ${lopGroup}, mealIndex: ${mealIndex}`);
       
-      console.log(`🔍 Looking for foodId: "${foodId}" (type: ${typeof foodId})`);
-      console.log(`🔍 FoodsDropdown sample:`, foodsDropdown.slice(0, 2));
-      console.log(`🔍 Selected food:`, selectedFood);
-      console.log(`🔍 Food name resolved:`, foodName);
-      
-      // Build payload with correct format
-      const payload = {
-        ngay_ap_dung: dateStr,
-        nhom: groupName === "Nhà Trẻ" ? "nha_tre" : "mau_giao",
-        chi_tiet: [
-          {
-            buoi: mealType,
-            id_mon_an: foodId,
-            kcal
-          }
-        ]
-      };
-      
-      console.log('Sending payload:', payload);
-      
-      // OPTIMISTIC UPDATE: Update UI immediately
-      console.log(` Optimistic update: Adding ${selectedFood?.ten_mon_an} to ${groupName} ${day} ${mealType}`);
-      
-      setWeeklyMealData(prevData => {
-        const newData = JSON.parse(JSON.stringify(prevData)); // Deep copy
+      if (converted[lopGroup] && converted[lopGroup][mealIndex]) {
+        // Use mon_an_list from menu.mon_an_list instead of thuc_don_info
+        const dishes = menu.mon_an_list || [];
+        console.log(`🍽️ Using dishes:`, dishes);
         
-        // Ensure group and day exist
-        if (!newData[groupName]) newData[groupName] = {};
-        if (!newData[groupName][day]) newData[groupName][day] = [];
+        // Combine dish names and calculate calories per serving (not total)
+        const dishNames = dishes.map(item => item.ten_mon_an).join(', ');
+        const totalKcal = dishes.reduce((sum, item) => 
+          sum + (item.calories_per_serving || 0), 0 // Only calories_per_serving, not multiply by so_khau_phan
+        );
         
-        // Remove existing meal of same type
-        newData[groupName][day] = newData[groupName][day].filter(meal => meal.meal_type !== mealType);
+        console.log(`🏷️ dishNames: "${dishNames}", totalKcal per serving: ${totalKcal}`);
         
-        // Add new meal
-        newData[groupName][day].push({
-          food_id: foodId,
-          food_name: foodName, // Use resolved food name
-          kcal: kcal,
-          meal_type: mealType,
-          nhom: groupName === "Nhà Trẻ" ? "nha_tre" : "mau_giao"
-        });
+        converted[lopGroup][mealIndex] = {
+          ...converted[lopGroup][mealIndex],
+          dish: dishNames,
+          kcal: Math.round(totalKcal),
+          menuId: menu.thuc_don_info.id,
+          dishes: dishes
+        };
         
-        console.log(` UI updated optimistically for ${groupName} ${day} ${mealType}`);
-        return newData;
+        console.log(`✅ Updated converted[${lopGroup}][${mealIndex}]:`, converted[lopGroup][mealIndex]);
+      }
+    });
+
+    return converted;
+  };
+
+  // Tạo hoặc cập nhật thực đơn
+  const saveMenu = async (menuData) => {
+    try {
+      const url = menuData.id ? 
+        `${API_BASE_URL}/meals/${menuData.id}` : 
+        `${API_BASE_URL}/meals`;
+      
+      const method = menuData.id ? 'PUT' : 'POST';
+      
+      const response = await fetch(url, {
+        method,
+        headers: getAuthHeaders(),
+        body: JSON.stringify(menuData)
       });
       
-      // Send update request to server (async, non-blocking)
-      try {
-        const updateResult = await mealService.updateMealPlan(payload);
-        console.log(` Server update successful:`, updateResult);
-      } catch (serverError) {
-        console.error(`❌ Server update failed:`, serverError);
-        // Revert optimistic update on server error
-        await loadWeeklyMeals();
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.message);
       }
       
-      // Debug: Check if updated meal appears in data after a brief delay
-      setTimeout(() => {
-        const dayIndex = ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"].indexOf(day);
-        const targetDate = new Date(currentWeekStart);
-        targetDate.setDate(targetDate.getDate() + (dayIndex === 0 ? 6 : dayIndex - 1));
-        const dateStr = targetDate.toISOString().split('T')[0];
-        
-        console.log(`🔍 Debug after reload: ${dateStr} ${groupName} ${mealType}`);
-        console.log('📊 Full weeklyMealData state:', JSON.stringify(weeklyMealData, null, 2));
-        
-        // Check if groupName exists in data
-        if (weeklyMealData[groupName]) {
-          console.log(`✅ ${groupName} data exists:`, Object.keys(weeklyMealData[groupName]));
-          
-          if (weeklyMealData[groupName][day]) {
-            console.log(`✅ ${day} data exists for ${groupName}:`, weeklyMealData[groupName][day]);
-            const dayMeals = weeklyMealData[groupName][day];
-            const targetMeal = dayMeals.find(m => m.meal_type === mealType);
-            console.log(`🎯 Target meal for ${groupName} ${day} ${mealType}:`, targetMeal);
-            
-            if (targetMeal) {
-              console.log(`🆔 Food ID from getMealFoodId:`, getMealFoodId(targetMeal));
-            } else {
-              console.log(`❌ No meal found for ${mealType}`);
-              console.log(`📋 Available meal types:`, dayMeals.map(m => m.meal_type));
-            }
-          } else {
-            console.log(`❌ No ${day} data for ${groupName}`);
-            console.log(`📅 Available days:`, Object.keys(weeklyMealData[groupName]));
-          }
-        } else {
-          console.log(`❌ No ${groupName} data`);
-          console.log(`🏫 Available groups:`, Object.keys(weeklyMealData));
-        }
-      }, 2000);
-      
-      
+      return result.data;
     } catch (error) {
-      console.error('Error updating meal:', error);
-      alert('Lỗi cập nhật thực đơn: ' + error.message);
-    } finally {
-      setSaving(false);
+      console.error('Error saving menu:', error);
+      throw error;
     }
   };
 
-  // Render bảng tuần
-  const renderWeekTable = (data) => {
-    const daysOfWeek = ["Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu"];
-    const mealTypes = [
-      { key: 'sang', name: 'Bữa sáng' },
-      { key: 'trua', name: 'Bữa trưa' }, 
-      { key: 'xe', name: 'Bữa xế' }
-    ];
+  // Xóa thực đơn
+  const deleteMenu = async (menuId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/meals/${menuId}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      });
+      
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.message);
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('Error deleting menu:', error);
+      throw error;
+    }
+  };
+
+  // Handle delete menu
+  const handleDeleteMenu = async () => {
+    try {
+      setLoading(true);
+      const currentDayName = getDayOfWeek(selectedDate);
+      const dayData = weeklyMealData[currentDayName];
+      
+      if (!dayData) {
+        alert('Không có thực đơn để xóa');
+        return;
+      }
+      
+      const { mealType, groupType } = deleteSelection;
+      const mealIndex = mealType === 'breakfast' ? 0 : 
+                      mealType === 'lunch' ? 1 : 2;
+      
+      const mealData = dayData[groupType]?.[mealIndex];
+      
+      if (!mealData || !mealData.menuId) {
+        alert('Không tìm thấy thực đơn để xóa');
+        return;
+      }
+      
+      // Confirm delete
+      const confirmDelete = window.confirm(
+        `Bạn có chắc chắn muốn xóa thực đơn "${mealData.dish}" cho ${groupType} - ${mealType === 'breakfast' ? 'Bữa sáng' : mealType === 'lunch' ? 'Bữa trưa' : 'Bữa xế'}?`
+      );
+      
+      if (!confirmDelete) return;
+      
+      // Delete from backend
+      await deleteMenu(mealData.menuId);
+      
+      // Refresh data
+      await fetchMenuByDate(selectedDate);
+      
+      alert('Xóa thực đơn thành công!');
+      setShowDeleteModal(false);
+      
+    } catch (error) {
+      console.error('Error deleting menu:', error);
+      alert('Lỗi khi xóa thực đơn: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load initial data
+  useEffect(() => {
+    fetchUserInfo();
+    fetchDishes();
+    fetchMenuByDate(selectedDate);
+  }, []);
+
+  // Load menu when date changes
+  useEffect(() => {
+    fetchMenuByDate(selectedDate);
+  }, [selectedDate]);
+
+  // Get dishes by meal type
+  const getDishesByMealType = (mealTitle) => {
+    const mealTypeMap = {
+      "Bữa sáng": "main_dish",
+      "Bữa trưa": "main_dish", 
+      "Bữa xế": "snack"
+    };
     
+    const mealType = mealTypeMap[mealTitle];
+    return dishList.filter(dish => 
+      dish.loai_mon_an === mealType || dish.loai_mon_an === '' || dish.loai_mon_an === null
+    );
+  };
+
+  // Handle dish selection change - add dish to array instead of replacing
+  const handleDishChange = (day, group, index, selectedDishId) => {
+    if (!selectedDishId) return; // Don't do anything if no dish selected
+    
+    setTempMealData((prev) => {
+      const updated = { ...prev };
+      const selectedDish = dishList.find(dish => dish.id === selectedDishId);
+      
+      if (selectedDish) {
+        // Initialize dishes array if not exists
+        if (!updated[day][group][index].dishes) {
+          updated[day][group][index].dishes = [];
+        }
+        
+        // Check if dish already exists in the list
+        const existingDishIndex = updated[day][group][index].dishes.findIndex(
+          dish => dish.id === selectedDishId
+        );
+        
+        if (existingDishIndex === -1) {
+          // Add new dish to the list
+          updated[day][group][index].dishes.push({
+            id: selectedDish.id,
+            ten_mon_an: selectedDish.ten_mon_an,
+            calories_per_serving: selectedDish.calories_per_serving,
+            loai_mon_an: selectedDish.loai_mon_an
+          });
+          
+          // Update combined display text and total calories
+          const dishNames = updated[day][group][index].dishes.map(dish => dish.ten_mon_an);
+          const totalKcal = updated[day][group][index].dishes.reduce((sum, dish) => 
+            sum + (dish.calories_per_serving || 0), 0
+          );
+          
+          updated[day][group][index] = {
+            ...updated[day][group][index],
+            dish: dishNames.join(', '),
+            kcal: totalKcal
+          };
+        }
+      }
+      
+      return updated;
+    });
+  };
+
+  // Remove dish from meal by index
+  const handleRemoveDish = (day, group, mealIndex, dishIndex) => {
+    setTempMealData((prev) => {
+      const updated = { ...prev };
+      
+      if (updated[day][group][mealIndex].dishes && updated[day][group][mealIndex].dishes.length > dishIndex) {
+        // Remove dish at specific index
+        updated[day][group][mealIndex].dishes.splice(dishIndex, 1);
+        
+        // Update combined display text and total calories
+        const remainingDishes = updated[day][group][mealIndex].dishes;
+        const dishNames = remainingDishes.map(dish => dish.ten_mon_an);
+        const totalKcal = remainingDishes.reduce((sum, dish) => 
+          sum + (dish.calories_per_serving || 0), 0
+        );
+        
+        updated[day][group][mealIndex] = {
+          ...updated[day][group][mealIndex],
+          dish: dishNames.length > 0 ? dishNames.join(', ') : '',
+          kcal: totalKcal
+        };
+      }
+      
+      return updated;
+    });
+  };
+
+  // Save all changes
+  const handleSave = async () => {
+    try {
+      setLoading(true);
+      
+      // Debug user info
+      console.log('Current userInfo:', userInfo);
+      console.log('userInfo?.user?.id:', userInfo?.user?.id);
+      
+      // Kiểm tra user đã đăng nhập chưa
+      if (!userInfo?.user?.id) {
+        console.log('User not logged in or no user ID');
+        
+        // Thử fetch user info một lần nữa
+        console.log('Trying to fetch user info again...');
+        await fetchUserInfo();
+        
+        // Nếu vẫn không có, thử decode token trực tiếp
+        if (!userInfo?.user?.id) {
+          const token = localStorage.getItem('authToken'); // Sửa từ 'token' thành 'authToken'
+          if (token) {
+            try {
+              // Decode JWT token để lấy user info
+              const payload = JSON.parse(atob(token.split('.')[1]));
+              console.log('Token payload:', payload);
+              
+              if (payload.id) {
+                // Tạm thời set userInfo từ token với cấu trúc đúng
+                setUserInfo({ user: { id: payload.id, username: payload.username, role: payload.role } });
+                console.log('Set userInfo from token:', { id: payload.id, username: payload.username, role: payload.role });
+              } else {
+                alert('Vui lòng đăng nhập để lưu thực đơn');
+                return;
+              }
+            } catch (e) {
+              console.error('Error decoding token:', e);
+              alert('Vui lòng đăng nhập để lưu thực đơn');
+              return;
+            }
+          } else {
+            alert('Vui lòng đăng nhập để lưu thực đơn');
+            return;
+          }
+        }
+      }
+      
+      const promises = [];
+      const currentDayName = getDayOfWeek(selectedDate);
+      
+      console.log('💿 Before saving - tempMealData:', tempMealData);
+      console.log('📅 Current day name:', currentDayName);
+      
+      if (tempMealData && tempMealData[currentDayName]) {
+        const dayData = tempMealData[currentDayName];
+        console.log('📊 Day data to save:', dayData);
+        console.log('🏠 Nhà Trẻ meals to save:', dayData["Nhà Trẻ"]);
+        console.log('🎓 Mẫu Giáo meals to save:', dayData["Mẫu Giáo"]);
+        
+        Object.keys(dayData).forEach(group => {
+          console.log(`🔄 Processing group: "${group}" with ${dayData[group].length} meals`);
+          dayData[group].forEach((meal, index) => {
+            // Check if meal has dishes array with at least one dish
+            if (meal.dishes && meal.dishes.length > 0) {
+              // Debug: Log group value to see exact string
+              console.log(`🐛 DEBUG - Raw group value: "${group}" (length: ${group.length})`);
+              console.log(`🐛 DEBUG - Group === 'Nhà Trẻ':`, group === 'Nhà Trẻ');
+              console.log(`🐛 DEBUG - Group.trim() === 'Nhà Trẻ':`, group.trim() === 'Nhà Trẻ');
+              
+              // More robust mapping with explicit checks
+              let nhomLop;
+              if (group.trim() === 'Nhà Trẻ') {
+                nhomLop = 'nha_tre';
+              } else if (group.trim() === 'Mẫu Giáo') {
+                nhomLop = 'mau_giao';
+              } else {
+                console.warn(`⚠️ Unknown group: "${group}", defaulting to mau_giao`);
+                nhomLop = 'mau_giao';
+              }
+              
+              const loaiBuaAn = meal.title === 'Bữa sáng' ? 'breakfast' : 
+                               meal.title === 'Bữa trưa' ? 'lunch' : 'dinner';
+              
+              console.log(`💾 Saving menu - group: "${group}", nhomLop: "${nhomLop}", loaiBuaAn: "${loaiBuaAn}"`);
+              console.log(`🍽️ Dishes to save:`, meal.dishes);
+              
+              const menuData = {
+                id: meal.menuId || null,
+                ten_thuc_don: `${meal.title} - ${group} - ${selectedDate}`,
+                ngay_ap_dung: selectedDate,
+                loai_bua_an: loaiBuaAn,
+                nhom_lop: nhomLop,
+                so_tre_du_kien: 30,
+                trang_thai: 'active',
+                ghi_chu: '', // Explicitly set to empty string
+                // created_by sẽ được server tự động thêm từ token
+                mon_an_list: meal.dishes.map(dish => ({
+                  mon_an_id: dish.id,
+                  so_khau_phan: 30,
+                  ghi_chu: ''
+                }))
+              };
+              
+              promises.push(saveMenu(menuData));
+            }
+          });
+        });
+      }
+      
+      await Promise.all(promises);
+      
+      // Refresh data
+      await fetchMenuByDate(selectedDate);
+      
+      setTempMealData(null);
+      setIsEditing(false);
+      alert('Lưu thực đơn thành công!');
+      
+    } catch (error) {
+      console.error('Error saving menus:', error);
+      alert('Lỗi khi lưu thực đơn: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Render table
+  const renderWeekTable = (data) => {
+    const currentDayName = getDayOfWeek(selectedDate);
+    console.log('📋 renderWeekTable - currentDayName:', currentDayName);
+    console.log('📋 renderWeekTable - input data:', data);
+    
+    const dayData = data[currentDayName] || {
+      "Nhà Trẻ": [
+        { title: "Bữa sáng", dish: "", kcal: 0 },
+        { title: "Bữa trưa", dish: "", kcal: 0 },
+        { title: "Bữa xế", dish: "", kcal: 0 }
+      ],
+      "Mẫu Giáo": [
+        { title: "Bữa sáng", dish: "", kcal: 0 },
+        { title: "Bữa trưa", dish: "", kcal: 0 },
+        { title: "Bữa xế", dish: "", kcal: 0 }
+      ]
+    };
+    
+    console.log('📊 renderWeekTable - dayData:', dayData);
+    console.log('🏠 Nhà Trẻ data:', dayData["Nhà Trẻ"]);
+    console.log('🎓 Mẫu Giáo data:', dayData["Mẫu Giáo"]);
+
     return (
       <table className="menu-table">
         <thead>
@@ -401,72 +581,63 @@ function KitchenMenu() {
           </tr>
         </thead>
         <tbody>
-          {daysOfWeek.map((day, idx) => {
-            const nhaTreMeals = data["Nhà Trẻ"] && data["Nhà Trẻ"][day] ? data["Nhà Trẻ"][day] : [];
-            const mauGiaoMeals = data["Mẫu Giáo"] && data["Mẫu Giáo"][day] ? data["Mẫu Giáo"][day] : [];
-            
-            return (
-              <tr key={idx}>
-                <td>{day}</td>
-                {/* Nhà Trẻ cells */}
-                {mealTypes.map(mealType => {
-                  const meal = nhaTreMeals.find(m => m.meal_type === mealType.key);
-                  console.log(`🔍 ${day} Nhà Trẻ ${mealType.key}: meal =`, meal?.food_name || 'None');
-                  return (
-                    <td key={`${day}-nhatre-${mealType.key}`}>
-                      {isEditing ? (
-                        <select
-                          value={getMealFoodId(meal)}
-                          onChange={(e) => handleMealUpdate(day, "Nhà Trẻ", mealType.key, e.target.value)}
-                          disabled={saving}
-                        >
-                          <option value="">-- Chọn món --</option>
-                          {foodsDropdown.map((food) => (
-                            <option key={food.id} value={String(food.id)}>
-                              {food.name} ({food.kcal} kcal)
-                            </option>
+          <tr>
+            <td>{currentDayName}</td>
+            {["Nhà Trẻ", "Mẫu Giáo"].map((group) =>
+              dayData[group].map((meal, i) => (
+                <td key={group + i}>
+                  {isEditing ? (
+                    <div className="meal-editor">
+                      {/* Display selected dishes */}
+                      {meal.dishes && meal.dishes.length > 0 && (
+                        <div className="selected-dishes">
+                          {meal.dishes.map((dish, dishIndex) => (
+                            <div key={`${dish.id}-${dishIndex}`} className="selected-dish-item">
+                              <span className="dish-name">{dish.ten_mon_an}</span>
+                              <span className="dish-kcal">({dish.calories_per_serving} kcal)</span>
+                            </div>
                           ))}
-                        </select>
-                      ) : (
-                        <>
-                          {meal ? meal.food_name : "Chưa có"}
-                          {meal && <div className="kcal">({meal.kcal} kcal)</div>}
-                        </>
+                        </div>
                       )}
-                    </td>
-                  );
-                })}
-                {/* Mẫu Giáo cells */}
-                {mealTypes.map(mealType => {
-                  const meal = mauGiaoMeals.find(m => m.meal_type === mealType.key);
-                  console.log(`🔍 ${day} Mẫu Giáo ${mealType.key}: meal =`, meal?.food_name || 'None');
-                  return (
-                    <td key={`${day}-maugiao-${mealType.key}`}>
-                      {isEditing ? (
-                        <select
-                          value={getMealFoodId(meal)}
-                          onChange={(e) => handleMealUpdate(day, "Mẫu Giáo", mealType.key, e.target.value)}
-                          disabled={saving}
-                        >
-                          <option value="">-- Chọn món --</option>
-                          {foodsDropdown.map((food) => (
-                            <option key={food.id} value={String(food.id)}>
-                              {food.name} ({food.kcal} kcal)
-                            </option>
+                      
+                      {/* Dropdown to add new dishes */}
+                      <select
+                        value=""
+                        onChange={(e) => {
+                          handleDishChange(currentDayName, group, i, e.target.value);
+                          e.target.value = ""; // Reset dropdown after selection
+                        }}
+                        className="dish-selector"
+                      >
+                        <option value="">-- Thêm món ăn --</option>
+                        {getDishesByMealType(meal.title).map((dish) => (
+                          <option key={dish.id} value={dish.id}>
+                            {dish.ten_mon_an} ({dish.calories_per_serving} kcal)
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  ) : (
+                    <div className="meal-display">
+                      {meal.dishes && meal.dishes.length > 0 ? (
+                        <div className="dishes-list">
+                          {meal.dishes.map((dish, dishIndex) => (
+                            <div key={`view-${dish.id}-${dishIndex}`} className="dish-item">
+                              <div className="dish-name">{dish.ten_mon_an}</div>
+                              <div className="dish-kcal">({dish.calories_per_serving} kcal)</div>
+                            </div>
                           ))}
-                        </select>
+                          <div className="total-kcal">Tổng: ({meal.kcal} kcal)</div>
+                        </div>
                       ) : (
-                        <>
-                          {meal ? meal.food_name : "Chưa có"}
-                          {meal && <div className="kcal">({meal.kcal} kcal)</div>}
-                        </>
+                        <div className="no-menu">Chưa có thực đơn</div>
                       )}
-                    </td>
-                  );
-                })}
-              </tr>
-            );
-          })}
+                    </div>
+                  )}
+                </td>
+              ))
+            )}
+          </tr>
         </tbody>
       </table>
     );
@@ -479,75 +650,169 @@ function KitchenMenu() {
       <div className="menu-header">
         <div className="menu-title">Thực đơn</div>
         <div className="tabs">
-          <button className="active">Theo Tuần (Chỉnh sửa)</button>
+          <button className="active">Theo Ngày</button>
         </div>
         <div className="menu-actions">
-          {/* Toggle Edit Mode */}
           <button
-            className={`btn-edit ${isEditing ? 'cancel' : 'edit'}`}
-            onClick={() => setIsEditing(!isEditing)}
-            disabled={saving}
+            className="btn-save"
+            onClick={handleSave}
+            disabled={loading || !isEditing}
           >
-            {isEditing ? "Hủy chỉnh sửa" : "Chỉnh sửa"}
+            {loading ? "Đang lưu..." : "Lưu"}
+          </button>
+
+          <button
+            className="btn-delete"
+            onClick={() => setShowDeleteModal(true)}
+            disabled={loading}
+            style={{
+              backgroundColor: '#dc3545',
+              color: 'white',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: '4px',
+              marginLeft: '8px',
+              cursor: loading ? 'not-allowed' : 'pointer'
+            }}
+          >
+            Xóa
+          </button>
+
+          <button
+            className="btn-edit"
+            onClick={() => {
+              if (isEditing) {
+                setTempMealData(null);
+                setIsEditing(false);
+              } else {
+                setTempMealData(JSON.parse(JSON.stringify(weeklyMealData)));
+                setIsEditing(true);
+              }
+            }}
+            disabled={loading}
+          >
+            {isEditing ? "Hủy" : "Sửa"}
           </button>
         </div>
       </div>
 
-      {/* Tuần hiện tại và điều hướng */}
       <div className="date-field">
-        <label>Tuần từ {formatDate(currentWeekStart)} đến {formatDate(getWeekEnd(currentWeekStart))}</label>
-        <div className="week-navigation">
-          <button 
-            className="btn-week-nav" 
-            onClick={goToPreviousWeek}
-            disabled={saving}
-            title="Tuần trước"
-          >
-            ◀
-          </button>
-          <button 
-            className="btn-week-nav" 
-            onClick={goToNextWeek}
-            disabled={saving}
-            title="Tuần sau"
-          >
-            ▶
-          </button>
-        </div>
+        <label htmlFor="date">Ngày:</label>
+        <input
+          type="date"
+          id="date"
+          value={selectedDate}
+          onChange={(e) => setSelectedDate(e.target.value)}
+          disabled={loading}
+        />
+        <span className="weekday">{getDayOfWeek(selectedDate)}</span>
       </div>
 
-      {/* Loading state */}
-      {loading && (
-        <div className="loading-message">
-          Đang tải thực đơn...
-        </div>
+      {loading ? (
+        <div className="loading">Đang tải...</div>
+      ) : (
+        (() => {
+          const dataToRender = isEditing ? tempMealData : weeklyMealData;
+          console.log('🖼️ Rendering table with data:', dataToRender);
+          console.log('🔄 isEditing:', isEditing);
+          return renderWeekTable(dataToRender);
+        })()
       )}
 
-      {/* Error state */}
-      {error && (
-        <div className="error-message">
-          <p>{error}</p>
-          <button onClick={loadWeeklyMeals} className="retry-button">
-            Thử lại
-          </button>
-        </div>
-      )}
+      {/* Delete Modal */}
+      {showDeleteModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            padding: '24px',
+            borderRadius: '8px',
+            minWidth: '400px',
+            maxWidth: '500px'
+          }}>
+            <h3 style={{ marginTop: 0, color: '#dc3545' }}>Xóa Thực Đơn</h3>
+            
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
+                Chọn bữa ăn:
+              </label>
+              <select
+                value={deleteSelection.mealType}
+                onChange={(e) => setDeleteSelection(prev => ({ ...prev, mealType: e.target.value }))}
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  fontSize: '14px'
+                }}
+              >
+                <option value="breakfast">Bữa sáng</option>
+                <option value="lunch">Bữa trưa</option>
+                <option value="dinner">Bữa xế</option>
+              </select>
+            </div>
 
-      {/* Saving state */}
-      {saving && (
-        <div className="saving-message">
-          Đang lưu thay đổi...
-        </div>
-      )}
+            <div style={{ marginBottom: '24px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
+                Chọn nhóm lớp:
+              </label>
+              <select
+                value={deleteSelection.groupType}
+                onChange={(e) => setDeleteSelection(prev => ({ ...prev, groupType: e.target.value }))}
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  fontSize: '14px'
+                }}
+              >
+                <option value="Nhà Trẻ">Nhà Trẻ</option>
+                <option value="Mẫu Giáo">Mẫu Giáo</option>
+              </select>
+            </div>
 
-      {/* Bảng tuần */}
-      {!loading && !error && Object.keys(weeklyMealData).length > 0 && (
-        renderWeekTable(weeklyMealData)
-      )}
-
-      {!loading && !error && Object.keys(weeklyMealData).length === 0 && (
-        <div className="no-data-message">
-          Không có dữ liệu thực đơn cho tuần này
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                disabled={loading}
+                style={{
+                  padding: '8px 16px',
+                  border: '1px solid #ddd',
+                  backgroundColor: 'white',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleDeleteMenu}
+                disabled={loading}
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: '#dc3545',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: loading ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {loading ? 'Đang xóa...' : 'Xóa'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -10,6 +10,727 @@ class Meal {
     }
 
     /**
+     * Lấy tất cả món ăn để hiển thị trong dropdown
+     */
+    async getAllDishes() {
+        try {
+            const query = `
+                SELECT 
+                    id, ten_mon_an, mo_ta,
+                    total_calories as calories_per_serving, 
+                    total_protein as protein_per_serving,
+                    total_carbs as carbs_per_serving, 
+                    total_fat as fat_per_serving,
+                    loai_mon as loai_mon_an,
+                    do_tuoi_phu_hop, thoi_gian_che_bien, khau_phan_chuan
+                FROM mon_an 
+                WHERE (trang_thai = 'active' OR trang_thai = '' OR trang_thai IS NULL)
+                ORDER BY loai_mon, ten_mon_an
+            `;
+            
+            const dishes = await this.db.query(query);
+            return dishes || [];
+        } catch (error) {
+            console.error('Error getting all dishes:', error);
+            throw new Error('Lỗi khi lấy danh sách món ăn: ' + error.message);
+        }
+    }
+
+    /**
+     * Tạo thực đơn với chi tiết món ăn
+     */
+    async createMenuWithDetails(menuData) {
+        try {
+            const { v4: uuidv4 } = require('uuid');
+            const menuId = uuidv4();
+            
+            // Debug: Log dữ liệu nhận vào
+            console.log('🐛 DEBUG createMenuWithDetails - menuData:', menuData);
+            
+            const {
+                ten_thuc_don,
+                ngay_ap_dung,
+                loai_bua_an,
+                nhom_lop,
+                so_tre_du_kien = 30,
+                trang_thai = 'active',
+                created_by,
+                ghi_chu = '',
+                mon_an_list = [] // Array các món ăn với số lượng
+            } = menuData;
+            
+            // Debug: Log các giá trị sau destructuring
+            console.log('🐛 DEBUG - nhom_lop sau destructuring:', nhom_lop);
+            console.log('🐛 DEBUG - ten_thuc_don:', ten_thuc_don);
+            console.log('🐛 DEBUG - loai_bua_an:', loai_bua_an);
+
+            // Validation
+            if (!ten_thuc_don || !ngay_ap_dung || !loai_bua_an) {
+                throw new Error('Thiếu thông tin bắt buộc: tên thực đơn, ngày áp dụng, loại bữa ăn');
+            }
+
+            // Tạo thực đơn chính
+            const menuQuery = `
+                INSERT INTO thuc_don (
+                    id, ten_thuc_don, ngay_ap_dung, loai_bua_an,
+                    nhom_lop, so_tre_du_kien, trang_thai,
+                    created_by, ghi_chu, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+            `;
+
+            const menuValues = [
+                menuId, ten_thuc_don, ngay_ap_dung, loai_bua_an,
+                nhom_lop, so_tre_du_kien, trang_thai,
+                created_by, ghi_chu
+            ];
+            
+            // Debug: Log query và values
+            console.log('🐛 DEBUG - menuQuery:', menuQuery);
+            console.log('🐛 DEBUG - menuValues:', menuValues);
+            console.log('🐛 DEBUG - nhom_lop trong values (index 4):', menuValues[4]);
+
+            await this.db.query(menuQuery, menuValues);
+
+            // Thêm chi tiết món ăn
+            if (mon_an_list.length > 0) {
+                for (const monAn of mon_an_list) {
+                    // Map loai_bua_an sang tiếng Việt cho cột buoi
+                    const buoiMap = {
+                        'breakfast': 'Sáng',
+                        'lunch': 'Trưa', 
+                        'dinner': 'Tối',
+                        'snack': 'Xế'
+                    };
+                    
+                    const detailQuery = `
+                        INSERT INTO chi_tiet_thuc_don (
+                            thuc_don_id, mon_an_id, buoi, so_khau_phan, 
+                            ghi_chu
+                        ) VALUES (?, ?, ?, ?, ?)
+                    `;
+                    
+                    await this.db.query(detailQuery, [
+                        menuId, monAn.mon_an_id, buoiMap[loai_bua_an] || 'Trưa',
+                        monAn.so_khau_phan || so_tre_du_kien, 
+                        monAn.ghi_chu || ''
+                    ]);
+                }
+            }
+
+            return await this.getMenuWithDetails(menuId);
+
+        } catch (error) {
+            console.error('Error creating menu with details:', error);
+            throw new Error('Lỗi khi tạo thực đơn: ' + error.message);
+        }
+    }
+
+    /**
+     * Lấy thực đơn với chi tiết món ăn
+     */
+    async getMenuWithDetails(menuId) {
+        try {
+            // Lấy thông tin thực đơn
+            const menuQuery = `
+                SELECT * FROM thuc_don WHERE id = ?
+            `;
+            const menu = await this.db.query(menuQuery, [menuId]);
+            
+            if (!menu || menu.length === 0) {
+                return null;
+            }
+
+            // Lấy chi tiết món ăn
+            const detailQuery = `
+                SELECT 
+                    ctd.id as chi_tiet_id,
+                    ctd.so_khau_phan,
+                    ctd.ghi_chu as chi_tiet_ghi_chu,
+                    ma.*
+                FROM chi_tiet_thuc_don ctd
+                JOIN mon_an ma ON ctd.mon_an_id = ma.id
+                WHERE ctd.thuc_don_id = ?
+                ORDER BY ma.loai_mon, ma.ten_mon_an
+            `;
+            
+            const details = await this.db.query(detailQuery, [menuId]);
+
+            return {
+                ...menu[0],
+                chi_tiet_mon_an: details || []
+            };
+
+        } catch (error) {
+            console.error('Error getting menu with details:', error);
+            throw new Error('Lỗi khi lấy chi tiết thực đơn: ' + error.message);
+        }
+    }
+
+    /**
+     * Lấy thực đơn theo ngày với chi tiết
+     */
+    async getMenuByDateWithDetails(date, lopApDung = null) {
+        try {
+            let query = `
+                SELECT 
+                    td.id, td.ten_thuc_don, td.ngay_ap_dung, 
+                    td.loai_bua_an, td.nhom_lop, td.so_tre_du_kien, td.trang_thai,
+                    td.ghi_chu, td.created_by, td.created_at, 
+                    ma.ten_mon_an, 
+                    ma.total_calories as calories_per_serving, 
+                    ma.total_protein as protein_per_serving,
+                    ma.total_carbs as carbs_per_serving, 
+                    ma.total_fat as fat_per_serving,
+                    ma.loai_mon as loai_mon_an,
+                    ctd.so_khau_phan, ctd.ghi_chu as chi_tiet_ghi_chu
+                FROM thuc_don td
+                LEFT JOIN chi_tiet_thuc_don ctd ON td.id = ctd.thuc_don_id
+                LEFT JOIN mon_an ma ON ctd.mon_an_id = ma.id
+                WHERE DATE(td.ngay_ap_dung) = ?
+            `;
+            const values = [date];
+
+            // ⚠️ Không còn lọc theo nhom_lop vì bảng không có cột này
+            // Nếu bạn có thêm cột lop_ap_dung trong tương lai, có thể bật lại điều kiện này:
+             if (lopApDung) {
+                 query += ' AND td.lop_ap_dung = ?';
+                 values.push(lopApDung);
+             }
+
+            query += ' ORDER BY td.loai_bua_an, ma.loai_mon';
+
+            const results = await this.db.query(query, values);
+            console.log('🔍 SQL Results sample (first row):', results.length > 0 ? results[0] : 'NO RESULTS');
+            console.log('🔍 nhom_lop values found:', results.map(r => `${r.loai_bua_an}: ${r.nhom_lop}`));
+
+            if (!results || results.length === 0) {
+                console.warn("⚠️ Không có chi tiết món ăn cho ngày:", date);
+                return [];
+            }
+
+            // Nhóm theo loại bữa ăn
+            const groupedMenus = this.groupMenusByMealType(results);
+            return groupedMenus;
+
+        } catch (error) {
+            console.error('Error getting menu by date with details:', error);
+            throw new Error('Lỗi khi lấy thực đơn theo ngày: ' + error.message);
+        }
+    }
+
+    /**
+     * Nhóm thực đơn theo loại bữa ăn
+     */
+    groupMenusByMealType(results) {
+        const grouped = {};
+
+        results.forEach(item => {
+            const key = `${item.loai_bua_an}_${item.nhom_lop || 'all'}`;
+            
+            if (!grouped[key]) {
+                grouped[key] = {
+                    thuc_don_info: {
+                        id: item.id,
+                        ten_thuc_don: item.ten_thuc_don,
+                        ngay_ap_dung: item.ngay_ap_dung,
+                        loai_bua_an: item.loai_bua_an,
+                        nhom_lop: item.nhom_lop,
+                        so_tre_du_kien: item.so_tre_du_kien,
+                        trang_thai: item.trang_thai
+                    },
+                    mon_an_list: []
+                };
+            }
+
+            if (item.ten_mon_an) {
+                grouped[key].mon_an_list.push({
+                    ten_mon_an: item.ten_mon_an,
+                    calories_per_serving: item.calories_per_serving,
+                    protein_per_serving: item.protein_per_serving,
+                    carbs_per_serving: item.carbs_per_serving,
+                    fat_per_serving: item.fat_per_serving,
+                    gia_tien: item.gia_tien,
+                    so_khau_phan: item.so_khau_phan,
+                    ghi_chu: item.chi_tiet_ghi_chu
+                });
+            }
+        });
+
+        return grouped;
+    }
+
+    /**
+     * Cập nhật thực đơn với chi tiết món ăn
+     */
+    async updateMenuWithDetails(menuId, updateData) {
+        try {
+            console.log('🔍 Debug updateMenuWithDetails - menuId:', menuId);
+            console.log('🔍 Debug updateMenuWithDetails - updateData:', JSON.stringify(updateData, null, 2));
+            
+            const {
+                ten_thuc_don,
+                ngay_ap_dung,
+                loai_bua_an,
+                nhom_lop, // Frontend gửi nhom_lop không phải lop_ap_dung
+                so_tre_du_kien,
+                trang_thai,
+                ghi_chu,
+                mon_an_list // KHÔNG gán default value = []
+            } = updateData;
+
+            console.log('🔍 Extracted values:');
+            console.log('  ten_thuc_don:', ten_thuc_don);
+            console.log('  ngay_ap_dung:', ngay_ap_dung);
+            console.log('  loai_bua_an:', loai_bua_an);
+            console.log('  nhom_lop:', nhom_lop);
+            console.log('  so_tre_du_kien:', so_tre_du_kien);
+            console.log('  trang_thai:', trang_thai);
+            console.log('  ghi_chu:', ghi_chu);
+            console.log('  mon_an_list:', mon_an_list);
+
+            // Cập nhật thông tin thực đơn chính
+            const menuFields = [];
+            const menuValues = [];
+
+            if (ten_thuc_don !== undefined && ten_thuc_don !== null) {
+                menuFields.push('ten_thuc_don = ?');
+                menuValues.push(ten_thuc_don);
+            }
+            if (ngay_ap_dung !== undefined && ngay_ap_dung !== null) {
+                menuFields.push('ngay_ap_dung = ?');
+                menuValues.push(ngay_ap_dung);
+            }
+            if (loai_bua_an !== undefined && loai_bua_an !== null) {
+                menuFields.push('loai_bua_an = ?');
+                menuValues.push(loai_bua_an);
+            }
+            if (nhom_lop !== undefined && nhom_lop !== null) {
+                menuFields.push('nhom_lop = ?');
+                menuValues.push(nhom_lop);
+            }
+            if (so_tre_du_kien !== undefined && so_tre_du_kien !== null) {
+                menuFields.push('so_tre_du_kien = ?');
+                menuValues.push(so_tre_du_kien);
+            }
+            if (trang_thai !== undefined && trang_thai !== null) {
+                menuFields.push('trang_thai = ?');
+                menuValues.push(trang_thai);
+            }
+            if (ghi_chu !== undefined) {
+                menuFields.push('ghi_chu = ?');
+                menuValues.push(ghi_chu || ''); // Convert null/undefined to empty string
+            }
+            // Bỏ updated_by vì bảng thuc_don không có cột này
+
+            if (menuFields.length > 0) {
+                menuValues.push(menuId);
+                const menuQuery = `
+                    UPDATE thuc_don 
+                    SET ${menuFields.join(', ')}, updated_at = NOW() 
+                    WHERE id = ?
+                `;
+                console.log('🔍 Debug SQL Query:', menuQuery);
+                console.log('🔍 Debug menuValues:', menuValues);
+                console.log('🔍 Checking for undefined values:');
+                menuValues.forEach((val, idx) => {
+                    console.log(`  [${idx}]: ${val} (type: ${typeof val})`);
+                    if (val === undefined) {
+                        console.error(`❌ FOUND UNDEFINED at index ${idx}!`);
+                    }
+                });
+                await this.db.query(menuQuery, menuValues);
+            }
+
+            // Cập nhật chi tiết món ăn chỉ khi có dữ liệu món ăn được gửi lên
+            // Kiểm tra xem có gửi mon_an_list từ frontend không (có thể là array rỗng hoặc có dữ liệu)
+            if (updateData.hasOwnProperty('mon_an_list')) {
+                console.log('🔍 Updating dish details - mon_an_list provided:', mon_an_list);
+                console.log('🔍 Will update dish details for menu:', menuId);
+                
+                // Xóa chi tiết cũ chỉ khi thực sự cần cập nhật
+                await this.db.query('DELETE FROM chi_tiet_thuc_don WHERE thuc_don_id = ?', [menuId]);
+                console.log('🔍 Deleted existing dish details for menu:', menuId);
+
+                // Thêm chi tiết mới nếu có
+                if (mon_an_list.length > 0) {
+                    console.log('🔍 Adding', mon_an_list.length, 'new dishes to menu:', menuId);
+                    for (const monAn of mon_an_list) {
+                        // Map loai_bua_an sang tiếng Việt cho cột buoi
+                        const buoiMap = {
+                            'breakfast': 'Sáng',
+                            'lunch': 'Trưa', 
+                            'dinner': 'Tối',
+                            'snack': 'Xế'
+                        };
+                        
+                        const detailQuery = `
+                            INSERT INTO chi_tiet_thuc_don (
+                                thuc_don_id, mon_an_id, buoi, so_khau_phan, 
+                                ghi_chu
+                            ) VALUES (?, ?, ?, ?, ?)
+                        `;
+                        
+                        // Validate monAn object to avoid undefined values
+                        const validatedMonAn = {
+                            mon_an_id: monAn.mon_an_id,
+                            so_khau_phan: monAn.so_khau_phan || so_tre_du_kien || 30,
+                            ghi_chu: monAn.ghi_chu || ''
+                        };
+                        
+                        if (!validatedMonAn.mon_an_id) {
+                            console.error('❌ Invalid mon_an_id:', monAn);
+                            continue; // Skip invalid dishes
+                        }
+                        
+                        await this.db.query(detailQuery, [
+                            menuId, validatedMonAn.mon_an_id, buoiMap[loai_bua_an] || 'Trưa',
+                            validatedMonAn.so_khau_phan, validatedMonAn.ghi_chu
+                        ]);
+                    }
+                }
+            } else {
+                console.log('🔍 mon_an_list not provided - keeping existing dish details');
+            }
+
+            return await this.getMenuWithDetails(menuId);
+
+        } catch (error) {
+            console.error('Error updating menu with details:', error);
+            throw new Error('Lỗi khi cập nhật thực đơn: ' + error.message);
+        }
+    }
+
+    /**
+     * Cập nhật thực đơn thông minh - dành cho nút Sửa/Lưu từ frontend
+     * Chỉ cập nhật những thông tin thay đổi, bảo toàn dữ liệu cũ
+     */
+    async updateMenuSmart(menuId, updateData) {
+        try {
+            console.log('🔍 Smart Update - menuId:', menuId);
+            console.log('🔍 Smart Update - updateData:', JSON.stringify(updateData, null, 2));
+            
+            const {
+                ten_thuc_don,
+                ngay_ap_dung,
+                loai_bua_an,
+                nhom_lop,
+                so_tre_du_kien,
+                trang_thai,
+                ghi_chu,
+                mon_an_list,
+                update_mode = 'smart' // 'smart' hoặc 'replace'
+            } = updateData;
+
+            // Lấy dữ liệu hiện tại của menu
+            const currentMenu = await this.getMenuWithDetails(menuId);
+            if (!currentMenu) {
+                throw new Error('Không tìm thấy thực đơn để cập nhật');
+            }
+
+            console.log('🔍 Current menu has', currentMenu.chi_tiet_mon_an?.length || 0, 'dishes');
+            
+            // 1. Cập nhật thông tin cơ bản của thực đơn
+            const basicUpdateData = {
+                ten_thuc_don,
+                ngay_ap_dung,
+                loai_bua_an,
+                nhom_lop,
+                so_tre_du_kien,
+                trang_thai,
+                ghi_chu
+            };
+
+            // Lọc ra những field có giá trị
+            const filteredBasicData = {};
+            Object.keys(basicUpdateData).forEach(key => {
+                if (basicUpdateData[key] !== undefined && basicUpdateData[key] !== null) {
+                    filteredBasicData[key] = basicUpdateData[key];
+                }
+            });
+
+            if (Object.keys(filteredBasicData).length > 0) {
+                await this.updateMenuBasicInfo(menuId, filteredBasicData);
+                console.log('✅ Updated basic menu info');
+            }
+
+            // 2. Xử lý món ăn một cách thông minh
+            if (mon_an_list !== undefined) {
+                console.log('🔍 Processing dish list - mode:', update_mode);
+                
+                // Kiểm tra và làm sạch dữ liệu món ăn
+                let validDishes = [];
+                let hasInvalidDishes = false;
+                
+                if (Array.isArray(mon_an_list)) {
+                    validDishes = mon_an_list.filter(dish => {
+                        if (!dish.mon_an_id) {
+                            hasInvalidDishes = true;
+                            console.log('⚠️ Found invalid dish (missing mon_an_id):', dish);
+                            return false;
+                        }
+                        return true;
+                    });
+                }
+                
+                if (hasInvalidDishes) {
+                    console.log(`⚠️ Filtered out ${mon_an_list.length - validDishes.length} invalid dishes`);
+                    
+                    // Nếu tất cả món ăn đều invalid, chỉ cập nhật thông tin cơ bản
+                    if (validDishes.length === 0) {
+                        console.log('⚠️ All dishes invalid - keeping existing dishes');
+                        return await this.getMenuWithDetails(menuId);
+                    }
+                }
+                
+                if (update_mode === 'replace') {
+                    // Mode thay thế: xóa tất cả và thêm mới
+                    console.log('🔄 Replace mode: replacing all dishes');
+                    await this.db.query('DELETE FROM chi_tiet_thuc_don WHERE thuc_don_id = ?', [menuId]);
+                    
+                    if (validDishes.length > 0) {
+                        for (const dish of validDishes) {
+                            try {
+                                await this.addDishToMenu(menuId, dish);
+                            } catch (error) {
+                                console.log('❌ Failed to add dish in replace mode:', dish, 'Error:', error.message);
+                            }
+                        }
+                    }
+                } else {
+                    // Mode thông minh: merge dữ liệu
+                    console.log('🧠 Smart mode: merging with existing dishes');
+                    
+                    if (validDishes.length > 0) {
+                        const currentDishes = currentMenu.chi_tiet_mon_an || [];
+                        const currentDishIds = currentDishes.map(d => d.id);
+                        const newDishIds = validDishes.map(d => d.mon_an_id);
+                        
+                        // Xóa những món không còn trong danh sách mới
+                        for (const currentDish of currentDishes) {
+                            if (!newDishIds.includes(currentDish.id)) {
+                                console.log('🗑️ Removing dish:', currentDish.ten_mon_an);
+                                try {
+                                    await this.removeDishFromMenu(menuId, currentDish.id);
+                                } catch (error) {
+                                    console.log('❌ Failed to remove dish:', currentDish.ten_mon_an, 'Error:', error.message);
+                                }
+                            }
+                        }
+                        
+                        // Thêm/cập nhật những món trong danh sách mới
+                        for (const newDish of validDishes) {
+                            if (currentDishIds.includes(newDish.mon_an_id)) {
+                                console.log('🔄 Updating dish:', newDish.mon_an_id);
+                                // Cập nhật món hiện có
+                                try {
+                                    await this.db.query(
+                                        'UPDATE chi_tiet_thuc_don SET so_khau_phan = ?, ghi_chu = ? WHERE thuc_don_id = ? AND mon_an_id = ?',
+                                        [newDish.so_khau_phan || 30, newDish.ghi_chu || '', menuId, newDish.mon_an_id]
+                                    );
+                                } catch (error) {
+                                    console.log('❌ Failed to update dish:', newDish.mon_an_id, 'Error:', error.message);
+                                }
+                            } else {
+                                console.log('➕ Adding new dish:', newDish.mon_an_id);
+                                // Thêm món mới
+                                try {
+                                    await this.addDishToMenu(menuId, newDish);
+                                } catch (error) {
+                                    console.log('❌ Failed to add dish:', newDish, 'Error:', error.message);
+                                    // Continue với món tiếp theo thay vì fail toàn bộ
+                                }
+                            }
+                        }
+                    } else {
+                        console.log('🔍 No valid dishes to process - keeping existing dishes');
+                    }
+                }
+            } else {
+                console.log('🔍 No dish list provided - keeping existing dishes');
+            }
+
+            return await this.getMenuWithDetails(menuId);
+
+        } catch (error) {
+            console.error('Error in smart update:', error);
+            throw new Error('Lỗi khi cập nhật thực đơn thông minh: ' + error.message);
+        }
+    }
+
+    /**
+     * Thêm món ăn vào thực đơn (không xóa món cũ)
+     */
+    async addDishToMenu(menuId, dishData) {
+        try {
+            const { mon_an_id, so_khau_phan = 30, ghi_chu = '', loai_bua_an = 'lunch' } = dishData;
+
+            if (!mon_an_id) {
+                throw new Error('Thiếu ID món ăn');
+            }
+
+            // Kiểm tra thực đơn có tồn tại không
+            const menu = await this.db.query('SELECT * FROM thuc_don WHERE id = ?', [menuId]);
+            if (!menu || menu.length === 0) {
+                throw new Error('Không tìm thấy thực đơn');
+            }
+
+            // Kiểm tra món ăn đã có trong thực đơn chưa
+            const existing = await this.db.query(
+                'SELECT * FROM chi_tiet_thuc_don WHERE thuc_don_id = ? AND mon_an_id = ?', 
+                [menuId, mon_an_id]
+            );
+
+            if (existing && existing.length > 0) {
+                // Cập nhật số khẩu phần nếu món đã có
+                await this.db.query(
+                    'UPDATE chi_tiet_thuc_don SET so_khau_phan = ?, ghi_chu = ? WHERE thuc_don_id = ? AND mon_an_id = ?',
+                    [so_khau_phan, ghi_chu, menuId, mon_an_id]
+                );
+                console.log('🔄 Updated existing dish in menu:', menuId);
+            } else {
+                // Thêm món mới
+                const buoiMap = {
+                    'breakfast': 'Sáng',
+                    'lunch': 'Trưa', 
+                    'dinner': 'Tối',
+                    'snack': 'Xế'
+                };
+
+                await this.db.query(
+                    'INSERT INTO chi_tiet_thuc_don (thuc_don_id, mon_an_id, buoi, so_khau_phan, ghi_chu) VALUES (?, ?, ?, ?, ?)',
+                    [menuId, mon_an_id, buoiMap[loai_bua_an] || 'Trưa', so_khau_phan, ghi_chu]
+                );
+                console.log('➕ Added new dish to menu:', menuId);
+            }
+
+            return await this.getMenuWithDetails(menuId);
+
+        } catch (error) {
+            console.error('Error adding dish to menu:', error);
+            throw new Error('Lỗi khi thêm món vào thực đơn: ' + error.message);
+        }
+    }
+
+    /**
+     * Xóa món ăn khỏi thực đơn
+     */
+    async removeDishFromMenu(menuId, monAnId) {
+        try {
+            if (!monAnId) {
+                throw new Error('Thiếu ID món ăn');
+            }
+
+            const result = await this.db.query(
+                'DELETE FROM chi_tiet_thuc_don WHERE thuc_don_id = ? AND mon_an_id = ?',
+                [menuId, monAnId]
+            );
+
+            if (result.affectedRows === 0) {
+                throw new Error('Không tìm thấy món ăn trong thực đơn');
+            }
+
+            console.log('➖ Removed dish from menu:', menuId);
+            return await this.getMenuWithDetails(menuId);
+
+        } catch (error) {
+            console.error('Error removing dish from menu:', error);
+            throw new Error('Lỗi khi xóa món khỏi thực đơn: ' + error.message);
+        }
+    }
+
+    /**
+     * Cập nhật chỉ thông tin cơ bản của thực đơn (không động đến chi tiết món ăn)
+     */
+    async updateMenuBasicInfo(menuId, updateData) {
+        try {
+            const {
+                ten_thuc_don,
+                ngay_ap_dung,
+                loai_bua_an,
+                nhom_lop,
+                so_tre_du_kien,
+                trang_thai,
+                ghi_chu
+            } = updateData;
+
+            // Cập nhật chỉ thông tin thực đơn chính
+            const fields = [];
+            const values = [];
+
+            if (ten_thuc_don !== undefined && ten_thuc_don !== null) {
+                fields.push('ten_thuc_don = ?');
+                values.push(ten_thuc_don);
+            }
+            if (ngay_ap_dung !== undefined && ngay_ap_dung !== null) {
+                fields.push('ngay_ap_dung = ?');
+                values.push(ngay_ap_dung);
+            }
+            if (loai_bua_an !== undefined && loai_bua_an !== null) {
+                fields.push('loai_bua_an = ?');
+                values.push(loai_bua_an);
+            }
+            if (nhom_lop !== undefined && nhom_lop !== null) {
+                fields.push('nhom_lop = ?');
+                values.push(nhom_lop);
+            }
+            if (so_tre_du_kien !== undefined && so_tre_du_kien !== null) {
+                fields.push('so_tre_du_kien = ?');
+                values.push(so_tre_du_kien);
+            }
+            if (trang_thai !== undefined && trang_thai !== null) {
+                fields.push('trang_thai = ?');
+                values.push(trang_thai);
+            }
+            if (ghi_chu !== undefined) {
+                fields.push('ghi_chu = ?');
+                values.push(ghi_chu || '');
+            }
+
+            if (fields.length === 0) {
+                throw new Error('Không có dữ liệu để cập nhật');
+            }
+
+            values.push(menuId);
+            const query = `UPDATE thuc_don SET ${fields.join(', ')}, updated_at = NOW() WHERE id = ?`;
+            
+            await this.db.query(query, values);
+            return await this.getMenuWithDetails(menuId);
+
+        } catch (error) {
+            console.error('Error updating menu basic info:', error);
+            throw new Error('Lỗi khi cập nhật thông tin thực đơn: ' + error.message);
+        }
+    }
+
+    /**
+     * Xóa thực đơn với chi tiết món ăn
+     */
+    async deleteMenuWithDetails(menuId) {
+        try {
+            // Kiểm tra xem thực đơn có tồn tại không
+            const menu = await this.db.query('SELECT * FROM thuc_don WHERE id = ?', [menuId]);
+            if (!menu || menu.length === 0) {
+                throw new Error('Không tìm thấy thực đơn để xóa');
+            }
+
+            // Xóa chi tiết món ăn trước (vì có foreign key constraint)
+            await this.db.query('DELETE FROM chi_tiet_thuc_don WHERE thuc_don_id = ?', [menuId]);
+
+            // Xóa thực đơn chính
+            await this.db.query('DELETE FROM thuc_don WHERE id = ?', [menuId]);
+
+            return {
+                id: menuId,
+                message: 'Xóa thực đơn thành công'
+            };
+
+        } catch (error) {
+            console.error('Error deleting menu with details:', error);
+            throw new Error('Lỗi khi xóa thực đơn: ' + error.message);
+        }
+    }
+
+    /**
      * Tạo thực đơn mới
      */
     async create(mealData) {
@@ -425,711 +1146,27 @@ class Meal {
     }
 
     /**
-     * Lấy chi tiết bữa ăn với thông tin đầy đủ các món ăn
-     */
-    async getMealDetails(mealId) {
-        try {
-            const query = `
-                SELECT 
-                    td.id,
-                    td.ngay_ap_dung,
-                    td.loai_bua_an,
-                    td.class_id as lop_ap_dung,
-                    td.ten_thuc_don as ten_bua_an,
-                    td.ghi_chu,
-                    ma.id as mon_an_id,
-                    ma.ten_mon_an,
-                    ma.mo_ta,
-                    ma.total_calories as kcal,
-                    ma.total_protein as protein,
-                    ma.total_fat as fat,
-                    ma.total_carbs as carbs,
-                    ma.huong_dan_che_bien,
-                    ctd.so_khau_phan,
-                    ctd.thu_tu_phuc_vu
-                FROM thuc_don td
-                LEFT JOIN chi_tiet_thuc_don ctd ON td.id = ctd.thuc_don_id
-                LEFT JOIN mon_an ma ON ctd.mon_an_id = ma.id
-                WHERE td.id = ?
-                ORDER BY ctd.thu_tu_phuc_vu ASC
-            `;
-
-            const rows = await this.db.query(query, [mealId]);
-            
-            if (!rows || rows.length === 0) {
-                return null;
-            }
-
-            // Lấy thông tin cơ bản của bữa ăn từ row đầu tiên
-            const mealInfo = {
-                id: rows[0].id,
-                ngay_ap_dung: rows[0].ngay_ap_dung,
-                loai_bua_an: rows[0].loai_bua_an,
-                lop_ap_dung: rows[0].lop_ap_dung,
-                ten_bua_an: rows[0].ten_bua_an,
-                ghi_chu: rows[0].ghi_chu,
-                mon_an: [],
-                tong_kcal: 0
-            };
-
-            // Xử lý danh sách món ăn
-            let totalKcal = 0;
-            rows.forEach(row => {
-                if (row.mon_an_id) {
-                    const monAn = {
-                        id: row.mon_an_id,
-                        ten_mon_an: row.ten_mon_an,
-                        mo_ta: row.mo_ta,
-                        kcal: row.kcal || 0,
-                        protein: row.protein || 0,
-                        fat: row.fat || 0,
-                        carbs: row.carbs || 0,
-                        huong_dan_che_bien: row.huong_dan_che_bien,
-                        so_khau_phan: row.so_khau_phan,
-                        thu_tu_phuc_vu: row.thu_tu_phuc_vu
-                    };
-                    
-                    mealInfo.mon_an.push(monAn);
-                    totalKcal += (row.kcal || 0) * (row.so_khau_phan || 1);
-                }
-            });
-
-            mealInfo.tong_kcal = Math.round(totalKcal);
-
-            return mealInfo;
-
-        } catch (error) {
-            console.error('Error getting meal details:', error);
-            throw new Error('Lỗi khi lấy chi tiết bữa ăn: ' + error.message);
-        }
-    }
-
-    /**
-     * Lấy danh sách thư viện món ăn (từ DB + JSON tĩnh)
-     */
-    async getAllFoods() {
-        try {
-            const fs = require('fs');
-            const path = require('path');
-
-            // Lấy món ăn từ database
-            const dbQuery = `
-                SELECT 
-                    id,
-                    ten_mon_an,
-                    mo_ta,
-                    loai_mon,
-                    do_tuoi_phu_hop,
-                    total_calories as kcal,
-                    total_protein as protein,
-                    total_fat as fat,
-                    total_carbs as carbs,
-                    huong_dan_che_bien,
-                    trang_thai
-                FROM mon_an 
-                WHERE trang_thai = 'active'
-                ORDER BY loai_mon, ten_mon_an
-            `;
-
-            const dbFoods = await this.db.query(dbQuery) || [];
-
-            // Đọc dữ liệu từ file JSON tĩnh
-            let staticFoods = [];
-            try {
-                const staticFilePath = path.join(__dirname, '../data/mon_an_static.json');
-                if (fs.existsSync(staticFilePath)) {
-                    const staticData = JSON.parse(fs.readFileSync(staticFilePath, 'utf8'));
-                    staticFoods = staticData.foods || [];
-                }
-            } catch (jsonError) {
-                console.warn('Could not read static foods file:', jsonError.message);
-            }
-
-            // Merge dữ liệu từ DB và JSON
-            const allFoods = [...staticFoods];
-            
-            // Thêm món ăn từ DB (chỉ thêm những món chưa có trong static data)
-            dbFoods.forEach(dbFood => {
-                const exists = staticFoods.find(staticFood => 
-                    staticFood.id === dbFood.id || 
-                    staticFood.ten_mon_an === dbFood.ten_mon_an
-                );
-                
-                if (!exists) {
-                    allFoods.push({
-                        id: dbFood.id,
-                        ten_mon_an: dbFood.ten_mon_an,
-                        mo_ta: dbFood.mo_ta,
-                        loai_mon: dbFood.loai_mon,
-                        do_tuoi_phu_hop: dbFood.do_tuoi_phu_hop,
-                        kcal: dbFood.kcal || 0,
-                        protein: dbFood.protein || 0,
-                        fat: dbFood.fat || 0,
-                        carbs: dbFood.carbs || 0,
-                        huong_dan_che_bien: dbFood.huong_dan_che_bien,
-                        trang_thai: dbFood.trang_thai
-                    });
-                }
-            });
-
-            // Sắp xếp theo loại món và tên
-            allFoods.sort((a, b) => {
-                if (a.loai_mon !== b.loai_mon) {
-                    return (a.loai_mon || '').localeCompare(b.loai_mon || '');
-                }
-                return (a.ten_mon_an || '').localeCompare(b.ten_mon_an || '');
-            });
-
-            return {
-                foods: allFoods,
-                total: allFoods.length,
-                from_database: dbFoods.length,
-                from_static: staticFoods.length
-            };
-
-        } catch (error) {
-            console.error('Error getting all foods:', error);
-            throw new Error('Lỗi khi lấy danh sách món ăn: ' + error.message);
-        }
-    }
-
-    /**
-     * Lấy thực đơn theo tuần với format chuẩn cho API
-     */
-    async getWeeklyMealsForAPI(startDate, endDate, nhom = null, classId = null) {
-        try {
-            console.log(`🔍 getWeeklyMealsForAPI called with: startDate=${startDate}, endDate=${endDate}, nhom=${nhom}, classId=${classId}`);
-            
-            // Build WHERE clause với tham số đúng
-            let whereClause = 'td.ngay_ap_dung BETWEEN ? AND ? AND td.trang_thai IN (?, ?)';
-            let queryParams = [startDate, endDate, 'active', 'approved'];
-
-            // Thêm filter theo nhom nếu có (database field is nhom_lop)
-            if (nhom) {
-                whereClause += ' AND td.nhom_lop = ?';
-                queryParams.push(nhom);
-                console.log(` Adding nhom filter: ${nhom}`);
-            }
-
-            // Thêm filter theo class_id nếu có
-            if (classId) {
-                whereClause += ' AND td.class_id = ?';
-                queryParams.push(classId);
-                console.log(` Adding class_id filter: ${classId}`);
-            }
-
-            const query = `
-                SELECT 
-                    td.id as thuc_don_id,
-                    td.ngay_ap_dung,
-                    td.loai_bua_an,
-                    td.class_id,
-                    td.nhom_lop as nhom,
-                    ma.id as mon_an_id,
-                    ma.ten_mon_an,
-                    ma.total_calories as kcal,
-                    ma.total_protein as protein,
-                    ma.total_fat as fat,
-                    ma.total_carbs as carbs,
-                    ctd.so_khau_phan,
-                    c.name as ten_lop
-                FROM thuc_don td
-                LEFT JOIN chi_tiet_thuc_don ctd ON td.id = ctd.thuc_don_id
-                LEFT JOIN mon_an ma ON ctd.mon_an_id = ma.id
-                LEFT JOIN classes c ON td.class_id = c.id
-                WHERE ${whereClause}
-                ORDER BY td.ngay_ap_dung, td.loai_bua_an ASC
-            `;
-
-            console.log(`🔍 SQL Query:`, query);
-            console.log(`🔍 Query params:`, queryParams);
-
-            const rows = await this.db.query(query, queryParams);
-            
-            if (!rows || rows.length === 0) {
-                // Return mock data when database is empty
-                const fs = require('fs');
-                const path = require('path');
-                try {
-                    const mockPath = path.join(__dirname, '../data/mock_weekly_meals.json');
-                    if (fs.existsSync(mockPath)) {
-                        const mockData = JSON.parse(fs.readFileSync(mockPath, 'utf8'));
-                        return mockData.data;
-                    }
-                } catch (error) {
-                    console.warn('Could not load mock data:', error.message);
-                }
-                
-                return {
-                    nhom: nhom || 'all',
-                    tuan: {
-                        start_date: startDate,
-                        end_date: endDate
-                    },
-                    thuc_don: []
-                };
-            }
-
-            // Group data theo ngày và buổi
-            const groupedData = {};
-
-            rows.forEach(row => {
-                const date = row.ngay_ap_dung;
-                let buoi = 'khac'; // default
-
-                // Map loai_bua_an to buoi
-                switch (row.loai_bua_an) {
-                    case 'breakfast':
-                        buoi = 'sang';
-                        break;
-                    case 'lunch':
-                        buoi = 'trua';
-                        break;
-                    case 'snack':
-                        buoi = 'xen';
-                        break;
-                    default:
-                        buoi = 'khac';
-                }
-
-                const key = `${date}_${buoi}`;
-
-                if (!groupedData[key]) {
-                    groupedData[key] = {
-                        ngay: date,
-                        buoi: buoi,
-                        nhom: row.nhom, // Add nhom field from database
-                        nhom_lop: row.nhom, // For backward compatibility
-                        mon_an: []
-                    };
-                }
-
-                // Add món ăn if exists
-                if (row.mon_an_id && row.ten_mon_an) {
-                    const existingFood = groupedData[key].mon_an.find(
-                        food => food.id === row.mon_an_id
-                    );
-
-                    if (!existingFood) {
-                        groupedData[key].mon_an.push({
-                            id: row.mon_an_id,
-                            ten_mon_an: row.ten_mon_an,
-                            kcal: row.kcal || 0,
-                            protein: row.protein || 0,
-                            fat: row.fat || 0,
-                            carbs: row.carbs || 0
-                        });
-                    }
-                }
-            });
-
-            return {
-                nhom: nhom || 'all',
-                tuan: {
-                    start_date: startDate,
-                    end_date: endDate
-                },
-                thuc_don: Object.values(groupedData)
-            };
-
-        } catch (error) {
-            console.error('Error getting weekly meals for API:', error);
-            throw new Error('Lỗi khi lấy thực đơn tuần: ' + error.message);
-        }
-    }
-
-    /**
-     * Lấy thực đơn theo ngày với format chuẩn cho API
+     * Lấy thực đơn theo ngày cho API (format chuẩn)
+     * Được gọi từ controller getMealsByDateForAPI
      */
     async getMealsByDateForAPI(date, nhom = null, classId = null) {
         try {
-            console.log(`🔍 getMealsByDateForAPI called with: date=${date}, nhom=${nhom}, classId=${classId}`);
+            console.log(`🍽️ getMealsByDateForAPI called with: date=${date}, nhom=${nhom}, classId=${classId}`);
             
-            // Build WHERE clause
-            let whereClause = 'td.ngay_ap_dung = ? AND td.trang_thai IN (?, ?)';
-            let queryParams = [date, 'active', 'approved'];
+            // Sử dụng method getMenuByDateWithDetails có sẵn, bỏ tham số nhom để tránh lọc sai
+            const menuData = await this.getMenuByDateWithDetails(date, nhom);
 
-            // Thêm filter theo nhom nếu có (database field is nhom_lop)
-            if (nhom) {
-                whereClause += ' AND td.nhom_lop = ?';
-                queryParams.push(nhom);
-                console.log(` Adding nhom filter: ${nhom}`);
-            }
-
-            // Thêm filter theo class_id nếu có
-            if (classId) {
-                whereClause += ' AND td.class_id = ?';
-                queryParams.push(classId);
-                console.log(` Adding class_id filter: ${classId}`);
-            }
-
-            const query = `
-                SELECT 
-                    td.id as thuc_don_id,
-                    td.ngay_ap_dung,
-                    td.loai_bua_an,
-                    td.class_id,
-                    td.nhom_lop as nhom,
-                    ma.id as mon_an_id,
-                    ma.ten_mon_an,
-                    ma.total_calories as kcal,
-                    ma.total_protein as protein,
-                    ma.total_fat as fat,
-                    ma.total_carbs as carbs,
-                    ctd.so_khau_phan,
-                    c.name as ten_lop
-                FROM thuc_don td
-                LEFT JOIN chi_tiet_thuc_don ctd ON td.id = ctd.thuc_don_id
-                LEFT JOIN mon_an ma ON ctd.mon_an_id = ma.id
-                LEFT JOIN classes c ON td.class_id = c.id
-                WHERE ${whereClause}
-                ORDER BY td.loai_bua_an ASC
-            `;
-
-            console.log(`🔍 SQL Query:`, query);
-            console.log(`🔍 Query params:`, queryParams);
-
-            const rows = await this.db.query(query, queryParams);
-            
-            if (!rows || rows.length === 0) {
-                return {
-                    nhom: nhom || 'all',
-                    ngay: date,
-                    thuc_don: []
-                };
-            }
-
-            // Transform data to expected API format
-            const groupedData = {};
-
-            rows.forEach(row => {
-                if (!row.mon_an_id) return; // Skip empty meals
-                
-                const dateStr = row.ngay_ap_dung.toISOString().split('T')[0];
-                let buoi = row.loai_bua_an;
-
-                // Map loai_bua_an to buoi
-                switch (row.loai_bua_an) {
-                    case 'breakfast':
-                        buoi = 'sang';
-                        break;
-                    case 'lunch':
-                        buoi = 'trua';
-                        break;
-                    case 'snack':
-                        buoi = 'xen';
-                        break;
-                    default:
-                        buoi = 'khac';
-                }
-
-                const key = `${dateStr}_${buoi}`;
-
-                if (!groupedData[key]) {
-                    groupedData[key] = {
-                        ngay: dateStr,
-                        buoi: buoi,
-                        nhom: row.nhom,
-                        class_id: row.class_id,
-                        mon_an: []
-                    };
-                }
-
-                // Add food to meal session
-                if (row.mon_an_id) {
-                    groupedData[key].mon_an.push({
-                        id: row.mon_an_id,
-                        ten_mon_an: row.ten_mon_an,
-                        kcal: row.kcal || 0,
-                        protein: row.protein || 0,
-                        fat: row.fat || 0,
-                        carbs: row.carbs || 0,
-                        so_khau_phan: row.so_khau_phan || 1
-                    });
-                }
-            });
-
-            return {
-                nhom: nhom || 'all',
-                ngay: date,
-                thuc_don: Object.values(groupedData)
-            };
-
-        } catch (error) {
-            console.error('Error getting meals by date for API:', error);
-            throw new Error('Lỗi khi lấy thực đơn theo ngày: ' + error.message);
-        }
-    }
-
-    /**
-     * Lấy danh sách món ăn cho dropdown (chỉ từ database)
-     */
-    async getFoodsForDropdown() {
-        try {
-            console.log('🍽️ getFoodsForDropdown method called');
-            const query = `
-                SELECT 
-                    id,
-                    ten_mon_an AS name,
-                    total_calories AS kcal,
-                    total_protein,
-                    total_fat,
-                    total_carbs,
-                    loai_mon,
-                    do_tuoi_phu_hop,
-                    trang_thai
-                FROM mon_an 
-                WHERE trang_thai = 'active'
-                ORDER BY loai_mon, ten_mon_an
-            `;
-
-            const foods = await this.db.query(query);
-            
-            if (!foods || foods.length === 0) {
-                // Return mock data when database is empty
-                const fs = require('fs');
-                const path = require('path');
-                try {
-                    const mockPath = path.join(__dirname, '../data/mock_foods.json');
-                    if (fs.existsSync(mockPath)) {
-                        const mockData = JSON.parse(fs.readFileSync(mockPath, 'utf8'));
-                        return mockData.data.foods;
-                    }
-                } catch (error) {
-                    console.warn('Could not load mock foods data:', error.message);
-                }
+            if (!menuData || Object.keys(menuData).length === 0) {
+                console.warn("⚠️ Không có dữ liệu menuData cho ngày:", date);
                 return [];
             }
-            
-            return foods.map(food => ({
-                id: food.id,
-                name: food.name, // Already aliased in SQL
-                kcal: food.kcal || 0, // Already aliased in SQL
-                total_protein: food.total_protein || 0,
-                total_fat: food.total_fat || 0,
-                total_carbs: food.total_carbs || 0,
-                loai_mon: food.loai_mon,
-                do_tuoi_phu_hop: food.do_tuoi_phu_hop
-            }));
+
+            console.log(`📋 Found menu data keys:`, Object.keys(menuData));
+            return menuData;
 
         } catch (error) {
-            console.error('Error getting foods for dropdown:', error);
-            throw new Error('Lỗi khi lấy danh sách món ăn: ' + error.message);
-        }
-    }
-
-    /**
-     * Cập nhật thực đơn (cho giáo viên)
-     */
-    async updateMealPlan(mealId, updateData) {
-        try {
-            const { ngay_ap_dung, nhom, chi_tiet } = updateData;
-
-            // Validate input
-            if (!ngay_ap_dung || !nhom || !chi_tiet || !Array.isArray(chi_tiet)) {
-                throw new Error('Thiếu thông tin bắt buộc: ngay_ap_dung, nhom, chi_tiet');
-            }
-
-            // Start transaction
-            await this.db.query('START TRANSACTION');
-
-            try {
-                // 1. Update bua_an basic info
-                const updateMealQuery = `
-                    UPDATE bua_an 
-                    SET ngay_ap_dung = ?, updated_at = NOW()
-                    WHERE id = ?
-                `;
-                await this.db.query(updateMealQuery, [ngay_ap_dung, mealId]);
-
-                // 2. Delete existing chi_tiet_bua_an
-                const deleteDetailsQuery = `DELETE FROM chi_tiet_bua_an WHERE bua_an_id = ?`;
-                await this.db.query(deleteDetailsQuery, [mealId]);
-
-                // 3. Insert new chi_tiet_bua_an
-                for (let i = 0; i < chi_tiet.length; i++) {
-                    const detail = chi_tiet[i];
-                    const { buoi, id_mon_an, kcal } = detail;
-
-                    if (!buoi || !id_mon_an) {
-                        throw new Error(`Chi tiết thứ ${i + 1}: thiếu buoi hoặc id_mon_an`);
-                    }
-
-                    // Map buoi to loai_bua_an
-                    let loai_bua_an = 'snack'; // default
-                    switch (buoi) {
-                        case 'sang':
-                            loai_bua_an = 'breakfast';
-                            break;
-                        case 'trua':
-                            loai_bua_an = 'lunch';
-                            break;
-                        case 'xen':
-                            loai_bua_an = 'snack';
-                            break;
-                    }
-
-                    // Update loai_bua_an in bua_an if needed
-                    await this.db.query(
-                        'UPDATE bua_an SET loai_bua_an = ? WHERE id = ?',
-                        [loai_bua_an, mealId]
-                    );
-
-                    // Insert chi_tiet_bua_an
-                    const insertDetailQuery = `
-                        INSERT INTO chi_tiet_bua_an (bua_an_id, mon_an_id, so_khau_phan, thu_tu_phuc_vu)
-                        VALUES (?, ?, ?, ?)
-                    `;
-                    await this.db.query(insertDetailQuery, [mealId, id_mon_an, 25, i + 1]);
-                }
-
-                // Commit transaction
-                await this.db.query('COMMIT');
-
-                // Return updated meal
-                return await this.getMealDetails(mealId);
-
-            } catch (error) {
-                // Rollback on error
-                await this.db.query('ROLLBACK');
-                throw error;
-            }
-
-        } catch (error) {
-            console.error('Error updating meal plan:', error);
-            throw new Error('Lỗi khi cập nhật thực đơn: ' + error.message);
-        }
-    }
-
-    /**
-     * Cập nhật thực đơn mới (theo format từ frontend)
-     */
-    async updateMealPlanNew(updateData) {
-        try {
-            const { ngay_ap_dung, nhom, class_id, chi_tiet } = updateData;
-
-            console.log(' updateMealPlanNew called with:', updateData);
-
-            // Validate input - Hỗ trợ 2 formats
-            if (!ngay_ap_dung || !chi_tiet || !Array.isArray(chi_tiet)) {
-                throw new Error('Thiếu thông tin bắt buộc: ngay_ap_dung, chi_tiet');
-            }
-
-            if (!nhom && !class_id) {
-                throw new Error('Phải có nhomhoặc class_id');
-            }
-
-            // Start transaction
-            const connection = await this.db.beginTransaction();
-
-            try {
-                // Xác định classes để áp dụng
-                let targetClasses = [];
-                
-                if (class_id) {
-                    // Format 2: Áp dụng cho lớp cụ thể
-                    targetClasses = [{ class_id: class_id, nhom: null }];
-                } else {
-                    // Format 1: Áp dụng theo nhóm lớp (class_id = NULL)
-                    targetClasses = [{ class_id: null, nhom: nhom }];
-                }
-                
-                for (const target of targetClasses) {
-                    for (const detail of chi_tiet) {
-                        const { buoi, id_mon_an, kcal } = detail;
-
-                        // Map buoi to database enum values
-                        let loai_bua_an;
-                        switch (buoi) {
-                            case 'sang':
-                                loai_bua_an = 'breakfast';
-                                break;
-                            case 'trua':
-                                loai_bua_an = 'lunch';
-                                break;
-                            case 'xe':
-                            case 'xen':
-                                loai_bua_an = 'snack';
-                                break;
-                            default:
-                                loai_bua_an = 'breakfast'; // default fallback
-                        }
-
-                        // Check if record exists
-                        let checkQuery, checkParams;
-                        
-                        if (target.class_id) {
-                            // Kiểm tra theo class_id cụ thể
-                            checkQuery = `
-                                SELECT id FROM thuc_don 
-                                WHERE ngay_ap_dung = ? AND class_id = ? AND loai_bua_an = ?
-                            `;
-                            checkParams = [ngay_ap_dung, target.class_id, loai_bua_an];
-                        } else {
-                            // Kiểm tra theo nhom (class_id NULL) - use nhom_lop database field
-                            checkQuery = `
-                                SELECT id FROM thuc_don 
-                                WHERE ngay_ap_dung = ? AND class_id IS NULL AND nhom_lop = ? AND loai_bua_an = ?
-                            `;
-                            checkParams = [ngay_ap_dung, target.nhom, loai_bua_an];
-                        }
-                        
-                        const [existing] = await connection.execute(checkQuery, checkParams);
-
-                        if (existing && existing.length > 0) {
-                            // Delete existing chi_tiet_thuc_don
-                            await connection.execute('DELETE FROM chi_tiet_thuc_don WHERE thuc_don_id = ?', [existing[0].id]);
-                            
-                            // Insert new chi_tiet_thuc_don
-                            const insertDetailQuery = `
-                                INSERT INTO chi_tiet_thuc_don (thuc_don_id, mon_an_id, so_khau_phan) 
-                                VALUES (?, ?, ?)
-                            `;
-                            await connection.execute(insertDetailQuery, [existing[0].id, id_mon_an, 1]);
-                        } else {
-                            // Create new thuc_don record với UUID thủ công
-                            const { v4: uuidv4 } = require('uuid');
-                            const thucDonId = uuidv4();
-                            
-                            const insertQuery = `
-                                INSERT INTO thuc_don (
-                                    id, ten_thuc_don, ngay_ap_dung, loai_bua_an, class_id, 
-                                    nhom_lop, so_tre_du_kien, trang_thai, created_at
-                                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
-                            `;
-                            await connection.execute(insertQuery, [
-                                thucDonId, `Thực đơn ${buoi}`, ngay_ap_dung, loai_bua_an, target.class_id, 
-                                target.nhom, 30, 'active'
-                            ]);
-
-                            // Insert chi_tiet_thuc_don với UUID từ thuc_don
-                            const insertDetailQuery = `
-                                INSERT INTO chi_tiet_thuc_don (thuc_don_id, mon_an_id, so_khau_phan) 
-                                VALUES (?, ?, ?)
-                            `;
-                            await connection.execute(insertDetailQuery, [thucDonId, id_mon_an, 1]);
-                        }
-                    }
-                }
-
-                // Commit transaction
-                await this.db.commit(connection);
-
-                return {
-                    success: true,
-                    message: 'Cập nhật thực đơn thành công',
-                    data: { ngay_ap_dung, nhom, class_id, chi_tiet }
-                };
-
-            } catch (error) {
-                // Rollback on error
-                await this.db.rollback(connection);
-                throw error;
-            }
-
-        } catch (error) {
-            console.error('Error updating meal plan new:', error);
-            throw new Error('Lỗi khi cập nhật thực đơn: ' + error.message);
+            console.error('Error in getMealsByDateForAPI:', error);
+            throw new Error('Không tìm thấy thực đơn');
         }
     }
 }
