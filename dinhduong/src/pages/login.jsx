@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import "../styles/login.css";
 
 function Login() {
+  // Sinh captcha 5 ký tự
   const generateCaptcha = () => {
-    // tạo chuỗi captcha ngẫu nhiên gồm chữ + số (5 ký tự)
     const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
     let result = "";
     for (let i = 0; i < 5; i++) {
@@ -18,15 +18,20 @@ function Login() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    if (inputCaptcha.toLowerCase() !== captcha.toLowerCase()) {
+    if (inputCaptcha.trim().toLowerCase() !== captcha.toLowerCase()) {
       setError("❌ Mã bảo vệ không đúng, vui lòng thử lại.");
-      setCaptcha(generateCaptcha()); // tạo captcha mới
-      setInputCaptcha(""); // reset ô nhập
+      setCaptcha(generateCaptcha());
+      setInputCaptcha("");
     } else {
-      setError(""); 
-      alert("✅ Đăng nhập thành công!"); 
+      setError("");
+      alert("✅ Đăng nhập thành công!");
     }
+  };
+
+  const handleReloadCaptcha = () => {
+    setCaptcha(generateCaptcha());
+    setInputCaptcha("");
+    setError("");
   };
 
   return (
@@ -46,7 +51,19 @@ function Login() {
               value={inputCaptcha}
               onChange={(e) => setInputCaptcha(e.target.value)}
             />
+
             <span className="captcha">{captcha}</span>
+
+            {/* Nút reload dạng ký tự, không cần lib */}
+            <button
+              type="button"
+              className="reload-btn"
+              aria-label="Tải lại mã bảo vệ"
+              onClick={handleReloadCaptcha}
+              title="Tải lại mã"
+            >
+              ↻
+            </button>
           </div>
 
           {error && <p className="error">{error}</p>}

@@ -5,7 +5,7 @@ import comTrang from "../assets/com-trang.jpg";
 import duaHau from "../assets/dua-hau.jpg";
 import xoiLac from "../assets/xoi-lac.jpg";
 import thitBamXaoNgo from "../assets/thit-bam-xao-ngo.jpg";
-import banhMi from "../assets/xoi-gac.jpg";
+import xoiGac from "../assets/xoi-gac.jpg";
 import chaoHen from "../assets/chao-hen.jpg";
 import giaXaoThitBo from "../assets/gia-xao-thit-bo.jpg";
 import canhBiDo from "../assets/canh-bi-do.jpg";
@@ -102,7 +102,7 @@ const monAn = [
   {
     id: 8,
     ten: "Xôi gấc",
-    anh: banhMi,
+    anh: xoiGac,
     nguyenLieu: ["Gạo nếp", "Gấc chín", "Đường", "Dừa nạo"],
     cheBien: [
       "Ngâm gạo nếp 6-8 tiếng, để ráo.",

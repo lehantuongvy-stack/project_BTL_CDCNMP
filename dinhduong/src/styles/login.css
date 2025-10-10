@@ -59,23 +59,27 @@ form input:focus {
 }
 
 /* Captcha */
-.captcha-group {
+/* .captcha-group {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 10px;
+  margin-top: 10px;
 }
 
 .captcha-group input {
   flex: 1;
-  margin-right: 0.5rem;
 }
 
 .captcha {
   font-weight: bold;
-  color: #333;
-  font-size: 15px;
-}
-
+  background: #eee;
+  padding: 6px 12px;
+  border-radius: 5px;
+  letter-spacing: 2px;
+  font-size: 18px;
+  user-select: none; /* không cho copy captcha */
+  /* color: #333;
+} */ */
 
 button {
   width: 100%;
@@ -94,11 +98,26 @@ button:hover {
   background-color: #ffeaaa;
 }
 
+
+
+.error {
+  color: red;
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+
+/* ...giữ nguyên phần CSS của bạn ở trên... */
+
 .captcha-group {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   margin-top: 10px;
+}
+
+.captcha-group input {
+  flex: 1; /* input chiếm chỗ còn lại */
 }
 
 .captcha {
@@ -106,13 +125,36 @@ button:hover {
   background: #eee;
   padding: 6px 12px;
   border-radius: 5px;
-  letter-spacing: 2px;
   font-size: 18px;
-  user-select: none; /* không cho copy captcha */
+  user-select: none;
+  color: #333;
 }
 
-.error {
-  color: red;
-  margin-top: 10px;
-  font-size: 14px;
+/* Nút reload nhỏ gọn, không chiếm chiều ngang */
+.reload-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #666;
+  padding: 4px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.reload-btn:hover {
+  color: #ff6680;
+}
+
+/* chỉ xoay icon bên trong */
+.reload-btn span,
+.reload-btn svg {
+  transition: transform 0.3s ease;
+}
+
+.reload-btn:hover span,
+.reload-btn:hover svg {
+  transform: rotate(90deg);
 }
