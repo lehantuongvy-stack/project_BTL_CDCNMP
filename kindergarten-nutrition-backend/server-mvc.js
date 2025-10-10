@@ -19,6 +19,7 @@ const IngredientController = require('./controllers/IngredientController');
 const MealController = require('./controllers/mealController');
 const NutritionController = require('./controllers/nutritionController');
 const ReportController = require('./controllers/ReportController'); //  Thêm ReportControlle
+const ClassController = require('./controllers/ClassController');
 
 // Routes
 const AuthRoutes = require('./routes/auth');
@@ -29,6 +30,7 @@ const MealsRoutes = require('./routes/meals');
 const NutritionRoutes = require('./routes/nutrition');
 const DishRoutes = require('./routes/dishes'); 
 const ReportRoutes = require('./routes/report');
+const ClassRoutes = require('./routes/classes');
 
 // Services (for backward compatibility)
 const ReportingService = require('./services/ReportingService');
@@ -53,6 +55,7 @@ class KindergartenServer {
         this.ingredientController = new IngredientController(this.db);
         this.mealController = new MealController(this.db);
         this.nutritionController = new NutritionController(this.db);
+        this.classController = new ClassController(this.db);
         
         // Initialize Routes
         this.authRoutes = new AuthRoutes(this.authController);
@@ -62,6 +65,7 @@ class KindergartenServer {
         this.dishRoutes = new DishRoutes(this.authController); // ✅ Truyền authController
         this.mealsRoutes = new MealsRoutes(this.mealController, this.authController);
         this.nutritionRoutes = new NutritionRoutes(this.nutritionController, this.authController);
+        this.classRoutes = new ClassRoutes(this.classController);
         
         // Initialize Services (for complex business logic)
         this.reportingService = new ReportingService(this.db);
@@ -212,6 +216,8 @@ class KindergartenServer {
                 await this.ingredientRoutes.handleIngredientRoutes(req, res, pathname.replace('/api/ingredients', ''), method);
             } else if (pathname.startsWith('/api/dishes')) {
                 await this.dishRoutes.handleDishRoutes(req, res, pathname.replace('/api/dishes', ''), method);
+            } else if (pathname.startsWith('/api/classes')) {
+                await this.classRoutes.handleClassRoutes(req, res, pathname.replace('/api/classes', ''), method);
             } else if (pathname.startsWith('/api/meals')) {
                 // Sử dụng Express router cho các endpoint đơn giản
                 const simplePaths = ['/dishes', '/by-date'];
@@ -571,7 +577,10 @@ class KindergartenServer {
 
             // Parse request body nếu cần
             if (['POST', 'PUT', 'PATCH'].includes(method)) {
+                console.log('🔧 About to parse request body for method:', method);
+                console.log('🔧 Request headers:', req.headers);
                 req.body = await this.parseRequestBody(req);
+                console.log('🔧 After parsing - req.body:', req.body);
             }
 
             // Route handling
@@ -746,8 +755,17 @@ class KindergartenServer {
             });
             req.on('end', () => {
                 try {
-                    resolve(body ? JSON.parse(body) : {});
+                    console.log('🔧 parseRequestBody - raw body:', body);
+                    console.log('🔧 parseRequestBody - body length:', body.length);
+                    console.log('🔧 parseRequestBody - body type:', typeof body);
+                    
+                    const parsed = body ? JSON.parse(body) : {};
+                    console.log('🔧 parseRequestBody - parsed:', parsed);
+                    console.log('🔧 parseRequestBody - parsed keys:', Object.keys(parsed));
+                    resolve(parsed);
                 } catch (error) {
+                    console.log('🔧 parseRequestBody - JSON parse error:', error.message);
+                    console.log('🔧 parseRequestBody - problematic body:', body);
                     resolve({});
                 }
             });

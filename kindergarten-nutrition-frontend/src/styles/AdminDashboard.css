@@ -159,9 +159,9 @@ a{ color:inherit; text-decoration:none; }
 /* logout icon (iconless button keeps size) */
 .logout-button{
   width:32px; height:32px; border-radius:10px;
-  background:rgba(255,255,255,.18);
+  background:red;
 }
-.logout-button:hover{ background:rgba(255,255,255,.28); }
+.logout-button:hover{ background:darkred; }
 
 /* ========== Body Layout ========== */
 .dashboard-container{

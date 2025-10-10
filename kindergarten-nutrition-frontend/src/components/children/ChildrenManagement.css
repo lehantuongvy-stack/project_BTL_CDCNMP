@@ -6,12 +6,113 @@
   color: #333;
 }
 
-/* Force all text to be visible */
+/* Inline Editing Styles */
+.editable-cell {
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  min-height: 20px;
+  display: inline-block;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.editable-cell:hover {
+  background-color: #f0f8ff !important;
+  border: 2px solid #e3f2fd !important;
+  color: #1976d2 !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.inline-edit-container {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+}
+
+.inline-edit-input,
+.inline-edit-select {
+  flex: 1;
+  padding: 4px 8px;
+  border: 2px solid #2196f3;
+  border-radius: 4px;
+  font-size: 14px;
+  min-width: 100px;
+}
+
+.inline-edit-input:focus,
+.inline-edit-select:focus {
+  outline: none;
+  border-color: #1976d2;
+  box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+}
+
+.inline-edit-actions {
+  display: flex;
+  gap: 2px;
+}
+
+.inline-save-btn,
+.inline-cancel-btn {
+  padding: 4px 8px;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+  min-width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.inline-save-btn {
+  background: #4caf50;
+  color: white;
+}
+
+.inline-save-btn:hover {
+  background: #45a049;
+}
+
+.inline-cancel-btn {
+  background: #f44336;
+  color: white;
+}
+
+.inline-cancel-btn:hover {
+  background: #da190b;
+}
+
+.btn-delete {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background-color 0.2s ease;
+}
+
+.btn-delete:hover {
+  background: #c82333;
+}
+
+.btn-delete:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+/* Force all text to be visible and use same font */
 .children-management,
 .children-management *,
 .children-management *:before,
 .children-management *:after {
   color: #333 !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif !important;
 }
 
 /* Override any pink theme colors for table */
@@ -195,30 +296,35 @@
   color: #495057 !important;
 }
 
-/* Specific column styling */
-.child-id,
-.student-id,
-.parent-id,
-.teacher-id,
-.parent-name,
-.teacher-name {
-  font-family: monospace;
-  font-weight: 600;
-  color: #e91e63 !important;
-  max-width: 120px;
+/* Đồng nhất font cho TẤT CẢ nội dung trong table */
+.children-table table,
+.children-table th,
+.children-table td,
+.children-table td *,
+.children-table th *,
+.children-table span,
+.children-table .allergy-badge,
+.children-table .medical-note,
+.children-table .contact-info {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif !important;
+  font-weight: 500 !important;
+  color: #333 !important;
   background: white !important;
 }
 
-.child-name,
-.name {
-  min-width: 150px;
-  max-width: 200px;
-  color: #333 !important;
+/* ID và tên phụ huynh/giáo viên màu khác nhưng cùng font */
+.children-table .student-id,
+.children-table .parent-name,
+.children-table .teacher-name {
+  color: #e91e63 !important;
+  font-weight: 600 !important;
+  max-width: 120px;
 }
 
-.child-name .name {
-  font-weight: 500;
-  color: #333 !important;
+/* Đảm bảo tên trẻ có đủ không gian */
+.children-table .name {
+  min-width: 150px;
+  max-width: 200px;
 }
 
 .height,

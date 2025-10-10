@@ -65,10 +65,19 @@ class ChildService {
   // Cập nhật thông tin trẻ em
   async updateChild(childId, childData) {
     try {
+      console.log('🔧 childService.updateChild called with:');
+      console.log('🔧 childId:', childId, 'type:', typeof childId);
+      console.log('🔧 childData:', childData, 'type:', typeof childData);
+      console.log('🔧 childData stringified:', JSON.stringify(childData));
+      console.log('🔧 childData keys:', Object.keys(childData));
+      console.log('🔧 childData values:', Object.values(childData));
+      
       const response = await apiService.put(`/api/children/${childId}`, childData);
+      console.log('🔧 childService.updateChild response:', response);
       return response;
     } catch (error) {
       console.error('Update child error:', error);
+      console.error('Error response:', error.response?.data);
       throw error;
     }
   }
@@ -140,6 +149,28 @@ class ChildService {
       return response;
     } catch (error) {
       console.error('Get birthdays in month error:', error);
+      throw error;
+    }
+  }
+
+  // Cập nhật thông tin trẻ em
+  async updateChild(id, childData) {
+    try {
+      const response = await apiService.put(`/api/children/${id}`, childData);
+      return response;
+    } catch (error) {
+      console.error('Update child error:', error);
+      throw error;
+    }
+  }
+
+  // Xóa trẻ em
+  async deleteChild(id) {
+    try {
+      const response = await apiService.delete(`/api/children/${id}`);
+      return response;
+    } catch (error) {
+      console.error('Delete child error:', error);
       throw error;
     }
   }

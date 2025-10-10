@@ -235,21 +235,15 @@ export default function Home() {
               />
             ))}
             
-            {/* Nút Chi tiết Thực đơn */}
-            <button 
-              className="menu-detail-btn"
-              onClick={() => {
-                if (user?.role === 'parent') {
-                  navigate('/menu');
-                } else if (user?.role === 'teacher') {
-                  navigate('/kitchen-menu');
-                } else {
-                  navigate('/menu'); // Default cho admin
-                }
-              }}
-            >
-              Chi tiết Thực đơn
-            </button>
+            {/* Nút Chi tiết Thực đơn - chỉ hiển thị cho teacher */}
+            {user?.role === 'teacher' && (
+              <button 
+                className="menu-detail-btn"
+                onClick={() => navigate('/kitchen-menu')}
+              >
+                Chi tiết Thực đơn
+              </button>
+            )}
           </aside>
         </div>
       </div>

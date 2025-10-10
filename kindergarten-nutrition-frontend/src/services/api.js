@@ -12,6 +12,10 @@ class ApiService {
     
     const config = {
       mode: 'cors',
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
       ...options,
     };
 
@@ -24,12 +28,19 @@ class ApiService {
       };
     }
 
-    console.log(' API Request:', {
+    console.log('🔧 API Request:', {
       url,
       method: config.method,
       headers: config.headers,
-      body: config.body
+      body: config.body,
+      bodyType: typeof config.body
     });
+    
+    // Additional debug for PUT requests
+    if (config.method === 'PUT') {
+      console.log('🔧 PUT request body details:', config.body);
+      console.log('🔧 PUT request body length:', config.body?.length);
+    }
 
     try {
       const response = await fetch(url, config);
@@ -92,6 +103,12 @@ class ApiService {
 
   // PUT request
   put(endpoint, data, headers = {}) {
+    console.log('🔧 apiService.put called with:');
+    console.log('🔧 endpoint:', endpoint);
+    console.log('🔧 data:', data, 'type:', typeof data);
+    console.log('🔧 data stringified:', JSON.stringify(data));
+    console.log('🔧 headers:', headers);
+    
     return this.request(endpoint, {
       method: 'PUT',
       headers,

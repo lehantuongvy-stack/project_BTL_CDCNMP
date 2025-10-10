@@ -20,13 +20,14 @@ class User {
             phone,
             role,
             address,
+            class_id,
             is_active = true
         } = userData;
 
         const query = `
             INSERT INTO ${this.tableName} 
-            (username, password_hash, full_name, email, phone, role, address, is_active, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
+            (username, password_hash, full_name, email, phone, role, address, class_id, is_active, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
         `;
 
         const values = [
@@ -37,6 +38,7 @@ class User {
             phone_number || phone || null,
             role, 
             address || null,
+            class_id || null,
             is_active
         ];
         
@@ -62,6 +64,7 @@ class User {
             phone: phone_number || phone,
             role,
             address,
+            class_id,
             is_active,
             created_at: new Date()
         };
@@ -70,7 +73,7 @@ class User {
     // Tìm user theo ID
     async findById(id) {
         const query = `
-            SELECT id, username, full_name, email, phone, role, address, is_active, created_at, updated_at
+            SELECT id, username, full_name, email, phone, role, address, class_id, is_active, created_at, updated_at
             FROM ${this.tableName} 
             WHERE id = ? AND is_active = 1
         `;
@@ -85,7 +88,7 @@ class User {
     // Tìm user theo ID với password_hash (dùng cho đổi mật khẩu)
     async findByIdWithPassword(id) {
         const query = `
-            SELECT id, username, password_hash, full_name, email, phone, role, address, is_active, created_at, updated_at
+            SELECT id, username, password_hash, full_name, email, phone, role, address, class_id, is_active, created_at, updated_at
             FROM ${this.tableName} 
             WHERE id = ? AND is_active = 1
         `;
@@ -100,7 +103,7 @@ class User {
     // Tìm user theo username
     async findByUsername(username) {
         const query = `
-            SELECT id, username, password_hash, full_name, email, phone, role, address, is_active, created_at, updated_at
+            SELECT id, username, password_hash, full_name, email, phone, role, address, class_id, is_active, created_at, updated_at
             FROM ${this.tableName} 
             WHERE username = ? AND is_active = 1
         `;
@@ -115,7 +118,7 @@ class User {
     // Tìm user theo email
     async findByEmail(email) {
         const query = `
-            SELECT id, username, password_hash, full_name, email, phone, role, address, is_active, created_at, updated_at
+            SELECT id, username, password_hash, full_name, email, phone, role, address, class_id, is_active, created_at, updated_at
             FROM ${this.tableName} 
             WHERE email = ? AND is_active = 1
         `;
@@ -127,7 +130,7 @@ class User {
     // Lấy tất cả users
     async findAll(limit = 50, offset = 0) {
         const query = `
-            SELECT id, username, full_name, email, phone, role, address, is_active, created_at, updated_at
+            SELECT id, username, full_name, email, phone, role, address, class_id, is_active, created_at, updated_at
             FROM ${this.tableName} 
             WHERE is_active = 1
             ORDER BY created_at DESC
@@ -145,7 +148,7 @@ class User {
     // Lấy users theo role
     async findByRole(role) {
         const query = `
-            SELECT id, username, full_name, email, phone, role, address, chuc_vu, is_active, created_at, updated_at
+            SELECT id, username, full_name, email, phone, role, address, class_id, is_active, created_at, updated_at
             FROM ${this.tableName} 
             WHERE role = ? AND is_active = 1
             ORDER BY created_at DESC

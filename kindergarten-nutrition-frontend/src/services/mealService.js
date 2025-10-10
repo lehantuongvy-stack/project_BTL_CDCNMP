@@ -101,16 +101,10 @@ class MealService {
    */
   async getDailyMeals(date, classId = null, nhom = null) {
     try {
-      // Use new dedicated endpoint for date-based meals with security
-      let endpoint = `/api/meals/date?date=${date}`;
-      if (classId) {
-        endpoint += `&class_id=${classId}`;
-      }
-      if (nhom) {
-        endpoint += `&nhom=${nhom}`;
-      }
+      // Use existing by-date endpoint
+      let endpoint = `/api/meals/by-date/${date}`;
       
-      console.log('[mealService] getDailyMeals with security filters:', { date, classId, nhom });
+      console.log('[mealService] getDailyMeals calling:', endpoint);
       const response = await apiService.get(endpoint);
       return response;
     } catch (error) {

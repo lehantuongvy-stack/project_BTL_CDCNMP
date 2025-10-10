@@ -59,10 +59,14 @@ class Child {
             height,
             allergies,
             medical_conditions,
-            emergency_contact,
             admission_date,
             is_active = true
         } = childData;
+
+        console.log('🔧 Destructured class_name:', class_name);
+        console.log('🔧 class_name type:', typeof class_name);
+        console.log('🔧 class_name length:', class_name?.length);
+        console.log('🔧 class_name value in values array:', class_name || null);
 
         // Auto-generate student_id if not provided
         const finalStudentId = student_id || await this.generateStudentId();
@@ -71,8 +75,8 @@ class Child {
         const query = `
             INSERT INTO ${this.tableName} 
             (id, student_id, full_name, date_of_birth, gender, class_name, parent_id, teacher_id,
-             weight, height, allergies, medical_conditions, emergency_contact, admission_date, is_active)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             weight, height, allergies, medical_conditions, admission_date, is_active)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
         // Convert arrays/objects to JSON strings và handle undefined values
@@ -84,10 +88,6 @@ class Child {
             (Array.isArray(medical_conditions) ? JSON.stringify(medical_conditions) : 
              typeof medical_conditions === 'string' ? medical_conditions : JSON.stringify([medical_conditions])) : 
             null; // Set to null for JSON fields
-        const emergencyContactJson = emergency_contact ? 
-            (typeof emergency_contact === 'object' ? JSON.stringify(emergency_contact) : emergency_contact) : 
-            null; // Set to null for JSON fields
-
         const values = [
             childId, // UUID
             finalStudentId, // Auto-generated or provided student_id
@@ -101,7 +101,6 @@ class Child {
             height || null,
             allergiesJson,
             medicalConditionsJson,
-            emergencyContactJson,
             admission_date || new Date().toISOString().split('T')[0],
             is_active !== undefined ? is_active : true
         ];
@@ -111,7 +110,6 @@ class Child {
         console.log(' Generated child ID:', childId);
         console.log(' Processed allergies:', allergiesJson);
         console.log(' Processed medical_conditions:', medicalConditionsJson);
-        console.log(' Processed emergency_contact:', emergencyContactJson);
         
         try {
             const result = await this.db.query(query, values);
@@ -119,6 +117,9 @@ class Child {
             
             // Use the generated UUID to retrieve the created child
             const newChild = await this.findById(childId);
+            console.log('🔧 Raw database result for findById:', newChild);
+            console.log('🔧 Retrieved class_name:', newChild?.class_name);
+            console.log('🔧 Retrieved class_name type:', typeof newChild?.class_name);
             console.log(' Retrieved created child:', newChild);
             return newChild;
         } catch (error) {
@@ -171,7 +172,10 @@ class Child {
     // Tìm child theo ID
     async findById(id) {
         const query = `
-            SELECT c.*,
+            SELECT c.id, c.student_id, c.full_name, c.date_of_birth, c.gender, 
+                   c.class_name, c.nhom, c.parent_id, c.teacher_id, c.height, c.weight,
+                   c.allergies, c.medical_conditions, c.admission_date,
+                   c.is_active, c.created_at, c.updated_at,
                    u.full_name as parent_name,
                    u.phone as parent_phone,
                    t.full_name as teacher_name,
@@ -183,7 +187,17 @@ class Child {
         `;
         
         try {
+            console.log('🔧🔧🔧 FINDBBYID METHOD CALLED 🔧🔧🔧');
+            console.log('🔧 findById query:', query);
+            console.log('🔧 findById id parameter:', id);
+            
+            // Test direct query first
+            const directQuery = `SELECT class_name FROM children WHERE id = ?`;
+            const directResult = await this.db.query(directQuery, [id]);
+            console.log('🔧 DIRECT class_name query result:', directResult);
+            
             const result = await this.db.query(query, [id]);
+            console.log('🔧 findById raw result:', result);
             // Handle different MySQL2 response formats
             if (Array.isArray(result) && result.length > 0) {
                 const rows = Array.isArray(result[0]) ? result[0] : result;
@@ -202,13 +216,6 @@ class Child {
                             child.medical_conditions = JSON.parse(child.medical_conditions);
                         } catch (e) {
                             child.medical_conditions = [];
-                        }
-                    }
-                    if (child.emergency_contact && typeof child.emergency_contact === 'string') {
-                        try {
-                            child.emergency_contact = JSON.parse(child.emergency_contact);
-                        } catch (e) {
-                            child.emergency_contact = {};
                         }
                     }
                     return child;
@@ -335,13 +342,6 @@ class Child {
                     // child.medical_conditions stays as is
                 }
             }
-            if (child.emergency_contact && typeof child.emergency_contact === 'string') {
-                try {
-                    child.emergency_contact = JSON.parse(child.emergency_contact);
-                } catch (e) {
-                    child.emergency_contact = {};
-                }
-            }
             return child;
         });
     }
@@ -375,19 +375,27 @@ class Child {
     async updateById(id, updateData) {
         const allowedFields = [
             'full_name', 'date_of_birth', 'gender', 'class_name', 'weight', 
-            'height', 'allergies', 'medical_conditions', 'emergency_contact', 'is_active'
+            'height', 'allergies', 'medical_conditions', 'is_active'
         ];
         const setClause = [];
         const values = [];
 
+        console.log('🔧 Child.updateById - updateData:', updateData);
+        console.log('🔧 Child.updateById - allowedFields:', allowedFields);
+
         for (const [key, value] of Object.entries(updateData)) {
+            console.log(`🔧 Checking field: ${key} with value:`, value, 'Type:', typeof value);
+            
             if (allowedFields.includes(key)) {
+                console.log(`✅ Field ${key} is allowed`);
                 setClause.push(`${key} = ?`);
                 
                 // Handle JSON fields properly
-                if (['allergies', 'medical_conditions', 'emergency_contact'].includes(key)) {
-                    if (value) {
+                if (['allergies', 'medical_conditions'].includes(key)) {
+                    // For JSON fields, accept empty string and convert to null
+                    if (value !== null && value !== undefined && value !== '') {
                         if (typeof value === 'string') {
+                            // If it's a non-empty string, keep it as is
                             values.push(value);
                         } else if (Array.isArray(value) || typeof value === 'object') {
                             values.push(JSON.stringify(value));
@@ -397,13 +405,30 @@ class Child {
                     } else {
                         values.push(null); // Use null for empty JSON fields
                     }
+                } else if (['height', 'weight'].includes(key)) {
+                    // For numeric fields, ensure proper type
+                    if (value !== null && value !== undefined && value !== '') {
+                        const numValue = parseFloat(value);
+                        values.push(isNaN(numValue) ? null : numValue);
+                    } else {
+                        values.push(null);
+                    }
                 } else {
-                    values.push(value);
+                    // For other fields, accept all values including empty string and null
+                    values.push(value === undefined ? null : value);
                 }
+            } else {
+                console.log(`❌ Field ${key} is NOT allowed`);
             }
         }
 
+        console.log('🔧 Final setClause:', setClause);
+        console.log('🔧 Final values:', values);
+
         if (setClause.length === 0) {
+            console.log('❌ No valid fields found in setClause');
+            console.log('❌ updateData was:', updateData);
+            console.log('❌ allowedFields were:', allowedFields);
             throw new Error('No valid fields to update');
         }
 
@@ -561,19 +586,27 @@ class Child {
                 paramIndex += 2;
             }
 
-            // Filter by class
+            // Filter by class - support both exact match and LIKE pattern
             if (className) {
-                whereConditions.push(`c.class_name = ?`);
-                queryParams.push(className);
+                // Check if className contains specific class names
+                if (className.includes('Mầm')) {
+                    whereConditions.push(`c.class_name LIKE ?`);
+                    queryParams.push('%Mầm%');
+                } else {
+                    whereConditions.push(`c.class_name LIKE ?`);
+                    queryParams.push(`%${className}%`);
+                }
                 paramIndex++;
             }
 
             // Filter by allergy status
             if (hasAllergy !== undefined) {
                 if (hasAllergy) {
-                    whereConditions.push(`(c.allergies IS NOT NULL AND JSON_LENGTH(c.allergies) > 0)`);
+                    // Has allergy: allergies field is not null and not empty
+                    whereConditions.push(`(c.allergies IS NOT NULL AND c.allergies != '' AND c.allergies != '[]' AND JSON_LENGTH(c.allergies) > 0)`);
                 } else {
-                    whereConditions.push(`(c.allergies IS NULL OR JSON_LENGTH(c.allergies) = 0)`);
+                    // No allergy: allergies field is null, empty string, or empty array
+                    whereConditions.push(`(c.allergies IS NULL OR c.allergies = '' OR c.allergies = '[]' OR JSON_LENGTH(c.allergies) = 0)`);
                 }
             }
 
@@ -584,11 +617,18 @@ class Child {
                 paramIndex++;
             }
 
-            // Filter by gender
+            // Filter by gender - support both Vietnamese and English values
             if (gender) {
-                whereConditions.push(`c.gender = ?`);
-                queryParams.push(gender === 'Nam' ? 'male' : 'female');
-                paramIndex++;
+                whereConditions.push(`(c.gender = ? OR c.gender = ?)`);
+                if (gender === 'Nam' || gender === 'M' || gender === 'male') {
+                    queryParams.push('Nam', 'male');
+                } else if (gender === 'Nữ' || gender === 'F' || gender === 'female') {
+                    queryParams.push('Nữ', 'female');
+                } else {
+                    // If gender value is not recognized, try both the original value and fallback
+                    queryParams.push(gender, gender);
+                }
+                paramIndex += 2;
             }
 
             const whereClause = whereConditions.length > 0 ? 
@@ -609,7 +649,7 @@ class Child {
             const searchQuery = `
                 SELECT c.id, c.student_id, c.full_name, c.date_of_birth, c.gender, 
                        c.class_name, c.height, c.weight, c.allergies, c.medical_conditions,
-                       c.emergency_contact, c.admission_date, c.created_at, c.updated_at,
+                       c.admission_date, c.created_at, c.updated_at,
                        u.full_name as parent_name, u.phone as parent_phone,
                        FLOOR(DATEDIFF(CURDATE(), c.date_of_birth) / 365.25) as age
                 FROM ${this.tableName} c
@@ -636,13 +676,6 @@ class Child {
                         child.medical_conditions = JSON.parse(child.medical_conditions);
                     } catch (e) {
                         child.medical_conditions = [];
-                    }
-                }
-                if (child.emergency_contact && typeof child.emergency_contact === 'string') {
-                    try {
-                        child.emergency_contact = JSON.parse(child.emergency_contact);
-                    } catch (e) {
-                        child.emergency_contact = {};
                     }
                 }
                 return child;

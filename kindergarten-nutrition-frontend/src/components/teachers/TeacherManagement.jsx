@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import apiService from '../../services/api.js';
+import classService from '../../services/classService.js';
 import './TeacherManagement.css';
 
 const TeacherManagement = () => {
   const { user, token } = useAuth();
   const [teachers, setTeachers] = useState([]);
+  const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({
     searchTerm: '',
@@ -18,9 +20,10 @@ const TeacherManagement = () => {
   const [editingValues, setEditingValues] = useState({});
   const [originalValues, setOriginalValues] = useState({});
 
-  // Load teachers on component mount
+  // Load teachers and classes on component mount
   useEffect(() => {
     loadTeachers();
+    loadClasses();
   }, []);
 
   const loadTeachers = async () => {
@@ -53,6 +56,33 @@ const TeacherManagement = () => {
       setTeachers([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadClasses = async () => {
+    try {
+      const response = await classService.getAllClasses();
+      if (response.success) {
+        setClasses(response.data);
+      } else {
+        console.error('Failed to load classes:', response.message);
+        // Fallback to hardcoded classes với ID chính xác
+        setClasses([
+          { id: '1a9a342f-98a3-11f0-9a5b-a036bc312358', name: 'Lá' },
+          { id: '1a9a3487-98a3-11f0-9a5b-a036bc312358', name: 'Hoa' },
+          { id: '771fc0e3-a4ec-11f0-8498-a036bc312358', name: 'Mầm' },
+          { id: '771fdaee-a4ec-11f0-8498-a036bc312358', name: 'Chồi' }
+        ]);
+      }
+    } catch (error) {
+      console.error('Error loading classes:', error);
+      // Fallback to hardcoded classes
+      setClasses([
+        { id: '2d8e12f2-8da3-11f0-a95c-a036bc312358', name: 'Lá' },
+        { id: '4d9a1d57-8da3-11f0-a95c-a036bc312358', name: 'Gạo' },
+        { id: '77f1c63e-a4cc-11f0-8406-a036bc312358', name: 'Mầm' },
+        { id: '77f1baa8-a4cc-11f0-8406-a036bc312358', name: 'Chồi' }
+      ]);
     }
   };
 
@@ -308,6 +338,28 @@ const TeacherManagement = () => {
     );
   };
 
+  // Render class cell
+  const renderClassCell = (teacher) => {
+    // Tạm thời hiển thị class_id, sau này có thể map với tên lớp
+    const classId = teacher.class_id;
+    const className = getClassName(classId);
+    
+    return (
+      <div className="class-cell">
+        {className || 'Chưa phân lớp'}
+      </div>
+    );
+  };
+
+  // Helper function to get class name from class_id
+  const getClassName = (classId) => {
+    if (!classId) return null;
+    
+    // Find class by ID from loaded classes
+    const classItem = classes.find(cls => cls.id === classId);
+    return classItem ? `Lớp ${classItem.name}` : classId;
+  };
+
   if (loading && teachers.length === 0) {
     return (
       <div className="teacher-management-container">
@@ -384,6 +436,7 @@ const TeacherManagement = () => {
                 <th>EMAIL</th>
                 <th>SỐ ĐIỆN THOẠI</th>
                 <th>ĐỊA CHỈ</th>
+                <th>LỚP</th>
                 <th>TRẠNG THÁI</th>
                 <th>NGÀY TẠO</th>
                 <th>THAO TÁC</th>
@@ -397,6 +450,7 @@ const TeacherManagement = () => {
                   <td>{renderEditableCell(teacher, 'email', teacher.email)}</td>
                   <td>{renderEditableCell(teacher, 'phone', teacher.phone)}</td>
                   <td>{renderEditableCell(teacher, 'address', teacher.address)}</td>
+                  <td>{renderClassCell(teacher)}</td>
                   <td>{renderStatusCell(teacher)}</td>
                   <td>{teacher.created_at ? new Date(teacher.created_at).toLocaleDateString('vi-VN') : 'Chưa cập nhật'}</td>
                   <td>

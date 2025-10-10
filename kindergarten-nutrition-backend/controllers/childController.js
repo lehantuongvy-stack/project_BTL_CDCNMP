@@ -42,14 +42,40 @@ class ChildController extends BaseController {
                 }
             }
 
+            // Đếm tổng số children trong database
+            let totalCount = 0;
+            try {
+                if (class_id) {
+                    // Đếm theo class_id
+                    const countResult = await this.db.query('SELECT COUNT(*) as count FROM children WHERE class_id = ? AND is_active = 1', [class_id]);
+                    totalCount = countResult[0]?.count || 0;
+                } else if (parent_id) {
+                    // Đếm theo parent_id
+                    const countResult = await this.db.query('SELECT COUNT(*) as count FROM children WHERE parent_id = ? AND is_active = 1', [parent_id]);
+                    totalCount = countResult[0]?.count || 0;
+                } else if (req.user.role === 'parent') {
+                    // Đếm children của parent hiện tại
+                    const countResult = await this.db.query('SELECT COUNT(*) as count FROM children WHERE parent_id = ? AND is_active = 1', [req.user.id]);
+                    totalCount = countResult[0]?.count || 0;
+                } else {
+                    // Đếm tất cả children
+                    const countResult = await this.db.query('SELECT COUNT(*) as count FROM children WHERE is_active = 1');
+                    totalCount = countResult[0]?.count || 0;
+                }
+            } catch (countError) {
+                console.error('Count children error:', countError);
+                totalCount = (children && children.length) || 0; // Fallback
+            }
+
             this.sendResponse(res, 200, {
                 success: true,
                 data: {
                     children: children || [],
                     pagination: {
-                        page: parseInt(page),
-                        limit: parseInt(limit),
-                        total: (children && children.length) || 0
+                        current_page: parseInt(page),
+                        items_per_page: parseInt(limit),
+                        total_items: totalCount,
+                        total_pages: Math.ceil(totalCount / parseInt(limit))
                     }
                 }
             });
@@ -92,7 +118,6 @@ class ChildController extends BaseController {
                 weight: child.weight,
                 allergies: child.allergies,
                 medical_conditions: child.medical_conditions,
-                emergency_contact: child.emergency_contact,
                 nhom: child.nhom || 'nha_tre', 
                 age: child.age
             }));
@@ -157,7 +182,9 @@ class ChildController extends BaseController {
     async createChild(req, res) {
         try {
             const childData = req.body;
-            console.log('Creating child with data:', childData);
+            console.log('🔧 ChildController.createChild called');
+            console.log('🔧 Request body received:', childData);
+            console.log('🔧 class_name from request:', childData.class_name);
 
             // Validate required fields
             const requiredFields = ['full_name', 'date_of_birth', 'gender'];
@@ -218,6 +245,21 @@ class ChildController extends BaseController {
         try {
             const { id } = req.params;
             const updateData = req.body;
+
+            console.log('🔧 Backend updateChild - ID:', id);
+            console.log('🔧 Backend updateChild - req.body:', updateData);
+            console.log('🔧 Backend updateChild - Object.keys(updateData):', Object.keys(updateData));
+            console.log('🔧 Backend updateChild - typeof updateData:', typeof updateData);
+            console.log('🔧 Backend updateChild - updateData is empty?', Object.keys(updateData).length === 0);
+
+            // Check if updateData is empty or invalid
+            if (!updateData || typeof updateData !== 'object' || Object.keys(updateData).length === 0) {
+                return this.sendResponse(res, 400, {
+                    success: false,
+                    message: 'Dữ liệu cập nhật không hợp lệ hoặc rỗng',
+                    received_data: updateData
+                });
+            }
 
             // Kiểm tra child tồn tại
             const existingChild = await this.childModel.findById(id);
@@ -314,12 +356,8 @@ class ChildController extends BaseController {
             const limit = parseInt(query.limit) || 10;
             const offset = (page - 1) * limit;
 
-            if (!searchTerm && !className && hasAllergy === undefined && !age && !gender) {
-                return this.sendResponse(res, 400, {
-                    success: false,
-                    message: 'Vui lòng cung cấp ít nhất một tham số tìm kiếm (q, class, has_allergy, age, hoặc gender)'
-                });
-            }
+            // Allow search with any parameter combination
+            console.log('Legacy search function - parameters:', { searchTerm, className, hasAllergy, age, gender });
 
             // Build search criteria
             const searchCriteria = {
@@ -480,12 +518,8 @@ class ChildController extends BaseController {
             const limit = parseInt(query.limit) || 10;
             const offset = (page - 1) * limit;
 
-            if (!searchTerm && !className && hasAllergy === undefined && !age && !gender) {
-                return this.sendResponse(res, 400, {
-                    success: false,
-                    message: 'Vui lòng cung cấp ít nhất một tham số tìm kiếm (q, class, has_allergy, age, hoặc gender)'
-                });
-            }
+            // Allow search with any parameter combination
+            console.log('Search parameters received:', { searchTerm, className, hasAllergy, age, gender });
 
             // Build search criteria
             const searchCriteria = {

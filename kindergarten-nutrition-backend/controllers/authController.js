@@ -121,13 +121,29 @@ class AuthController {
     // Đăng ký (chỉ admin)
     async register(req, res) {
         try {
-            const { username, password, full_name, email, phone_number, role } = req.body;
+            const { username, password, full_name, email, phone_number, role, class_id } = req.body;
+
+            console.log(' === BACKEND REGISTER DEBUG START ===');
+            console.log(' Request body:', req.body);
+            console.log(' Role:', role);
+            console.log(' Class_id:', class_id);
+            console.log(' Class_id type:', typeof class_id);
+            console.log(' Class_id length:', class_id?.length);
+            console.log(' === BACKEND REGISTER DEBUG END ===');
 
             // Validate input
             if (!username || !password || !full_name || !role) {
                 return this.sendResponse(res, 400, {
                     success: false,
                     message: 'Username, password, full_name và role là bắt buộc'
+                });
+            }
+
+            // Validate class_id for teachers
+            if (role === 'teacher' && !class_id) {
+                return this.sendResponse(res, 400, {
+                    success: false,
+                    message: 'Class_id là bắt buộc cho giáo viên'
                 });
             }
 
@@ -163,6 +179,11 @@ class AuthController {
             const saltRounds = 10;
             const password_hash = await bcrypt.hash(password, saltRounds);
 
+            // Set class_id for teachers, null for parents
+            const finalClassId = (role === 'teacher' && class_id && class_id.trim() !== '') ? class_id : null;
+            
+            console.log(' Final class_id to save:', finalClassId);
+
             // Tạo user mới
             const newUser = await this.userModel.create({
                 username,
@@ -170,7 +191,8 @@ class AuthController {
                 full_name,
                 email,
                 phone_number,
-                role
+                role,
+                class_id: finalClassId
             });
 
             this.sendResponse(res, 201, {
@@ -183,7 +205,8 @@ class AuthController {
                         full_name: newUser.full_name,
                         email: newUser.email,
                         phone_number: newUser.phone_number,
-                        role: newUser.role
+                        role: newUser.role,
+                        class_id: newUser.class_id
                     }
                 }
             });
