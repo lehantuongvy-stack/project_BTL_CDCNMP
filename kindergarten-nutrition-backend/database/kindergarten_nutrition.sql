@@ -245,12 +245,13 @@ CREATE TABLE `ke_hoach_dinh_duong` (
 
 CREATE TABLE `kho_hang` (
   `id` int(11) NOT NULL,
-  `nguyen_lieu_id` char(36) NOT NULL,
-  `so_luong_ton` float DEFAULT 0,
+  `nguyen_lieu` varchar(36) NOT NULL,
+  `nguyen_lieu_ton` varchar(50) DEFAULT 0,
+  `tinh_trang` varchar(50) CHARACTER SET utf8 COLLATE utf8_general_ci DEFAULT 'good',
   `suc_chua_toi_da` float DEFAULT 0,
-  `muc_canh_bao_ton_it` float DEFAULT 0,
-  `vi_tri_kho` varchar(50) CHARACTER SET utf8 COLLATE utf8_general_ci DEFAULT NULL,
-  `ngay_cap_nhat` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `ngay_cap_nhat` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `ngay_xuat` timestamp NOT NULL DEFAULT current_timestamp(),
+  `tong_so_luong` float DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------

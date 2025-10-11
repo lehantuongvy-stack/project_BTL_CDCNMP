@@ -434,24 +434,24 @@ class DatabaseManager {
 
     async updateInventory(nguyen_lieu_id, so_luong_moi, ly_do = 'manual_update') {
         // Check if inventory record exists
-        const checkSql = 'SELECT id FROM kho_hang WHERE nguyen_lieu_id = ?';
-        const existing = await this.query(checkSql, [nguyen_lieu_id]);
+        const checkSql = 'SELECT id FROM kho_hang WHERE nguyen_lieu = ?';
+        const existing = await this.query(checkSql, [nguyen_lieu]);
         
         if (existing.length > 0) {
             // Update existing
             const sql = `
                 UPDATE kho_hang 
-                SET so_luong_ton = ?, ngay_cap_nhat = CURRENT_TIMESTAMP
+                SET nguyen_lieu_ton = ?, ngay_cap_nhat = CURRENT_TIMESTAMP
                 WHERE nguyen_lieu_id = ?
             `;
             return await this.query(sql, [so_luong_moi, nguyen_lieu_id]);
         } else {
             // Create new inventory record
             const sql = `
-                INSERT INTO kho_hang (nguyen_lieu_id, so_luong_ton, suc_chua_toi_da, muc_canh_bao_ton_it)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO kho_hang (nguyen_lieu, nguyen_lieu_ton, tinh_trang, suc_chua_toi_da, ngay_xuat, tong_so_luong)
+                VALUES (?, ?, ?, ?, ?, ?)
             `;
-            return await this.query(sql, [nguyen_lieu_id, so_luong_moi, so_luong_moi * 5, so_luong_moi * 0.2]);
+            return await this.query(sql, [nguyen_lieu, so_luong_moi, 'good', so_luong_moi * 5, so_luong_moi * 0.2]);
         }
     }
 

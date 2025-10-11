@@ -7,7 +7,7 @@
 require('dotenv').config();
 
 // Debug environment variables
-console.log('🔧 Environment Variables:');
+console.log(' Environment Variables:');
 console.log('DB_HOST:', process.env.DB_HOST);
 console.log('DB_PORT:', process.env.DB_PORT);
 console.log('DB_USER:', process.env.DB_USER);
@@ -30,6 +30,7 @@ const MealController = require('./controllers/MealController');
 const NutritionController = require('./controllers/NutritionController');
 const ReportController = require('./controllers/ReportController'); //  Thêm ReportControlle
 const NutritionReportController = require('./controllers/NutritionrpController');
+const WarehouseController = require('./controllers/WarehouseController.cjs');
 
 // Routes
 const AuthRoutes = require('./routes/auth');
@@ -65,6 +66,7 @@ class KindergartenServer {
         this.mealController = new MealController(this.db);
         this.nutritionController = new NutritionController(this.db);
         this.nutritionReportController = new NutritionReportController(this.db);
+        this.warehouseController = new WarehouseController(this.db);
         
         // Initialize Routes
         this.authRoutes = new AuthRoutes(this.authController);
@@ -103,15 +105,21 @@ class KindergartenServer {
             let body = '';
             req.on('data', chunk => {
                 body += chunk.toString();
+                console.log('📥 Received chunk:', chunk.toString());
             });
             req.on('end', () => {
                 try {
+                    console.log('📤 Full body received:', body);
                     if (body.trim() === '') {
+                        console.log('🔧 Empty body, returning {}');
                         resolve({});
                     } else {
-                        resolve(JSON.parse(body));
+                        const parsed = JSON.parse(body);
+                        console.log('🔧 Parsed body:', parsed);
+                        resolve(parsed);
                     }
                 } catch (error) {
+                    console.error(' JSON parse error:', error);
                     reject(error);
                 }
             });
@@ -253,6 +261,8 @@ class KindergartenServer {
                 await this.dishRoutes.handleDishRoutes(req, res, pathname.replace('/api/dishes', ''), method);
             } else if (pathname.startsWith('/api/meals')) {
                 await this.mealsRoutes.handleMealsRoutes(req, res, pathname.replace('/api/meals', ''), method);
+            } else if (pathname.startsWith('/api/warehouse')) {
+                await this.handleWarehouseRoutes(req, res, pathname.replace('/api/warehouse', ''), method);
             } else if (pathname.startsWith('/api/nutrition') && !pathname.startsWith('/api/nutritionrp')) {
                 await this.nutritionRoutes.handleNutritionRoutes(req, res);
             } else if (pathname.startsWith('/api/nutritionrp')) {
@@ -432,14 +442,14 @@ class KindergartenServer {
     // Xử lý nutrition reports
     async handleNutritionReports(req, res, path, method) {
         try {
-            console.log('🔐 handleNutritionReports - path:', path, 'method:', method);
+            console.log(' handleNutritionReports - path:', path, 'method:', method);
             
             // Apply authentication
             const authHeader = req.headers.authorization;
-            console.log('🔐 Auth header:', authHeader ? 'Present' : 'Missing');
+            console.log(' Auth header:', authHeader ? 'Present' : 'Missing');
             
             if (!authHeader || !authHeader.startsWith('Bearer ')) {
-                console.log('❌ Missing or invalid auth header');
+                console.log(' Missing or invalid auth header');
                 this.sendResponse(res, 401, {
                     success: false,
                     message: 'Access token is required'
@@ -448,13 +458,13 @@ class KindergartenServer {
             }
 
             const token = authHeader.substring(7);
-            console.log('🔐 Token length:', token.length);
+            console.log(' Token length:', token.length);
             
             const user = await this.authController.verifyToken(token);
-            console.log('🔐 User verification result:', user ? 'Success' : 'Failed');
+            console.log(' User verification result:', user ? 'Success' : 'Failed');
             
             if (!user) {
-                console.log('❌ Token verification failed');
+                console.log(' Token verification failed');
                 this.sendResponse(res, 401, {
                     success: false,
                     message: 'Invalid or expired token'
@@ -613,6 +623,53 @@ class KindergartenServer {
             });
         }
     }
+
+    // Handle Warehouse Routes
+    async handleWarehouseRoutes(req, res, path, method) {
+        try {
+            console.log(`🏪 Warehouse route: ${method} ${path}`);
+
+            if (method === 'GET' && (path === '' || path === '/')) {
+                // GET /api/warehouse - Lấy tất cả kho hàng
+                await this.warehouseController.getAllWarehouseRecords(req, res);
+                return;
+            }
+
+            if (method === 'POST' && (path === '' || path === '/')) {
+                // POST /api/warehouse - Tạo mới kho hàng
+                // Parse body for POST requests
+                console.log('🔧 About to parse body...');
+                req.body = await this.parseBody(req);
+                console.log('🔧 Body after parsing:', req.body);
+                await this.warehouseController.createWarehouseRecord(req, res);
+                return;
+            }
+
+            if (method === 'DELETE' && path.match(/^\/\d+$/)) {
+                // DELETE /api/warehouse/:id - Xóa kho hàng
+                const id = path.substring(1); // Loại bỏ dấu '/' đầu tiên
+                req.params = { id };
+                await this.warehouseController.deleteWarehouseRecord(req, res);
+                return;
+            }
+
+            // Route không tìm thấy
+            this.sendResponse(res, 404, { 
+                success: false, 
+                message: 'Warehouse route not found',
+                available_routes: [
+                    'GET /api/warehouse - Get all warehouse records',
+                    'POST /api/warehouse - Create new warehouse record',
+                    'DELETE /api/warehouse/:id - Delete warehouse record'
+                ]
+            });
+
+        } catch (error) {
+            console.error('❌ Error in handleWarehouseRoutes:', error);
+            this.sendResponse(res, 500, { success: false, error: error.message });
+        }
+    }
+
     // Graceful shutdown
     async stop() {
         if (this.server) {

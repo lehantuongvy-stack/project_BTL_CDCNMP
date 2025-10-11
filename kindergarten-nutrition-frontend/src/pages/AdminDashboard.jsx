@@ -5,6 +5,8 @@ import childService from '../services/childService.js';
 import ChildrenManagement from '../components/children/ChildrenManagement.jsx';
 import reportService from '../services/nutritionrpService.js'
 import CreateReport from './CreateReport.jsx';
+import WarehouseForm from './WarehouseForm.jsx';
+import warehouseService from '../services/warehouseService.js';
 import '../styles/AdminDashboard.css';
 
 function AdminDashboard() {
@@ -78,6 +80,31 @@ function AdminDashboard() {
     console.error('Error creating report:', err);
   }
 };
+
+  //kho nguyên liệu
+  const [warehouseData, setWarehouseData] = useState([]);
+  const [loadingWarehouse, setLoadingWarehouse] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [showWarehouseForm, setShowWarehouseForm] = useState(false);
+
+  const loadWarehouse = async () => {
+  try {
+    setLoadingWarehouse(true);
+    const res = await warehouseService.getAll();
+    setWarehouseData(res.data);
+  } catch (err) {
+    console.error('Lỗi khi tải dữ liệu kho:', err);
+  } finally {
+    setLoadingWarehouse(false);
+  }
+};
+useEffect(() => {
+  if (activeSection === 'warehouse') {
+    loadWarehouse();
+  }
+}, [activeSection]);
+
+
 
 
   // Load dashboard data
@@ -313,33 +340,33 @@ function AdminDashboard() {
         );
       
       case 'reports':
-  return (
-    <div className="section-content">
-      <h2>Báo cáo</h2>
-      <p>Tạo và xem các báo cáo dinh dưỡng...</p>
+        return (
+          <div className="section-content">
+            <h2>Báo cáo</h2>
+            <p>Tạo và xem các báo cáo dinh dưỡng...</p>
 
-      {/* Nút mở form tạo báo cáo */}
-      <button className="btn-primary" onClick={() => setShowCreateReport(true)}>
-        + Tạo báo cáo
-      </button>
+            {/* Nút mở form tạo báo cáo */}
+            <button className="btn-primary" onClick={() => setShowCreateReport(true)}>
+              + Tạo báo cáo
+            </button>
 
-      {/* Hiển thị danh sách báo cáo */}
-      {loadingReports ? (
-        <p>Đang tải báo cáo...</p>
-      ) : reports.length > 0 ? (
-        <table className="report-table">
-          <thead>
-            <tr>
-              <th>Tên báo cáo</th>
-              <th>Tên trường</th>
-              <th>Ngày báo cáo</th>
-              <th>Số trẻ</th>
-              <th>Số suất/ngày</th>
-              <th>Người tạo</th>
-              <th>Hành động</th>
-            </tr>
-          </thead>
-          <tbody>
+            {/* Hiển thị danh sách báo cáo */}
+            {loadingReports ? (
+              <p>Đang tải báo cáo...</p>
+            ) : reports.length > 0 ? (
+              <table className="report-table">
+              <thead>
+              <tr>
+                <th>Tên báo cáo</th>
+                <th>Tên trường</th>
+                <th>Ngày báo cáo</th>
+                <th>Số trẻ</th>
+                <th>Số suất/ngày</th>
+                <th>Người tạo</th>
+                <th>Hành động</th>
+              </tr>
+              </thead>
+            <tbody>
             {reports.map((r) => (
               <tr key={r.id}>
                 <td>{r.report_name}</td>
@@ -409,6 +436,82 @@ function AdminDashboard() {
       )}
     </div>
   );
+
+  case 'warehouse':
+  return (
+    <div className="section-content">
+      <h2>Kho hàng</h2>
+      <p>Quản lý nguyên liệu, số lượng và tình trạng kho.</p>
+
+      {loadingWarehouse ? (
+        <p>Đang tải dữ liệu...</p>
+      ) : warehouseData.length > 0 ? (
+        <table className="report-table">
+          <thead>
+            <tr>
+              <th>Tên nguyên liệu</th>
+              <th>Tình trạng</th>
+              <th>Tổng số lượng</th>
+              <th>Ngày xuất</th>
+              <th>Hành động</th>
+            </tr>
+          </thead>
+          <tbody>
+            {warehouseData.map((item) => (
+              <tr key={item.id}>
+                <td>{item.nguyen_lieu}</td>
+                <td>{item.tinh_trang}</td>
+                <td>{item.tong_so_luong}</td>
+                <td>{item.ngay_xuat?.slice(0, 10)}</td>
+                <td>
+                  <button onClick={() => { 
+                    console.log('Clicked warehouse item:', item);
+                    setSelectedItem(item); 
+                    setShowWarehouseForm(true); 
+                  }}>
+                    Xem
+                  </button>
+                  <button onClick={async () => {
+                    if (window.confirm('Bạn có chắc muốn xóa nguyên liệu này?')) {
+                      try {
+                        console.log('Deleting warehouse item with ID:', item.id);
+                        const result = await warehouseService.delete(item.id);
+                        console.log('Delete result:', result);
+                        alert('Xóa nguyên liệu thành công!');
+                        loadWarehouse();
+                      } catch (error) {
+                        console.error('Error deleting warehouse item:', error);
+                        alert('Lỗi khi xóa nguyên liệu: ' + error.message);
+                      }
+                    }
+                  }}>
+                    Xóa
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : (
+        <p>Kho hiện chưa có dữ liệu</p>
+      )}
+
+      {/* Modal hiển thị form xem chi tiết */}
+      {showWarehouseForm && selectedItem && (
+        <div className="modal-overlay" onClick={() => setShowWarehouseForm(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            {console.log('Rendering modal with selectedItem:', selectedItem)}
+            <WarehouseForm
+              initialData={selectedItem}
+              readOnly={true}
+              onCancel={() => setShowWarehouseForm(false)}
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
 
       
       default:

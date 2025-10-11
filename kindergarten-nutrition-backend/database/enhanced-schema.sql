@@ -262,18 +262,19 @@ CREATE TABLE chi_tiet_bua_an (
 -- I. Bảng Kho hàng
 CREATE TABLE kho_hang (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    nguyen_lieu_id CHAR(36) NOT NULL,
-    so_luong_ton FLOAT DEFAULT 0,
+    nguyen_lieu VARCHAR(36) NOT NULL,
+    nguyen_lieu_ton VARCHAR(50) DEFAULT 0,
+    tinh_trang VARCHAR(50) DEFAULT 'good', -- good, low, out_of_stock
     suc_chua_toi_da FLOAT DEFAULT 0,
-    muc_canh_bao_ton_it FLOAT DEFAULT 0, -- Mức cảnh báo hết hàng
-    vi_tri_kho NVARCHAR(50), -- A1, B2, etc.
-    
+    ngay_xuat TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    tong_so_luong FLOAT DEFAULT 0,
+
     ngay_cap_nhat TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
-    FOREIGN KEY (nguyen_lieu_id) REFERENCES nguyen_lieu(id) ON DELETE CASCADE,
+    FOREIGN KEY (nguyen_lieu) REFERENCES nguyen_lieu(id) ON DELETE CASCADE,
     
-    UNIQUE KEY unique_nguyen_lieu_kho (nguyen_lieu_id),
-    INDEX idx_so_luong_ton (so_luong_ton)
+    UNIQUE KEY unique_nguyen_lieu_kho (nguyen_lieu),
+    INDEX idx_nguyen_lieu_ton (nguyen_lieu_ton)
 );
 
 -- J. Bảng Phiếu nhập hàng
