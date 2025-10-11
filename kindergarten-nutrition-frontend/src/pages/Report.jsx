@@ -63,12 +63,12 @@ const handleSearch = async () => {
         console.log('📅 Comparing dates:', {
           reportDate: report.report_date,
           parsedReportDate: reportDate,
-          searchMonth: search.month,
+          searchMonthInput: search.month,
           searchDate: searchDate,
           reportYear: reportDate.getFullYear(),
           reportMonth: reportDate.getMonth(),
           searchYear: searchDate.getFullYear(), 
-          searchMonth: searchDate.getMonth()
+          searchMonthValue: searchDate.getMonth()
         });
         
         matchMonth = reportDate.getFullYear() === searchDate.getFullYear() &&

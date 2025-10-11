@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { useNavigate } from 'react-router-dom';
 import childService from '../services/childService.js';
 import userService from '../services/userService.js';
+import reportService from '../services/nutritionrpService.js';
 import ChildrenManagement from '../components/children/ChildrenManagement.jsx';
 import TeacherManagement from '../components/teachers/TeacherManagement.jsx';
 import ParentManagement from '../components/parents/ParentManagement.jsx';
@@ -22,6 +23,8 @@ function AdminDashboard() {
   const [childrenDetails, setChildrenDetails] = useState([]);
   const [showChildrenModal, setShowChildrenModal] = useState(false);
   const [showCreateAccountDropdown, setShowCreateAccountDropdown] = useState(false);
+  const [reports, setReports] = useState([]);
+  const [loadingReports, setLoadingReports] = useState(false);
 
   // Load dashboard data
   useEffect(() => {
@@ -146,6 +149,46 @@ function AdminDashboard() {
       console.log(' activeSection set, current value:', 'teachers');
     }
   };
+
+  // Load reports data
+  const loadReports = async () => {
+    try {
+      setLoadingReports(true);
+      console.log('📊 Loading reports data...');
+      const response = await reportService.getAllReports();
+      console.log('📊 Reports API response:', response);
+      setReports(response.data || []);
+    } catch (error) {
+      console.error('Error loading reports:', error);
+      setReports([]);
+    } finally {
+      setLoadingReports(false);
+    }
+  };
+
+  // Handle delete report
+  const handleDeleteReport = async (reportId) => {
+    if (!window.confirm('Bạn có chắc chắn muốn xóa báo cáo này?')) {
+      return;
+    }
+    
+    try {
+      await reportService.deleteReport(reportId);
+      // Reload reports after successful deletion
+      await loadReports();
+      alert('Xóa báo cáo thành công!');
+    } catch (error) {
+      console.error('Error deleting report:', error);
+      alert('Có lỗi khi xóa báo cáo!');
+    }
+  };
+
+  // Load reports when reports section is active
+  useEffect(() => {
+    if (activeSection === 'reports') {
+      loadReports();
+    }
+  }, [activeSection]);
 
   // Dashboard stats with real data
   const dashboardStats = [
@@ -276,11 +319,87 @@ function AdminDashboard() {
       case 'reports':
         return (
           <div className="section-content">
-            <h2>Báo cáo</h2>
-            <p>Tạo và xem các báo cáo dinh dưỡng...</p>
-            <button className="btn-primary" onClick={() => navigate('/create')}>
-              Xem báo cáo
-            </button>
+            <div className="reports-header">
+              <h2>Báo cáo</h2>
+              <p>Tạo và xem các báo cáo dinh dưỡng...</p>
+              <button 
+                className="btn-primary create-report-btn" 
+                onClick={() => navigate('/create')}
+              >
+                + Tạo báo cáo
+              </button>
+            </div>
+
+            <div className="reports-list-section">
+              <div className="reports-table-container">
+                <table className="reports-table">
+                  <thead>
+                    <tr>
+                      <th>Tên báo cáo</th>
+                      <th>Tên trường</th>
+                      <th>Ngày báo cáo</th>
+                      <th>Số trẻ</th>
+                      <th>Số suất/ngày</th>
+                      <th>Người tạo</th>
+                      <th>Hành động</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {loadingReports ? (
+                      <tr>
+                        <td colSpan="7" className="loading-cell">
+                          Đang tải báo cáo...
+                        </td>
+                      </tr>
+                    ) : reports.length > 0 ? (
+                      reports.map((report, index) => (
+                        <tr key={report.id || index}>
+                          <td>{report.report_name || 'Không có tên'}</td>
+                          <td>{report.school_name || 'Không có tên trường'}</td>
+                          <td>
+                            {report.report_date ? 
+                              new Date(report.report_date).toLocaleDateString('vi-VN') : 
+                              'Không có ngày'
+                            }
+                          </td>
+                          <td>{report.num_children || 0}</td>
+                          <td>{report.meals_per_day || 0}</td>
+                          <td>{report.created_by || 'Không rõ'}</td>
+                          <td>
+                            <div className="action-buttons">
+                              <button 
+                                className="btn-action btn-view"
+                                onClick={() => navigate(`/reports/${report.id}`)}
+                                title="Xem chi tiết"
+                              >
+                                Xem
+                              </button>
+                              <button 
+                                className="btn-action btn-delete"
+                                onClick={() => handleDeleteReport(report.id)}
+                                title="Xóa báo cáo"
+                              >
+                                Xóa
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="7" className="no-data-cell">
+                          Không có báo cáo nào. Hãy tạo báo cáo đầu tiên!
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="reports-summary">
+                <p>Tổng cộng: <strong>{reports.length}</strong> báo cáo</p>
+              </div>
+            </div>
           </div>
         );
       
