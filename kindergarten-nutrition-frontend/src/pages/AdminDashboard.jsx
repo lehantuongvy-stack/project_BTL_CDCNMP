@@ -278,7 +278,7 @@ function AdminDashboard() {
           <div className="section-content">
             <h2>Báo cáo</h2>
             <p>Tạo và xem các báo cáo dinh dưỡng...</p>
-            <button className="btn-primary" onClick={() => navigate('/report')}>
+            <button className="btn-primary" onClick={() => navigate('/create')}>
               Xem báo cáo
             </button>
           </div>

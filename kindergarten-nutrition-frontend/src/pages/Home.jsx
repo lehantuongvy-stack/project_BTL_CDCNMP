@@ -172,7 +172,12 @@ export default function Home() {
             </div>
             {/* Nút báo cáo chỉ hiển thị cho giáo viên */}
             {user?.role === 'teacher' && (
-              <button className="report-btn-home">BÁO CÁO</button>
+              <button 
+                className="report-btn-home"
+                onClick={() => navigate('/report')}
+              >
+                BÁO CÁO
+              </button>
             )}
           </aside>
 

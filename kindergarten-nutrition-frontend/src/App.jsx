@@ -97,8 +97,16 @@ function App() {
               <ListStudent />
             </ProtectedRoute>
           } />
-          <Route path="/report" element={<Report />} />
+          <Route path="/report" element={
+            <ProtectedRoute requiredRole="teacher">
+              <Report />
+            </ProtectedRoute>} />
           <Route path="/create" element={<CreateReport />} />
+          <Route path="/reports/:id" element={
+            <ProtectedRoute requiredRole="teacher">
+              <CreateReport readOnly={true} />
+            </ProtectedRoute>
+          } />
           <Route path="/mon/:id" element={<ChitietMon />} />
         </Routes>
       </BrowserRouter>

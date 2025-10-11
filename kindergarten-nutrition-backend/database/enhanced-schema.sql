@@ -537,6 +537,30 @@ INSERT INTO chi_tiet_bua_an (bua_an_id, mon_an_id, so_khau_phan, thu_tu_phuc_vu)
 
 -- Console output
 SELECT 'Enhanced Database Schema created successfully!' as message;
+-- ==============================================
+-- BẢNG BÁO CÁO DINH DƯỠNG (Nutrition Reports)
+-- ==============================================
+
+-- Bảng lưu trữ báo cáo dinh dưỡng
+CREATE TABLE nutrition_reports (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    report_name NVARCHAR(200) DEFAULT 'Báo cáo dinh dưỡng',
+    school_name NVARCHAR(200) NOT NULL,
+    report_date DATE NOT NULL,
+    num_children INT DEFAULT 0,
+    meals_per_day INT DEFAULT 0,
+    nutrition_data JSON,
+    growth_data JSON,
+    menu_reviews JSON,
+    created_by NVARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    INDEX idx_report_date (report_date),
+    INDEX idx_school (school_name),
+    INDEX idx_created_by (created_by)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 SELECT 'Sample data inserted for testing!' as message;
 SELECT CONCAT('Total users: ', COUNT(*)) as user_count FROM users;
 SELECT CONCAT('Total categories: ', COUNT(*)) as category_count FROM danh_muc_nguyen_lieu;
@@ -544,3 +568,4 @@ SELECT CONCAT('Total ingredients: ', COUNT(*)) as ingredient_count FROM nguyen_l
 SELECT CONCAT('Total suppliers: ', COUNT(*)) as supplier_count FROM nha_cung_cap;
 SELECT CONCAT('Total dishes: ', COUNT(*)) as dish_count FROM mon_an;
 SELECT CONCAT('Total meals: ', COUNT(*)) as meal_count FROM bua_an;
+SELECT CONCAT('Total nutrition reports: ', COUNT(*)) as reports_count FROM nutrition_reports;

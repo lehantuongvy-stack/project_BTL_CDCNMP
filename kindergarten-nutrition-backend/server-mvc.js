@@ -20,6 +20,7 @@ const MealController = require('./controllers/mealController');
 const NutritionController = require('./controllers/nutritionController');
 const ReportController = require('./controllers/ReportController'); //  Thêm ReportControlle
 const ClassController = require('./controllers/ClassController');
+const NutritionReportController = require('./controllers/NutritionrpController');
 
 // Routes
 const AuthRoutes = require('./routes/auth');
@@ -31,6 +32,7 @@ const NutritionRoutes = require('./routes/nutrition');
 const DishRoutes = require('./routes/dishes'); 
 const ReportRoutes = require('./routes/report');
 const ClassRoutes = require('./routes/classes');
+const NutritionRpRoutes = require('./routes/nutritionrp');
 
 // Services (for backward compatibility)
 const ReportingService = require('./services/ReportingService');
@@ -56,6 +58,7 @@ class KindergartenServer {
         this.mealController = new MealController(this.db);
         this.nutritionController = new NutritionController(this.db);
         this.classController = new ClassController(this.db);
+        this.nutritionReportController = new NutritionReportController(this.db);
         
         // Initialize Routes
         this.authRoutes = new AuthRoutes(this.authController);
@@ -66,6 +69,7 @@ class KindergartenServer {
         this.mealsRoutes = new MealsRoutes(this.mealController, this.authController);
         this.nutritionRoutes = new NutritionRoutes(this.nutritionController, this.authController);
         this.classRoutes = new ClassRoutes(this.classController);
+        this.nutritionRpRoutes = new NutritionRpRoutes(this.db);
         
         // Initialize Services (for complex business logic)
         this.reportingService = new ReportingService(this.db);
@@ -233,6 +237,8 @@ class KindergartenServer {
                 }
             } else if (pathname === '/api/foods' && method === 'GET') {
                 await this.handleFoodsLibrary(req, res);
+            } else if (pathname.startsWith('/api/nutritionrp')) {
+                await this.nutritionRpRoutes.handleNutritionRpRoutes(req, res, pathname.replace('/api/nutritionrp', ''), method);
             } else if (pathname.startsWith('/api/nutrition')) {
                 await this.nutritionRoutes.handleNutritionRoutes(req, res);
             } else if (pathname.startsWith('/api/reports')) {
@@ -523,6 +529,7 @@ class KindergartenServer {
             });
         }
     }
+
     // Graceful shutdown
     async stop() {
         if (this.server) {

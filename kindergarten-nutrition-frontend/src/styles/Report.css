@@ -1,39 +1,256 @@
+/* Overall layout */
+.home {
+  min-height: 100vh;
+  overflow-y: auto !important;
+  overflow-x: hidden;
+  background: #ffeef1;
+  padding: 200px 20px 20px 20px;
+  box-sizing: border-box;
+  height: auto !important;
+}
 
-.box {
-  margin-top: 130px;
+.search-section {
   background: #fff;
-  border: 1px solid #ddd;
-  padding: 30px;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-.box input {
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  padding: 8px 12px;
-  width: 30%;
-  font-size: 14px;
-  display: grid;
-  grid-template-columns: 150px 1fr 100px 1fr; /* label - input - label - input */
-  gap: 15px 20px;
-  align-items: center;
-  
+.search-row {
+  margin-bottom: 10px;
 }
 
-.button-row {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-}
-
-.btn {
-  background: #f4a6b6;
-  border: none;
-  padding: 10px 18px;
-  border-radius: 20px;
-  cursor: pointer;
+.search-row label {
+  display: block;
   font-weight: bold;
+  margin-bottom: 6px;
 }
 
-.btn:hover {
-  background: #f18b9d;
+.search-row input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #f4b6b6;
+  background-color: #fddede;
+  box-sizing: border-box;
+}
+
+.search-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.btn-primary, .btn-secondary {
+  flex: 1;
+  background-color: #f4a1a1 !important;
+  border: none;
+  padding: 12px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  text-decoration: none;
+  color: #333 !important;
+  text-align: center;
+  transition: background-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.btn-primary:hover, .btn-secondary:hover {
+  background-color: #f28b8b !important;
+}
+
+.btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: #f4a1a1 !important;
+}
+
+.btn-secondary:disabled:hover {
+  background-color: #f4a1a1 !important;
+}
+
+/* Specific overrides for button elements */
+button.btn-secondary {
+  background-color: #f4a1a1 !important;
+  color: #333 !important;
+  border: none !important;
+  outline: none !important;
+}
+
+button.btn-secondary:hover:not(:disabled) {
+  background-color: #f28b8b !important;
+}
+
+button.btn-secondary:focus {
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(244, 161, 161, 0.5) !important;
+}
+
+/* Specific styles for Link elements */
+a.btn-primary {
+  background-color: #f4a1a1 !important;
+  color: #333 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none !important;
+}
+
+a.btn-primary:hover {
+  background-color: #f28b8b !important;
+  color: #333 !important;
+}
+
+/* Results Section */
+.results-section {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.results-header h3 {
+  margin: 0 0 20px 0;
+  color: #333;
+  font-size: 18px;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+}
+
+.reports-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+/* Scrollbar styling for better UX */
+.reports-grid::-webkit-scrollbar {
+  width: 8px;
+}
+
+.reports-grid::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.reports-grid::-webkit-scrollbar-thumb {
+  background: #f4a1a1;
+  border-radius: 4px;
+}
+
+.reports-grid::-webkit-scrollbar-thumb:hover {
+  background: #f28b8b;
+}
+
+.report-card {
+  background: #f9f9f9;
+  border-radius: 8px;
+  padding: 15px;
+  border: 1px solid #eee;
+  transition: all 0.2s ease;
+  height: fit-content;
+}
+
+.report-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.report-card h4 {
+  margin: 0 0 10px 0;
+  color: #333;
+  font-size: 16px;
+}
+
+.report-card p {
+  margin: 5px 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.card-actions {
+  margin-top: 15px;
+  text-align: center;
+}
+
+.btn-view {
+  background-color: #4CAF50;
+  color: white;
+  padding: 8px 16px;
+  text-decoration: none;
+  border-radius: 4px;
+  font-size: 14px;
+  display: inline-block;
+}
+
+.btn-view:hover {
+  background-color: #45a049;
+}
+
+.no-results {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .home {
+    padding: 80px 10px 20px 10px;
+  }
+  
+  .search-buttons {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .btn-primary, .btn-secondary {
+    flex: none;
+    width: 100%;
+  }
+  
+  .reports-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+    max-height: 65vh;
+  }
+  
+  .results-section {
+    max-height: 75vh;
+  }
+}
+
+@media (max-width: 480px) {
+  .search-section, .results-section {
+    margin-left: -5px;
+    margin-right: -5px;
+    border-radius: 8px;
+  }
+  
+  .report-card {
+    padding: 12px;
+  }
+  
+  .report-card h4 {
+    font-size: 15px;
+  }
+  
+  .report-card p {
+    font-size: 13px;
+  }
 }
