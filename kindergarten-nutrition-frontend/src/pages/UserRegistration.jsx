@@ -159,7 +159,8 @@ const UserRegistration = () => {
           full_name: '',
           email: '',
           phone_number: '',
-          role: 'parent'
+          role: 'parent',
+          class_id: ''
         });
         
         // Auto redirect after 2 seconds
@@ -170,7 +171,61 @@ const UserRegistration = () => {
       
     } catch (error) {
       console.error(' Registration failed:', error);
-      setErrors({ submit: error.message || 'Có lỗi xảy ra khi tạo tài khoản' });
+      
+      // Extract clean error message
+      let errorMessage = error.message || 'Có lỗi xảy ra khi tạo tài khoản';
+      
+      console.log(' Original error message:', errorMessage);
+      
+      // Remove HTTP status code prefix if exists (more comprehensive)
+      errorMessage = errorMessage.replace(/^HTTP \d+:\s*/i, '');
+      
+      console.log(' After HTTP prefix removal:', errorMessage);
+      
+      // Try to parse JSON and extract message
+      try {
+        // Check if the message starts with { or [
+        if (errorMessage.trim().startsWith('{') || errorMessage.trim().startsWith('[')) {
+          const parsed = JSON.parse(errorMessage);
+          if (parsed.message) {
+            errorMessage = parsed.message;
+          } else if (parsed.error) {
+            errorMessage = parsed.error;
+          }
+        }
+      } catch (parseError) {
+        console.log(' JSON parse failed, using as is:', errorMessage);
+      }
+      
+      console.log(' Final error message:', errorMessage);
+      
+      // Map specific error messages to form fields
+      const fieldErrorMap = {
+        'Username đã tồn tại': 'username',
+        'Tên đăng nhập đã tồn tại': 'username', 
+        'Email đã tồn tại': 'email',
+        'Số điện thoại đã tồn tại': 'phone_number'
+      };
+      
+      // Check if error message matches a specific field
+      const fieldWithError = Object.keys(fieldErrorMap).find(msg => 
+        errorMessage.toLowerCase().includes(msg.toLowerCase())
+      );
+      
+      if (fieldWithError) {
+        // Set error on specific field
+        setErrors({
+          [fieldErrorMap[fieldWithError]]: errorMessage
+        });
+        console.log(' Field-specific error set:', fieldErrorMap[fieldWithError], '→', errorMessage);
+      } else {
+        // Set general error
+        setErrors({ 
+          submit: errorMessage 
+        });
+        console.log(' General error set:', errorMessage);
+      }
+      
     } finally {
       setLoading(false);
     }

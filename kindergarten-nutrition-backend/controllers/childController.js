@@ -246,12 +246,6 @@ class ChildController extends BaseController {
             const { id } = req.params;
             const updateData = req.body;
 
-            console.log('🔧 Backend updateChild - ID:', id);
-            console.log('🔧 Backend updateChild - req.body:', updateData);
-            console.log('🔧 Backend updateChild - Object.keys(updateData):', Object.keys(updateData));
-            console.log('🔧 Backend updateChild - typeof updateData:', typeof updateData);
-            console.log('🔧 Backend updateChild - updateData is empty?', Object.keys(updateData).length === 0);
-
             // Check if updateData is empty or invalid
             if (!updateData || typeof updateData !== 'object' || Object.keys(updateData).length === 0) {
                 return this.sendResponse(res, 400, {
@@ -339,70 +333,70 @@ class ChildController extends BaseController {
     }
 
     // Tìm kiếm children
-    async searchChildren(req, res) {
-        try {
-            // Parse query parameters
-            const urlParts = url.parse(req.url, true);
-            const query = urlParts.query;
+    // async searchChildren(req, res) {
+    //     try {
+    //         // Parse query parameters
+    //         const urlParts = url.parse(req.url, true);
+    //         const query = urlParts.query;
             
-            console.log('Search children with query:', query);
+    //         console.log('Search children with query:', query);
             
-            const searchTerm = query.q || query.search || '';
-            const className = query.class || query.lop || '';
-            const hasAllergy = query.has_allergy;
-            const age = query.age;
-            const gender = query.gender;
-            const page = parseInt(query.page) || 1;
-            const limit = parseInt(query.limit) || 10;
-            const offset = (page - 1) * limit;
+    //         const searchTerm = query.q || query.search || '';
+    //         const className = query.class || query.lop || '';
+    //         const hasAllergy = query.has_allergy;
+    //         const age = query.age;
+    //         const gender = query.gender;
+    //         const page = parseInt(query.page) || 1;
+    //         const limit = parseInt(query.limit) || 10;
+    //         const offset = (page - 1) * limit;
 
-            // Allow search with any parameter combination
-            console.log('Legacy search function - parameters:', { searchTerm, className, hasAllergy, age, gender });
+    //         // Allow search with any parameter combination
+    //         console.log('Legacy search function - parameters:', { searchTerm, className, hasAllergy, age, gender });
 
-            // Build search criteria
-            const searchCriteria = {
-                searchTerm: searchTerm.trim(),
-                className: className,
-                hasAllergy: hasAllergy !== undefined ? hasAllergy === 'true' : undefined,
-                age: age ? parseInt(age) : undefined,
-                gender: gender,
-                limit: limit,
-                offset: offset
-            };
-            console.log('Search criteria:', searchCriteria);
-            const result = await this.searchChildren(searchCriteria);
-            this.sendResponse(res, 200, {
-                success: true,
-                message: `Tìm kiếm trẻ em thành công. Tìm thấy ${result.total} kết quả`,
-                data: {
-                    children: result.children,
-                    pagination: {
-                        current_page: page,
-                        total_pages: Math.ceil(result.total / limit),
-                        total_items: result.total,
-                        items_per_page: limit,
-                        has_next: page * limit < result.total,
-                        has_prev: page > 1
-                    },
-                    search_criteria: {
-                        search_term: searchTerm,
-                        class: className || 'all',
-                        has_allergy: hasAllergy || 'all',
-                        age: age || 'all',
-                        gender: gender || 'all'
-                    }
-                }
-            });
+    //         // Build search criteria
+    //         const searchCriteria = {
+    //             searchTerm: searchTerm.trim(),
+    //             className: className,
+    //             hasAllergy: hasAllergy !== undefined ? hasAllergy === 'true' : undefined,
+    //             age: age ? parseInt(age) : undefined,
+    //             gender: gender,
+    //             limit: limit,
+    //             offset: offset
+    //         };
+    //         console.log('Search criteria:', searchCriteria);
+    //         const result = await this.searchChildren(searchCriteria);
+    //         this.sendResponse(res, 200, {
+    //             success: true,
+    //             message: `Tìm kiếm trẻ em thành công. Tìm thấy ${result.total} kết quả`,
+    //             data: {
+    //                 children: result.children,
+    //                 pagination: {
+    //                     current_page: page,
+    //                     total_pages: Math.ceil(result.total / limit),
+    //                     total_items: result.total,
+    //                     items_per_page: limit,
+    //                     has_next: page * limit < result.total,
+    //                     has_prev: page > 1
+    //                 },
+    //                 search_criteria: {
+    //                     search_term: searchTerm,
+    //                     class: className || 'all',
+    //                     has_allergy: hasAllergy || 'all',
+    //                     age: age || 'all',
+    //                     gender: gender || 'all'
+    //                 }
+    //             }
+    //         });
 
-        } catch (error) {
-            console.error('Error in searchChildrenHandler:', error);
-            this.sendResponse(res, 500, {
-                success: false,
-                message: 'Lỗi server',
-                error: 'Lỗi khi tìm kiếm trẻ em: ' + error.message
-            });
-        }
-    }
+    //     } catch (error) {
+    //         console.error('Error in searchChildrenHandler:', error);
+    //         this.sendResponse(res, 500, {
+    //             success: false,
+    //             message: 'Lỗi server',
+    //             error: 'Lỗi khi tìm kiếm trẻ em: ' + error.message
+    //         });
+    //     }
+    // }
 
     // Lấy children có dị ứng
     async getChildrenWithAllergies(req, res) {

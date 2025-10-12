@@ -243,9 +243,9 @@ class MealController extends BaseController {
 
             const menuData = await this.mealModel.getMealsByDateForAPI(date, nhom, class_id);
 
-            // ✅ Nếu không có dữ liệu, vẫn trả 200 (frontend sẽ xử lý hiển thị 'Không có thực đơn')
+            //  Nếu không có dữ liệu, vẫn trả 200 (frontend sẽ xử lý hiển thị 'Không có thực đơn')
             if (!menuData) {
-                console.warn("⚠️ menuData là null hoặc undefined");
+                console.warn(" menuData là null hoặc undefined");
                 return res.status(200).json({
                     success: true,
                     data: [],
@@ -254,7 +254,7 @@ class MealController extends BaseController {
             }
 
             if (Object.keys(menuData).length === 0) {
-                console.warn("⚠️ menuData rỗng");
+                console.warn(" menuData rỗng");
                 return res.status(200).json({
                     success: true,
                     data: [],
@@ -262,8 +262,8 @@ class MealController extends BaseController {
                 });
             }
 
-            // ✅ Nếu có dữ liệu
-            console.log("✅ Trả dữ liệu thực đơn ngày:", date);
+            //  Nếu có dữ liệu
+            console.log(" Trả dữ liệu thực đơn ngày:", date);
             return res.status(200).json({
                 success: true,
                 data: menuData,
@@ -271,7 +271,7 @@ class MealController extends BaseController {
             });
 
         } catch (error) {
-            console.error("❌ Lỗi getMealsByDateForAPI:", error);
+            console.error(" Lỗi getMealsByDateForAPI:", error);
             return res.status(500).json({
                 success: false,
                 message: "Lỗi server khi lấy thực đơn theo ngày",
@@ -290,13 +290,13 @@ class MealController extends BaseController {
             const { date } = req.query;
             const targetDate = date || new Date().toISOString().split('T')[0];
             
-            console.log("🏠 API slide-right-home gọi lấy thực đơn ngày:", targetDate);
+            console.log(" API slide-right-home gọi lấy thực đơn ngày:", targetDate);
 
             const menuData = await this.mealModel.getMealsByDateForAPI(targetDate);
 
-            // ✅ Nếu không có dữ liệu, vẫn trả 200 (frontend sẽ xử lý hiển thị 'Không có thực đơn')
+            //  Nếu không có dữ liệu, vẫn trả 200 (frontend sẽ xử lý hiển thị 'Không có thực đơn')
             if (!menuData) {
-                console.warn("⚠️ slide-right-home: menuData là null hoặc undefined");
+                console.warn(" slide-right-home: menuData là null hoặc undefined");
                 return res.status(200).json({
                     success: true,
                     data: [],
@@ -305,7 +305,7 @@ class MealController extends BaseController {
             }
 
             if (Object.keys(menuData).length === 0) {
-                console.warn("⚠️ slide-right-home: menuData rỗng");
+                console.warn(" slide-right-home: menuData rỗng");
                 return res.status(200).json({
                     success: true,
                     data: [],
@@ -313,8 +313,8 @@ class MealController extends BaseController {
                 });
             }
 
-            // ✅ Nếu có dữ liệu
-            console.log("✅ slide-right-home: Trả dữ liệu thực đơn ngày:", targetDate);
+            //  Nếu có dữ liệu
+            console.log(" slide-right-home: Trả dữ liệu thực đơn ngày:", targetDate);
             return res.status(200).json({
                 success: true,
                 data: menuData,
@@ -322,7 +322,7 @@ class MealController extends BaseController {
             });
 
         } catch (error) {
-            console.error("❌ Lỗi getSlideRightHomeMeals:", error);
+            console.error(" Lỗi getSlideRightHomeMeals:", error);
             return res.status(500).json({
                 success: false,
                 message: "Lỗi server khi lấy thực đơn cho slide-right-home",
@@ -451,8 +451,8 @@ class MealController extends BaseController {
      */
     async updateMealPlanNew(req, res) {
         try {
-            console.log('🔄 updateMealPlanNew called');
-            console.log('📊 Request body:', req.body);
+            console.log(' updateMealPlanNew called');
+            console.log(' Request body:', req.body);
 
             // Role check - chỉ giáo viên, admin, nutritionist mới được update
             if (!['admin', 'nutritionist', 'teacher'].includes(req.user.role)) {

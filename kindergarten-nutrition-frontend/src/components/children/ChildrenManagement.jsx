@@ -414,118 +414,104 @@ const ChildrenManagement = () => {
   };
 
   return (
-    <div className="children-management">
-      <div className="children-header">
+    <div className="children-management-container">
+      <div className="section-header">
         <h2>Quản lý trẻ em</h2>
         <p>Tìm kiếm và quản lý thông tin trẻ em trong hệ thống</p>
       </div>
 
-      {/* Filters Section */}
+      {/* Search Filters */}
       <div className="filters-section">
-        <div className="filters-grid">
-          <div className="filter-group">
-            <label htmlFor="searchTerm">Tìm kiếm</label>
-            <input
-              type="text"
-              id="searchTerm"
-              placeholder="Tìm theo tên"
-              value={filters.searchTerm}
-              onChange={(e) => handleFilterChange('searchTerm', e.target.value)}
-              className="filter-input"
-            />
-          </div>
-
-          <div className="filter-group">
-            <label htmlFor="className">Lớp học</label>
-            <select
-              id="className"
-              value={filters.className}
-              onChange={(e) => handleFilterChange('className', e.target.value)}
-              className="filter-select"
-            >
-              <option value="">Tất cả lớp</option>
-              <option value="Mầm">Mầm</option>
-              <option value="Lá">Lá</option>
-              <option value="Chồi">Chồi</option>
-              <option value="Hoa">Hoa</option>
-            </select>
-          </div>
-
-          <div className="filter-group">
-            <label htmlFor="gender">Giới tính</label>
-            <select
-              id="gender"
-              value={filters.gender}
-              onChange={(e) => handleFilterChange('gender', e.target.value)}
-              className="filter-select"
-            >
-              <option value="">Tất cả</option>
-              <option value="Nam">Nam</option>
-              <option value="Nữ">Nữ</option>
-            </select>
-          </div>
-
-          <div className="filter-group">
-            <label htmlFor="hasAllergy">Dị ứng</label>
-            <select
-              id="hasAllergy"
-              value={filters.hasAllergy}
-              onChange={(e) => handleFilterChange('hasAllergy', e.target.value)}
-              className="filter-select"
-            >
-              <option value="">Tất cả</option>
-              <option value="true">Có dị ứng</option>
-              <option value="false">Không dị ứng</option>
-            </select>
-          </div>
-
-          <div className="filter-actions">
-            <button 
-              onClick={clearFilters}
-              className="btn btn-secondary"
-            >
-              Xóa bộ lọc
-            </button>
-          </div>
+        <div className="filter-group">
+          <label>Tìm kiếm</label>
+          <input
+            type="text"
+            placeholder="Tìm theo tên"
+            value={filters.searchTerm}
+            onChange={(e) => handleFilterChange('searchTerm', e.target.value)}
+            className="filter-input"
+          />
         </div>
+
+        <div className="filter-group">
+          <label>Lớp học</label>
+          <select
+            value={filters.className}
+            onChange={(e) => handleFilterChange('className', e.target.value)}
+            className="filter-select"
+          >
+            <option value="">Tất cả lớp</option>
+            <option value="Mầm">Mầm</option>
+            <option value="Lá">Lá</option>
+            <option value="Chồi">Chồi</option>
+            <option value="Hoa">Hoa</option>
+          </select>
+        </div>
+
+        <div className="filter-group">
+          <label>Giới tính</label>
+          <select
+            value={filters.gender}
+            onChange={(e) => handleFilterChange('gender', e.target.value)}
+            className="filter-select"
+          >
+            <option value="">Tất cả</option>
+            <option value="Nam">Nam</option>
+            <option value="Nữ">Nữ</option>
+          </select>
+        </div>
+
+        <div className="filter-group">
+          <label>Dị ứng</label>
+          <select
+            value={filters.hasAllergy}
+            onChange={(e) => handleFilterChange('hasAllergy', e.target.value)}
+            className="filter-select"
+          >
+            <option value="">Tất cả</option>
+            <option value="true">Có dị ứng</option>
+            <option value="false">Không dị ứng</option>
+          </select>
+        </div>
+
+        <button onClick={clearFilters} className="clear-filters-btn">
+          Xóa bộ lọc
+        </button>
       </div>
 
-      {/* Results Section */}
-      <div className="results-section">
-        <div className="results-header">
-          <div className="results-info">
-            <span className="results-count">
-              Tìm thấy {pagination.total_items} trẻ em
-            </span>
-          </div>
-        </div>
+      {/* Results Summary */}
+      <div className="results-summary">
+        <p>Tìm thấy {pagination.total_items} trẻ em</p>
+      </div>
 
+      {/* Children Table */}
+      <div className="table-container">
         {loading ? (
-          <div className="loading-container">
-            <div className="loading-spinner"></div>
+          <div className="loading-message">
             <p>Đang tải danh sách trẻ em...</p>
           </div>
-        ) : children.length > 0 ? (
-          <>
-            <div className="children-table">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Mã học sinh</th>
-                    <th>Họ và tên</th>
-                    <th>Ngày sinh</th>
-                    <th>Tuổi</th>
-                    <th>Giới tính</th>
-                    <th>Lớp</th>
-                    <th>Phụ huynh</th>
-                    <th>Giáo viên</th>
-                    <th>Chiều cao</th>
-                    <th>Cân nặng</th>
-                    <th>Dị ứng</th>
-                    <th>Tình trạng y tế</th>
-                    <th>Thao tác</th>
-                  </tr>
-                </thead>
+        ) : children.length === 0 ? (
+          <div className="no-results">
+            <p>Không tìm thấy trẻ em nào phù hợp với bộ lọc</p>
+          </div>
+        ) : (
+          <table className="children-table">
+            <thead>
+              <tr>
+                <th>MÃ HỌC SINH</th>
+                <th>HỌ VÀ TÊN</th>
+                <th>NGÀY SINH</th>
+                <th>TUỔI</th>
+                <th>GIỚI TÍNH</th>
+                <th>LỚP</th>
+                <th>PHỤ HUYNH</th>
+                <th>GIÁO VIÊN</th>
+                <th>CHIỀU CAO</th>
+                <th>CÂN NẶNG</th>
+                <th>DỊ ỨNG</th>
+                <th>THAO TÁC</th>
+              </tr>
+            </thead>
                 <tbody>
                   {children.map((child) => {
                     const genderOptions = [
@@ -542,33 +528,33 @@ const ChildrenManagement = () => {
 
                     return (
                       <tr key={child.id}>
-                        <td className="student-id">{child.student_id || 'NULL'}</td>
-                        <td className="name">
+                        <td>{child.student_id || 'Chưa cập nhật'}</td>
+                        <td>
                           {renderEditableCell(child, 'full_name', child.name || child.full_name)}
                         </td>
-                        <td className="birth-date">
+                        <td>
                           {renderEditableCell(child, 'date_of_birth', 
                             (child.birth_date || child.date_of_birth) ? 
                             new Date(child.birth_date || child.date_of_birth).toISOString().split('T')[0] : '',
                             'date'
                           )}
                         </td>
-                        <td className="age">{child.age || calculateAge(child.birth_date || child.date_of_birth)}</td>
-                        <td className="gender">
+                        <td>{child.age || calculateAge(child.birth_date || child.date_of_birth)}</td>
+                        <td>
                           {renderSelectCell(child, 'gender', 
                             child.gender || 'male', 
                             genderOptions
                           )}
                         </td>
-                        <td className="class-name">
+                        <td>
                           {renderSelectCell(child, 'class_name', child.class_name, classOptions)}
                         </td>
-                        <td className="parent-name">{child.parent_name || 'NULL'}</td>
-                        <td className="teacher-name">{child.teacher_name || 'NULL'}</td>
-                        <td className="height">
+                        <td>{child.parent_name || 'Chưa cập nhật'}</td>
+                        <td>{child.teacher_name || 'Chưa cập nhật'}</td>
+                        <td>
                           {renderEditableCell(child, 'height', child.height || '', 'number')}
                         </td>
-                        <td className="weight">
+                        <td>
                           {renderEditableCell(child, 'weight', child.weight || '', 'number')}
                         </td>
                         <td className="allergies">
@@ -576,67 +562,25 @@ const ChildrenManagement = () => {
                             Array.isArray(child.allergies) ? child.allergies.join(', ') : child.allergies || ''
                           )}
                         </td>
-                        <td className="medical-conditions">
-                          {renderEditableCell(child, 'medical_conditions', 
-                            Array.isArray(child.medical_conditions) ? child.medical_conditions.join(', ') : child.medical_conditions || ''
-                          )}
-                        </td>
-                        <td className="actions">
-                          <button 
-                            onClick={() => handleDelete(child)}
-                            className="btn btn-delete"
-                            disabled={loading}
-                            title="Xóa trẻ em"
-                          >
-                            Xóa
-                          </button>
+                        <td>
+                          <div className="action-buttons">
+                            <button 
+                              onClick={() => handleDelete(child)}
+                              className="delete-btn"
+                              disabled={loading}
+                            >
+                              Xóa
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
                   })}
                 </tbody>
               </table>
-            </div>
-
-            {/* Pagination */}
-            {pagination.total_pages > 1 && (
-              <div className="pagination">
-                <button
-                  onClick={() => handlePageChange(pagination.current_page - 1)}
-                  disabled={pagination.current_page === 1}
-                  className="pagination-btn"
-                >
-                  « Trước
-                </button>
-                
-                {Array.from({length: pagination.total_pages}, (_, i) => i + 1).map(page => (
-                  <button
-                    key={page}
-                    onClick={() => handlePageChange(page)}
-                    className={`pagination-btn ${page === pagination.current_page ? 'active' : ''}`}
-                  >
-                    {page}
-                  </button>
-                ))}
-                
-                <button
-                  onClick={() => handlePageChange(pagination.current_page + 1)}
-                  disabled={pagination.current_page === pagination.total_pages}
-                  className="pagination-btn"
-                >
-                  Sau »
-                </button>
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="no-results">
-            <div className="no-results-icon"></div>
-            <h3>Không tìm thấy trẻ em nào</h3>
-            <p>Hãy thử thay đổi điều kiện tìm kiếm</p>
-          </div>
         )}
       </div>
+
     </div>
   );
 };

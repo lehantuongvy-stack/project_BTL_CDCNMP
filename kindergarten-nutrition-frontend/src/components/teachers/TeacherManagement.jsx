@@ -264,13 +264,13 @@ const TeacherManagement = () => {
               className="inline-save-btn"
               disabled={loading}
             >
-              ✓
+              V
             </button>
             <button 
               onClick={() => handleInlineCancel(teacher.id, field)}
               className="inline-cancel-btn"
             >
-              ✕
+              X
             </button>
           </div>
         </div>

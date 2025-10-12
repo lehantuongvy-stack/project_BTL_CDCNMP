@@ -481,7 +481,6 @@ INSERT INTO users (id, username, email, password_hash, full_name, role, phone, a
 (UUID(), 'admin', 'admin@kindergarten.com', '$2a$10$LvyJV6/.PbSa8UfPYhSwReRnOlsokOzr7J3QRGvr9xJgEu1qGwZhG', 'Hiệu trưởng Nguyễn Văn A', 'admin', '0901234567', '123 Đường ABC, Hà Nội'),
 (UUID(), 'teacher1', 'teacher1@kindergarten.com', '$2a$10$LvyJV6/.PbSa8UfPYhSwReRnOlsokOzr7J3QRGvr9xJgEu1qGwZhG', 'Cô Nguyễn Thị Lan', 'teacher', '0907654321', '456 Đường DEF, Hà Nội'),
 (UUID(), 'parent1', 'parent1@gmail.com', '$2a$10$LvyJV6/.PbSa8UfPYhSwReRnOlsokOzr7J3QRGvr9xJgEu1qGwZhG', 'Anh Trần Văn Minh', 'parent', '0912345678', '789 Đường GHI, Hà Nội'),
-(UUID(), 'nutritionist1', 'nutritionist@kindergarten.com', '$2a$10$LvyJV6/.PbSa8UfPYhSwReRnOlsokOzr7J3QRGvr9xJgEu1qGwZhG', 'Chuyên viên Lê Thị Hương', 'nutritionist', '0998765432', '321 Đường JKL, Hà Nội');
 
 -- Sample Danh mục nguyên liệu
 INSERT INTO danh_muc_nguyen_lieu (ten_danh_muc, mo_ta, mau_sac, icon, thu_tu_hien_thi) VALUES

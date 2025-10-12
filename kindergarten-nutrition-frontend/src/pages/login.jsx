@@ -4,6 +4,17 @@ import { useAuth } from "../context/AuthContext.jsx";
 import "../styles/login.css";
 
 function Login() {
+  // Sinh captcha 5 ký tự động
+  const generateCaptcha = () => {
+    const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+    let result = "";
+    for (let i = 0; i < 5; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+  };
+
+  const [captcha, setCaptcha] = useState(generateCaptcha());
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -37,6 +48,19 @@ function Login() {
     }
   };
 
+  // Handle reload captcha
+  const handleReloadCaptcha = () => {
+    setCaptcha(generateCaptcha());
+    setFormData(prev => ({
+      ...prev,
+      captcha: ""
+    }));
+    setErrors(prev => ({
+      ...prev,
+      captcha: ""
+    }));
+  };
+
   // Validate form
   const validateForm = () => {
     const newErrors = {};
@@ -51,7 +75,7 @@ function Login() {
     
     if (!formData.captcha.trim()) {
       newErrors.captcha = "Mã bảo vệ là bắt buộc";
-    } else if (formData.captcha !== "78a5") {
+    } else if (formData.captcha.toLowerCase() !== captcha.toLowerCase()) {
       newErrors.captcha = "Mã bảo vệ không đúng";
     }
     
@@ -97,9 +121,34 @@ function Login() {
       
     } catch (error) {
       console.error("Login error:", error);
+      
+      // Extract clean message from error
+      let errorMessage = "Đăng nhập thất bại. Vui lòng thử lại.";
+      
+      if (error.message) {
+        // Remove HTTP status code prefix if it exists
+        errorMessage = error.message.replace(/^HTTP \d+:\s*/, '');
+        
+        // Try to parse JSON message if it's a JSON string
+        try {
+          const parsed = JSON.parse(errorMessage);
+          if (parsed.message) {
+            errorMessage = parsed.message;
+          }
+        } catch (parseError) {
+          // If not JSON, use the cleaned message as is
+        }
+      }
+      
       setErrors({
-        general: error.message || "Đăng nhập thất bại. Vui lòng thử lại."
+        general: errorMessage
       });
+      // Reload captcha when login fails
+      setCaptcha(generateCaptcha());
+      setFormData(prev => ({
+        ...prev,
+        captcha: ""
+      }));
     } finally {
       setLoading(false);
     }
@@ -182,7 +231,20 @@ function Login() {
               onChange={handleChange}
               disabled={loading}
             />
-            <span className="captcha">78a5</span>
+            <span className="captcha">{captcha}</span>
+            
+            {/* Nút reload captcha */}
+            <button
+              type="button"
+              className="reload-btn"
+              aria-label="Tải lại mã bảo vệ"
+              onClick={handleReloadCaptcha}
+              title="Tải lại mã"
+              disabled={loading}
+            >
+              ↻
+            </button>
+            
             {errors.captcha && (
               <span className="error-text" style={{ color: '#ff4757', fontSize: '12px', width: '100%' }}>
                 {errors.captcha}
