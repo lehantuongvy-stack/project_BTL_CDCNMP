@@ -1,48 +1,11 @@
-import apiService from './api';
+import apiService from './api.js';
 
-class ClassService {
-    async getAllClasses() {
-        try {
-            console.log(' ClassService: Getting all classes...');
-            const response = await apiService.request('/classes', {
-                method: 'GET'
-            });
-            
-            console.log(' ClassService: Classes loaded:', response.data);
-            return {
-                success: true,
-                data: response.data
-            };
-        } catch (error) {
-            console.error(' ClassService: Get classes error:', error);
-            return {
-                success: false,
-                message: error.message,
-                data: []
-            };
-        }
-    }
+const classService = {
+  getAllClasses: () => apiService.get('/api/classes'),
+  getClassById: (id) => apiService.get(`/api/classes/${id}`),
+  createClass: (data) => apiService.post('/api/classes', data),
+  updateClass: (id, data) => apiService.put(`/api/classes/${id}`, data),
+  deleteClass: (id) => apiService.delete(`/api/classes/${id}`)
+};
 
-    async getClassById(id) {
-        try {
-            console.log(' ClassService: Getting class by ID:', id);
-            const response = await apiService.request(`/classes/${id}`, {
-                method: 'GET'
-            });
-            
-            return {
-                success: true,
-                data: response.data
-            };
-        } catch (error) {
-            console.error(' ClassService: Get class by ID error:', error);
-            return {
-                success: false,
-                message: error.message,
-                data: null
-            };
-        }
-    }
-}
-
-export default new ClassService();
+export default classService;

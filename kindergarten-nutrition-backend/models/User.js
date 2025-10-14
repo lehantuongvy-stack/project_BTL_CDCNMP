@@ -1,6 +1,6 @@
 /**
  * User Model
- * Mô hình dữ liệu cho người dùng
+ * Các chức năng của User 
  */
 
 class User {
@@ -42,13 +42,8 @@ class User {
             is_active
         ];
         
-        // Debug log
-        console.log('Create user values:', values);
-        console.log('Has undefined?', values.some(v => v === undefined));
-        
         const result = await this.db.query(query, values);
         
-        // Handle different MySQL2 response formats
         let insertId;
         if (Array.isArray(result) && result.length > 0) {
             insertId = result[0].insertId || result.insertId;
@@ -153,15 +148,10 @@ class User {
             WHERE role = ? AND is_active = 1
             ORDER BY created_at DESC
         `;
-        
-        console.log(' Finding users by role:', role);
         const result = await this.db.query(query, [role]);
-        console.log(' Raw DB result:', result);
-        
+
         if (Array.isArray(result) && result.length > 0) {
             const users = Array.isArray(result[0]) ? result[0] : result;
-            console.log(' Processed users:', users);
-            console.log(' Users count:', users.length);
             return users;
         }
         console.log(' No users found, returning empty array');
@@ -170,12 +160,9 @@ class User {
 
     // Cập nhật user
     async updateById(id, updateData) {
-        const allowedFields = ['username', 'full_name', 'email', 'phone', 'address', 'role', 'is_active'];
+        const allowedFields = ['username', 'full_name', 'email', 'phone', 'address', 'role', 'is_active', 'class_id'];
         const setClause = [];
         const values = [];
-
-        console.log(' User.updateById - updateData:', updateData);
-        console.log(' User.updateById - allowedFields:', allowedFields);
 
         for (const [key, value] of Object.entries(updateData)) {
             console.log(` Checking field: ${key} = ${value}, allowed: ${allowedFields.includes(key)}`);
@@ -184,9 +171,6 @@ class User {
                 values.push(value);
             }
         }
-
-        console.log(' Valid fields for update:', setClause);
-        console.log(' Values for update:', values);
 
         if (setClause.length === 0) {
             throw new Error('No valid fields to update');
@@ -217,7 +201,6 @@ class User {
         return true;
     }
 
-    // Soft delete user
     async deleteById(id) {
         const query = `
             UPDATE ${this.tableName}
@@ -287,7 +270,6 @@ class User {
             let queryParams = [];
             let paramIndex = 1;
 
-            // Tìm kiếm theo username, email hoặc full_name
             if (searchTerm) {
                 whereConditions.push(`(username LIKE ? OR email LIKE ? OR full_name LIKE ?)`);
                 const searchPattern = `%${searchTerm}%`;
@@ -295,14 +277,12 @@ class User {
                 paramIndex += 3;
             }
 
-            // Lọc theo role
             if (role) {
                 whereConditions.push(`role = ?`);
                 queryParams.push(role);
                 paramIndex++;
             }
 
-            // Lọc theo trạng thái kích hoạt
             if (isActive !== undefined) {
                 whereConditions.push(`is_active = ?`);
                 queryParams.push(isActive ? 1 : 0);
@@ -312,7 +292,6 @@ class User {
             const whereClause = whereConditions.length > 0 ? 
                 `WHERE ${whereConditions.join(' AND ')}` : '';
 
-            // Đếm tổng số kết quả
             const countQuery = `
                 SELECT COUNT(*) as total 
                 FROM users 
@@ -322,7 +301,6 @@ class User {
             const countResult = await this.db.query(countQuery, queryParams);
             const total = countResult[0]?.total || 0;
 
-            // Lấy kết quả phân trang
             const searchQuery = `
                 SELECT id, username, email, full_name, phone, role, is_active, 
                        created_at, updated_at

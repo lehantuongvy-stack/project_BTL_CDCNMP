@@ -3,7 +3,7 @@ const DatabaseManager = require('../database/DatabaseManager');
 
 class DishController {
     constructor(db = null) {
-        console.log('DishController (FIXED) constructor called');
+        console.log('DishController constructor called');
         this.db = db || new DatabaseManager();
         this.foodModel = new Food(this.db);
     }
@@ -151,7 +151,6 @@ class DishController {
                 });
             }
 
-            // Filter only valid fields that exist in database schema
             const validFields = [
                 'ten_mon_an', 'loai_mon', 'mo_ta', 'do_tuoi_phu_hop',
                 'thoi_gian_che_bien', 'khau_phan_chuan', 'total_calories',

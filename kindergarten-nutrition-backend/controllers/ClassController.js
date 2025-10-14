@@ -4,9 +4,11 @@
  */
 
 const Class = require('../models/Class');
+const BaseController = require('./BaseController');
 
-class ClassController {
+class ClassController extends BaseController {
     constructor(db) {
+        super();
         this.db = db;
         this.classModel = new Class(db);
     }
@@ -65,11 +67,6 @@ class ClassController {
         }
     }
 
-    // Utility method để gửi response
-    sendResponse(res, statusCode, data) {
-        res.writeHead(statusCode, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(data));
-    }
 }
 
 module.exports = ClassController;

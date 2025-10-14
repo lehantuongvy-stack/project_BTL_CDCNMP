@@ -15,9 +15,7 @@ class MealsRoutes {
     // Xử lý các meal routes
     async handleMealsRoutes(req, res, path, method) {
         try {
-            console.log(` Meals Route: ${method} ${path}`);
-            console.log(` PathParts: ${path.split('/').filter(Boolean)}`);
-            
+
             const pathParts = path.split('/').filter(Boolean);
             
             // Test endpoint không cần auth - bypass tất cả

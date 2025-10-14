@@ -28,7 +28,7 @@ class ApiService {
       };
     }
 
-    console.log('🔧 API Request:', {
+    console.log(' API Request:', {
       url,
       method: config.method,
       headers: config.headers,
@@ -38,8 +38,8 @@ class ApiService {
     
     // Additional debug for PUT requests
     if (config.method === 'PUT') {
-      console.log('🔧 PUT request body details:', config.body);
-      console.log('🔧 PUT request body length:', config.body?.length);
+      console.log(' PUT request body details:', config.body);
+      console.log(' PUT request body length:', config.body?.length);
     }
 
     try {
@@ -103,12 +103,6 @@ class ApiService {
 
   // PUT request
   put(endpoint, data, headers = {}) {
-    console.log('🔧 apiService.put called with:');
-    console.log('🔧 endpoint:', endpoint);
-    console.log('🔧 data:', data, 'type:', typeof data);
-    console.log('🔧 data stringified:', JSON.stringify(data));
-    console.log('🔧 headers:', headers);
-    
     return this.request(endpoint, {
       method: 'PUT',
       headers,

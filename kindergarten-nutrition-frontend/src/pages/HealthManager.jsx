@@ -29,10 +29,7 @@ const HealthManager = () => {
     const [weight, setWeight] = useState("");
     const [height, setHeight] = useState("");
     const [bmi, setBmi] = useState(null);
-    const [bmiCategory, setBmiCategory] = useState("");
-
-    // Gợi ý nhanh
-    const quickSuggestions = ["Mè (vừng)", "Trứng", "Hải sản", "Lúa mì", "Đậu nành", "Đậu phộng"];
+    const [bmiCategory, setBmiCategory] = useState(""); 
 
     // Load danh sách children theo lớp của teacher khi component mount
     useEffect(() => {
@@ -71,7 +68,6 @@ const HealthManager = () => {
     // Hàm xử lý chọn child
     const handleSelectChild = (child) => {
         setSelectedChild(child);
-        // Reset các form inputs khi chọn child mới
         setWeight("");
         setHeight("");
         setBmi(null);
@@ -98,8 +94,6 @@ const HealthManager = () => {
         else if (bmiValue < 22) setBmiCategory("Thừa cân");
         else setBmiCategory("Béo phì");
     };
-
-
 
     // Hàm thêm dị ứng
     const handleAddAllergy = () => {
@@ -142,10 +136,6 @@ const HealthManager = () => {
         }
 
         try {
-            // Debug: Check selectedChild
-            console.log('Selected child:', selectedChild);
-            console.log('Child ID:', selectedChild?.child_id);
-            
             // Chuẩn bị dữ liệu đánh giá sức khỏe
             const currentDate = new Date().toISOString().split('T')[0];
             const assessmentData = {
@@ -160,10 +150,6 @@ const HealthManager = () => {
                 an_uong: mapEatingLevel(eatingLevel) || 'good',
                 hoat_dong: mapActivityLevel(activityLevel) || 'normal', 
                 tinh_than: mapMoodLevel(moodLevel) || 'normal',
-                
-                // Ghi chú thêm: Gộp thông tin eatAtSchool và mealPercent vào ghi chú
-                // an_tai_truong: eatAtSchool ? 'yes' : 'no',  // Tạm thời bỏ
-                // muc_do_khau_phan: mealPercent || 0,        // Tạm thời bỏ
                 
                 // Ghi chú và khuyến cáo - mapping đúng field names trong database
                 tinh_trang_suc_khoe: mealNote || '',

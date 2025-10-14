@@ -96,7 +96,7 @@ function Login() {
       setErrors({});
       setSuccessMessage("");
       
-      // Call login API
+      // gọi API login
       const response = await login({
         username: formData.username,
         password: formData.password
@@ -117,7 +117,7 @@ function Login() {
         } else {
           navigate("/home");
         }
-      }, 1500); // Wait 1.5 seconds to show success message
+      }, 1500); 
       
     } catch (error) {
       console.error("Login error:", error);

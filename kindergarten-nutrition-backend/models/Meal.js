@@ -42,11 +42,7 @@ class Meal {
     async createMenuWithDetails(menuData) {
         try {
             const { v4: uuidv4 } = require('uuid');
-            const menuId = uuidv4();
-            
-            // Debug: Log dữ liệu nhận vào
-            console.log('🐛 DEBUG createMenuWithDetails - menuData:', menuData);
-            
+            const menuId = uuidv4();     
             const {
                 ten_thuc_don,
                 ngay_ap_dung,
@@ -59,11 +55,6 @@ class Meal {
                 mon_an_list = [] // Array các món ăn với số lượng
             } = menuData;
             
-            // Debug: Log các giá trị sau destructuring
-            console.log('🐛 DEBUG - nhom_lop sau destructuring:', nhom_lop);
-            console.log('🐛 DEBUG - ten_thuc_don:', ten_thuc_don);
-            console.log('🐛 DEBUG - loai_bua_an:', loai_bua_an);
-
             // Validation
             if (!ten_thuc_don || !ngay_ap_dung || !loai_bua_an) {
                 throw new Error('Thiếu thông tin bắt buộc: tên thực đơn, ngày áp dụng, loại bữa ăn');
@@ -84,11 +75,6 @@ class Meal {
                 created_by, ghi_chu
             ];
             
-            // Debug: Log query và values
-            console.log('🐛 DEBUG - menuQuery:', menuQuery);
-            console.log('🐛 DEBUG - menuValues:', menuValues);
-            console.log('🐛 DEBUG - nhom_lop trong values (index 4):', menuValues[4]);
-
             await this.db.query(menuQuery, menuValues);
 
             // Thêm chi tiết món ăn
@@ -190,8 +176,6 @@ class Meal {
             `;
             const values = [date];
 
-            // ⚠️ Không còn lọc theo nhom_lop vì bảng không có cột này
-            // Nếu bạn có thêm cột lop_ap_dung trong tương lai, có thể bật lại điều kiện này:
              if (lopApDung) {
                  query += ' AND td.lop_ap_dung = ?';
                  values.push(lopApDung);
@@ -200,11 +184,9 @@ class Meal {
             query += ' ORDER BY td.loai_bua_an, ma.loai_mon';
 
             const results = await this.db.query(query, values);
-            console.log('🔍 SQL Results sample (first row):', results.length > 0 ? results[0] : 'NO RESULTS');
-            console.log('🔍 nhom_lop values found:', results.map(r => `${r.loai_bua_an}: ${r.nhom_lop}`));
 
             if (!results || results.length === 0) {
-                console.warn("⚠️ Không có chi tiết món ăn cho ngày:", date);
+                console.warn(" Không có chi tiết món ăn cho ngày:", date);
                 return [];
             }
 
@@ -264,8 +246,8 @@ class Meal {
      */
     async updateMenuWithDetails(menuId, updateData) {
         try {
-            console.log('🔍 Debug updateMenuWithDetails - menuId:', menuId);
-            console.log('🔍 Debug updateMenuWithDetails - updateData:', JSON.stringify(updateData, null, 2));
+            console.log(' Debug updateMenuWithDetails - menuId:', menuId);
+            console.log(' Debug updateMenuWithDetails - updateData:', JSON.stringify(updateData, null, 2));
             
             const {
                 ten_thuc_don,
@@ -277,16 +259,6 @@ class Meal {
                 ghi_chu,
                 mon_an_list // KHÔNG gán default value = []
             } = updateData;
-
-            console.log('🔍 Extracted values:');
-            console.log('  ten_thuc_don:', ten_thuc_don);
-            console.log('  ngay_ap_dung:', ngay_ap_dung);
-            console.log('  loai_bua_an:', loai_bua_an);
-            console.log('  nhom_lop:', nhom_lop);
-            console.log('  so_tre_du_kien:', so_tre_du_kien);
-            console.log('  trang_thai:', trang_thai);
-            console.log('  ghi_chu:', ghi_chu);
-            console.log('  mon_an_list:', mon_an_list);
 
             // Cập nhật thông tin thực đơn chính
             const menuFields = [];
@@ -318,9 +290,8 @@ class Meal {
             }
             if (ghi_chu !== undefined) {
                 menuFields.push('ghi_chu = ?');
-                menuValues.push(ghi_chu || ''); // Convert null/undefined to empty string
+                menuValues.push(ghi_chu || ''); 
             }
-            // Bỏ updated_by vì bảng thuc_don không có cột này
 
             if (menuFields.length > 0) {
                 menuValues.push(menuId);
@@ -329,13 +300,10 @@ class Meal {
                     SET ${menuFields.join(', ')}, updated_at = NOW() 
                     WHERE id = ?
                 `;
-                console.log('🔍 Debug SQL Query:', menuQuery);
-                console.log('🔍 Debug menuValues:', menuValues);
-                console.log('🔍 Checking for undefined values:');
                 menuValues.forEach((val, idx) => {
                     console.log(`  [${idx}]: ${val} (type: ${typeof val})`);
                     if (val === undefined) {
-                        console.error(`❌ FOUND UNDEFINED at index ${idx}!`);
+                        console.error(` FOUND UNDEFINED at index ${idx}!`);
                     }
                 });
                 await this.db.query(menuQuery, menuValues);
@@ -344,16 +312,11 @@ class Meal {
             // Cập nhật chi tiết món ăn chỉ khi có dữ liệu món ăn được gửi lên
             // Kiểm tra xem có gửi mon_an_list từ frontend không (có thể là array rỗng hoặc có dữ liệu)
             if (updateData.hasOwnProperty('mon_an_list')) {
-                console.log('🔍 Updating dish details - mon_an_list provided:', mon_an_list);
-                console.log('🔍 Will update dish details for menu:', menuId);
-                
-                // Xóa chi tiết cũ chỉ khi thực sự cần cập nhật
                 await this.db.query('DELETE FROM chi_tiet_thuc_don WHERE thuc_don_id = ?', [menuId]);
-                console.log('🔍 Deleted existing dish details for menu:', menuId);
 
                 // Thêm chi tiết mới nếu có
                 if (mon_an_list.length > 0) {
-                    console.log('🔍 Adding', mon_an_list.length, 'new dishes to menu:', menuId);
+                    console.log(' Adding', mon_an_list.length, 'new dishes to menu:', menuId);
                     for (const monAn of mon_an_list) {
                         // Map loai_bua_an sang tiếng Việt cho cột buoi
                         const buoiMap = {
@@ -378,8 +341,8 @@ class Meal {
                         };
                         
                         if (!validatedMonAn.mon_an_id) {
-                            console.error('❌ Invalid mon_an_id:', monAn);
-                            continue; // Skip invalid dishes
+                            console.error(' Invalid mon_an_id:', monAn);
+                            continue; 
                         }
                         
                         await this.db.query(detailQuery, [
@@ -389,7 +352,7 @@ class Meal {
                     }
                 }
             } else {
-                console.log('🔍 mon_an_list not provided - keeping existing dish details');
+                console.log(' mon_an_list not provided - keeping existing dish details');
             }
 
             return await this.getMenuWithDetails(menuId);
@@ -406,8 +369,8 @@ class Meal {
      */
     async updateMenuSmart(menuId, updateData) {
         try {
-            console.log('🔍 Smart Update - menuId:', menuId);
-            console.log('🔍 Smart Update - updateData:', JSON.stringify(updateData, null, 2));
+            console.log(' Smart Update - menuId:', menuId);
+            console.log(' Smart Update - updateData:', JSON.stringify(updateData, null, 2));
             
             const {
                 ten_thuc_don,
@@ -427,8 +390,6 @@ class Meal {
                 throw new Error('Không tìm thấy thực đơn để cập nhật');
             }
 
-            console.log('🔍 Current menu has', currentMenu.chi_tiet_mon_an?.length || 0, 'dishes');
-            
             // 1. Cập nhật thông tin cơ bản của thực đơn
             const basicUpdateData = {
                 ten_thuc_don,
@@ -450,12 +411,12 @@ class Meal {
 
             if (Object.keys(filteredBasicData).length > 0) {
                 await this.updateMenuBasicInfo(menuId, filteredBasicData);
-                console.log('✅ Updated basic menu info');
+                console.log(' Updated basic menu info');
             }
 
             // 2. Xử lý món ăn một cách thông minh
             if (mon_an_list !== undefined) {
-                console.log('🔍 Processing dish list - mode:', update_mode);
+                console.log(' Processing dish list - mode:', update_mode);
                 
                 // Kiểm tra và làm sạch dữ liệu món ăn
                 let validDishes = [];
@@ -465,7 +426,7 @@ class Meal {
                     validDishes = mon_an_list.filter(dish => {
                         if (!dish.mon_an_id) {
                             hasInvalidDishes = true;
-                            console.log('⚠️ Found invalid dish (missing mon_an_id):', dish);
+                            console.log(' Found invalid dish (missing mon_an_id):', dish);
                             return false;
                         }
                         return true;
@@ -473,18 +434,15 @@ class Meal {
                 }
                 
                 if (hasInvalidDishes) {
-                    console.log(`⚠️ Filtered out ${mon_an_list.length - validDishes.length} invalid dishes`);
+                    console.log(` Filtered out ${mon_an_list.length - validDishes.length} invalid dishes`);
                     
                     // Nếu tất cả món ăn đều invalid, chỉ cập nhật thông tin cơ bản
                     if (validDishes.length === 0) {
-                        console.log('⚠️ All dishes invalid - keeping existing dishes');
                         return await this.getMenuWithDetails(menuId);
                     }
                 }
                 
                 if (update_mode === 'replace') {
-                    // Mode thay thế: xóa tất cả và thêm mới
-                    console.log('🔄 Replace mode: replacing all dishes');
                     await this.db.query('DELETE FROM chi_tiet_thuc_don WHERE thuc_don_id = ?', [menuId]);
                     
                     if (validDishes.length > 0) {
@@ -492,14 +450,11 @@ class Meal {
                             try {
                                 await this.addDishToMenu(menuId, dish);
                             } catch (error) {
-                                console.log('❌ Failed to add dish in replace mode:', dish, 'Error:', error.message);
+                                console.log(' Failed to add dish in replace mode:', dish, 'Error:', error.message);
                             }
                         }
                     }
                 } else {
-                    // Mode thông minh: merge dữ liệu
-                    console.log('🧠 Smart mode: merging with existing dishes');
-                    
                     if (validDishes.length > 0) {
                         const currentDishes = currentMenu.chi_tiet_mon_an || [];
                         const currentDishIds = currentDishes.map(d => d.id);
@@ -508,11 +463,11 @@ class Meal {
                         // Xóa những món không còn trong danh sách mới
                         for (const currentDish of currentDishes) {
                             if (!newDishIds.includes(currentDish.id)) {
-                                console.log('🗑️ Removing dish:', currentDish.ten_mon_an);
+                                console.log(' Removing dish:', currentDish.ten_mon_an);
                                 try {
                                     await this.removeDishFromMenu(menuId, currentDish.id);
                                 } catch (error) {
-                                    console.log('❌ Failed to remove dish:', currentDish.ten_mon_an, 'Error:', error.message);
+                                    console.log(' Failed to remove dish:', currentDish.ten_mon_an, 'Error:', error.message);
                                 }
                             }
                         }
@@ -520,33 +475,31 @@ class Meal {
                         // Thêm/cập nhật những món trong danh sách mới
                         for (const newDish of validDishes) {
                             if (currentDishIds.includes(newDish.mon_an_id)) {
-                                console.log('🔄 Updating dish:', newDish.mon_an_id);
-                                // Cập nhật món hiện có
+                                console.log(' Updating dish:', newDish.mon_an_id);
                                 try {
                                     await this.db.query(
                                         'UPDATE chi_tiet_thuc_don SET so_khau_phan = ?, ghi_chu = ? WHERE thuc_don_id = ? AND mon_an_id = ?',
                                         [newDish.so_khau_phan || 30, newDish.ghi_chu || '', menuId, newDish.mon_an_id]
                                     );
                                 } catch (error) {
-                                    console.log('❌ Failed to update dish:', newDish.mon_an_id, 'Error:', error.message);
+                                    console.log(' Failed to update dish:', newDish.mon_an_id, 'Error:', error.message);
                                 }
                             } else {
-                                console.log('➕ Adding new dish:', newDish.mon_an_id);
-                                // Thêm món mới
+                                console.log(' Adding new dish:', newDish.mon_an_id);
                                 try {
                                     await this.addDishToMenu(menuId, newDish);
                                 } catch (error) {
-                                    console.log('❌ Failed to add dish:', newDish, 'Error:', error.message);
-                                    // Continue với món tiếp theo thay vì fail toàn bộ
+                                    console.log(' Failed to add dish:', newDish, 'Error:', error.message);
+
                                 }
                             }
                         }
                     } else {
-                        console.log('🔍 No valid dishes to process - keeping existing dishes');
+                        console.log(' No valid dishes to process - keeping existing dishes');
                     }
                 }
             } else {
-                console.log('🔍 No dish list provided - keeping existing dishes');
+                console.log(' No dish list provided - keeping existing dishes');
             }
 
             return await this.getMenuWithDetails(menuId);
@@ -586,7 +539,6 @@ class Meal {
                     'UPDATE chi_tiet_thuc_don SET so_khau_phan = ?, ghi_chu = ? WHERE thuc_don_id = ? AND mon_an_id = ?',
                     [so_khau_phan, ghi_chu, menuId, mon_an_id]
                 );
-                console.log('🔄 Updated existing dish in menu:', menuId);
             } else {
                 // Thêm món mới
                 const buoiMap = {
@@ -600,7 +552,6 @@ class Meal {
                     'INSERT INTO chi_tiet_thuc_don (thuc_don_id, mon_an_id, buoi, so_khau_phan, ghi_chu) VALUES (?, ?, ?, ?, ?)',
                     [menuId, mon_an_id, buoiMap[loai_bua_an] || 'Trưa', so_khau_phan, ghi_chu]
                 );
-                console.log('➕ Added new dish to menu:', menuId);
             }
 
             return await this.getMenuWithDetails(menuId);
@@ -628,8 +579,6 @@ class Meal {
             if (result.affectedRows === 0) {
                 throw new Error('Không tìm thấy món ăn trong thực đơn');
             }
-
-            console.log('➖ Removed dish from menu:', menuId);
             return await this.getMenuWithDetails(menuId);
 
         } catch (error) {
@@ -1146,22 +1095,18 @@ class Meal {
     }
 
     /**
-     * Lấy thực đơn theo ngày cho API (format chuẩn)
+     * Lấy thực đơn theo ngày cho API
      * Được gọi từ controller getMealsByDateForAPI
      */
     async getMealsByDateForAPI(date, nhom = null, classId = null) {
-        try {
-            console.log(`🍽️ getMealsByDateForAPI called with: date=${date}, nhom=${nhom}, classId=${classId}`);
-            
+        try {  
             // Sử dụng method getMenuByDateWithDetails có sẵn, bỏ tham số nhom để tránh lọc sai
             const menuData = await this.getMenuByDateWithDetails(date, nhom);
 
             if (!menuData || Object.keys(menuData).length === 0) {
-                console.warn("⚠️ Không có dữ liệu menuData cho ngày:", date);
+                console.warn("Không có dữ liệu menuData cho ngày:", date);
                 return [];
             }
-
-            console.log(`📋 Found menu data keys:`, Object.keys(menuData));
             return menuData;
 
         } catch (error) {

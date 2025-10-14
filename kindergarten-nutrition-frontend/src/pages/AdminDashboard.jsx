@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import childService from '../services/childService.js';
 import userService from '../services/userService.js';
 import reportService from '../services/nutritionrpService.js';
+import parentFeedbackService from '../services/parentFeedbackService.js';
 import ChildrenManagement from '../components/children/ChildrenManagement.jsx';
 import TeacherManagement from '../components/teachers/TeacherManagement.jsx';
 import ParentManagement from '../components/parents/ParentManagement.jsx';
@@ -25,6 +26,27 @@ function AdminDashboard() {
   const [showCreateAccountDropdown, setShowCreateAccountDropdown] = useState(false);
   const [reports, setReports] = useState([]);
   const [loadingReports, setLoadingReports] = useState(false);
+  const [feedbacks, setFeedbacks] = useState([]);
+  const [loadingFeedbacks, setLoadingFeedbacks] = useState(false);
+
+  // Load danh sách ý kiến phụ huynh
+  const loadFeedbacks = async () => {
+    try {
+      setLoadingFeedbacks(true);
+      console.log('📬 Đang tải ý kiến phụ huynh...');
+      const response = await parentFeedbackService.getAllFeedback();
+      console.log('📬 Feedback API response:', response);
+
+      // Lấy tối đa 5 ý kiến mới nhất
+      const feedbackList = response.data?.slice(0, 5) || [];
+      setFeedbacks(feedbackList);
+    } catch (error) {
+      console.error('Lỗi khi tải ý kiến phụ huynh:', error);
+      setFeedbacks([]);
+    } finally {
+      setLoadingFeedbacks(false);
+    }
+  };
 
   // Load dashboard data
   useEffect(() => {
@@ -85,6 +107,13 @@ function AdminDashboard() {
 
     loadDashboardData();
   }, [user]);
+
+  // Load feedbacks when dashboard section is active
+  useEffect(() => {
+    if (activeSection === 'dashboard' && user?.role === 'admin') {
+      loadFeedbacks();
+    }
+  }, [activeSection, user]);
 
   // Handle logout
   const handleLogout = async () => {
@@ -288,7 +317,37 @@ function AdminDashboard() {
 
             {/* Recent Activities */}
             <div className="activity-section">
-              <h3>Hoạt động gần đây</h3>
+              <h3>Ý kiến đóng góp phụ huynh</h3>
+
+              {/* Danh sách ý kiến phụ huynh */}
+              {loadingFeedbacks ? (
+                <p>Đang tải ý kiến...</p>
+              ) : feedbacks.length > 0 ? (
+                <ul className="feedback-list">
+                  {feedbacks.map((fb, index) => (
+                    <li key={fb.id || index} className="feedback-item">
+                      <div className="feedback-header">
+                        <strong>{fb.parent_name || 'Phụ huynh'}</strong>
+                        {fb.danh_gia_sao && (
+                          <span className="feedback-stars">
+                            {'⭐'.repeat(fb.danh_gia_sao)}
+                          </span>
+                        )}
+                      </div>
+                      <div className="feedback-body">
+                        <p><b>{fb.tieu_de || 'Không có tiêu đề'}</b></p>
+                        <p>{fb.noi_dung}</p>
+                      </div>
+                      <div className="feedback-footer">
+                        <small>Trẻ: {fb.child_name || 'N/A'}</small>
+                        <small> | Ngày: {new Date(fb.created_at).toLocaleString('vi-VN')}</small>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p>Chưa có ý kiến phụ huynh nào.</p>
+              )}
             </div>
           </div>
         );
@@ -310,7 +369,7 @@ function AdminDashboard() {
           <div className="section-content">
             <h2>Quản lý bữa ăn</h2>
             <p>Chức năng quản lý thực đơn và bữa ăn...</p>
-            <button className="btn-primary" onClick={() => navigate('/menu')}>
+            <button className="btn-primary" onClick={() => navigate('/kitchen-menu')}>
               Xem thực đơn
             </button>
           </div>

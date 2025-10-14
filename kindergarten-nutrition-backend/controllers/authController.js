@@ -15,18 +15,8 @@ class AuthController {
 
     // Đăng nhập
     async login(req, res) {
-        try {
-            console.log('Login request received:');
-            console.log('Body:', req.body);
-            console.log('Headers:', req.headers);
-            
+        try {   
             const { username, password, email } = req.body;
-
-            console.log('Extracted values:');
-            console.log('username:', username);
-            console.log('password:', password ? '[HIDDEN]' : 'undefined');
-            console.log('email:', email);
-
             // Validate input - có thể dùng username hoặc email
             if ((!username || username.trim() === '') && (!email || email.trim() === '')) {
                 console.log('Validation failed: No username or email');
@@ -43,8 +33,6 @@ class AuthController {
                     message: 'Password là bắt buộc'
                 });
             }
-
-            console.log(' Validation passed, searching for user...');
 
             // Tìm user bằng username hoặc email
             let user;
@@ -83,7 +71,7 @@ class AuthController {
                     username: user.username, 
                     role: user.role 
                 },
-                process.env.JWT_SECRET || 'kindergarten_secret_key_2024',
+                process.env.JWT_SECRET || 'kindergarten_secret_key',
                 { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
             );
 
@@ -112,7 +100,6 @@ class AuthController {
         }
     }
 
-    // Send response helper
     sendResponse(res, statusCode, data) {
         res.writeHead(statusCode, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(data));
@@ -122,15 +109,6 @@ class AuthController {
     async register(req, res) {
         try {
             const { username, password, full_name, email, phone_number, role, class_id } = req.body;
-
-            console.log(' === BACKEND REGISTER DEBUG START ===');
-            console.log(' Request body:', req.body);
-            console.log(' Role:', role);
-            console.log(' Class_id:', class_id);
-            console.log(' Class_id type:', typeof class_id);
-            console.log(' Class_id length:', class_id?.length);
-            console.log(' === BACKEND REGISTER DEBUG END ===');
-
             // Validate input
             if (!username || !password || !full_name || !role) {
                 return this.sendResponse(res, 400, {
@@ -179,10 +157,7 @@ class AuthController {
             const saltRounds = 10;
             const password_hash = await bcrypt.hash(password, saltRounds);
 
-            // Set class_id for teachers, null for parents
             const finalClassId = (role === 'teacher' && class_id && class_id.trim() !== '') ? class_id : null;
-            
-            console.log(' Final class_id to save:', finalClassId);
 
             // Tạo user mới
             const newUser = await this.userModel.create({
@@ -248,62 +223,9 @@ class AuthController {
         }
     }
 
-    // Đổi mật khẩu
-    async changePassword(req, res) {
-        try {
-            const { current_password, new_password } = req.body;
-
-            if (!current_password || !new_password) {
-                return this.sendResponse(res, 400, {
-                    success: false,
-                    message: 'Current password và new password là bắt buộc'
-                });
-            }
-
-            // Lấy thông tin user hiện tại
-            const user = await this.userModel.findByUsername(req.user.username);
-            if (!user) {
-                return this.sendResponse(res, 404, {
-                    success: false,
-                    message: 'Không tìm thấy user'
-                });
-            }
-
-            // Kiểm tra mật khẩu hiện tại
-            const isValidPassword = await bcrypt.compare(current_password, user.password_hash);
-            if (!isValidPassword) {
-                return this.sendResponse(res, 400, {
-                    success: false,
-                    message: 'Mật khẩu hiện tại không đúng'
-                });
-            }
-
-            // Hash mật khẩu mới
-            const saltRounds = 10;
-            const newPasswordHash = await bcrypt.hash(new_password, saltRounds);
-
-            // Cập nhật mật khẩu
-            await this.userModel.updatePassword(req.user.id, newPasswordHash);
-
-            this.sendResponse(res, 200, {
-                success: true,
-                message: 'Đổi mật khẩu thành công'
-            });
-
-        } catch (error) {
-            console.error('Change password error:', error);
-            this.sendResponse(res, 500, {
-                success: false,
-                message: 'Lỗi server khi đổi mật khẩu',
-                error: error.message
-            });
-        }
-    }
-
-    // Verify token (middleware)
+    // Xác nhận token (middleware)
     async verifyToken(token) {
         try {
-            console.log(' Verifying token with secret:', process.env.JWT_SECRET || 'kindergarten_secret_key_2024');
             const decoded = jwt.verify(token, process.env.JWT_SECRET || 'kindergarten_secret_key_2024');
             console.log(' Token decoded:', decoded);
             
@@ -327,7 +249,7 @@ class AuthController {
         }
     }
 
-    // Verify token from request - used by route handlers
+    // Xác nhận token từ request - client gọi API kèm token trong header
     async verifyTokenFromRequest(req) {
         try {
             console.log(' Auth headers:', req.headers.authorization);
@@ -342,10 +264,6 @@ class AuthController {
             }
 
             const token = authHeader.substring(7);
-            console.log(' Extracted token:', token ? 'Token found' : 'No token');
-            console.log(' Token type:', typeof token);
-            console.log(' Token length:', token ? token.length : 0);
-            
             const user = await this.verifyToken(token);
 
             if (!user) {
@@ -369,7 +287,7 @@ class AuthController {
         }
     }
 
-    // Middleware authentication - Không sử dụng trong Pure Node.js
+    // Middleware xác thực 
     authenticate() {
         return async (req, res, next) => {
             try {
@@ -405,7 +323,7 @@ class AuthController {
         };
     }
 
-    // Middleware authorization - Không sử dụng trong Pure Node.js
+    // Middleware phân quyền
     authorize(roles = []) {
         return (req, res, next) => {
             if (!req.user) {
@@ -429,9 +347,6 @@ class AuthController {
     // Đăng xuất
     async logoutHandler(req, res) {
         try {
-            console.log(' Logout request received');
-            
-            // Get user info from JWT token (set by auth middleware)
             const userId = req.user?.id;
             const username = req.user?.username;
             
@@ -442,13 +357,11 @@ class AuthController {
                 });
             }
 
-            // Get token from Authorization header
             const authHeader = req.headers.authorization;
-            const token = authHeader?.split(' ')[1]; // Bearer TOKEN
+            const token = authHeader?.split(' ')[1]; 
 
-            console.log(' Logging out user:', username, 'ID:', userId);
+            console.log(' Đang đăng xuất người dùng:', username, 'ID:', userId);
 
-            // Perform logout logic (could blacklist token, update last_logout, etc.)
             const logoutResult = await this.logout(userId, token);
             
             if (!logoutResult.success) {

@@ -74,10 +74,7 @@ export const AuthProvider = ({ children }) => {
 
         localStorage.setItem('authToken', token);
         localStorage.setItem('user', JSON.stringify(user));
-        
-        // Debug log
-        console.log('🔑 Token saved to localStorage:', token);
-        console.log('📦 localStorage authToken:', localStorage.getItem('authToken'));
+
         return response;
       } else {
         throw new Error(response.message || 'Đăng nhập thất bại');

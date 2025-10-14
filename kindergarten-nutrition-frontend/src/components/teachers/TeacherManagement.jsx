@@ -61,27 +61,21 @@ const TeacherManagement = () => {
 
   const loadClasses = async () => {
     try {
-      const response = await classService.getAllClasses();
-      if (response.success) {
-        setClasses(response.data);
-      } else {
-        console.error('Failed to load classes:', response.message);
-        // Fallback to hardcoded classes với ID chính xác
-        setClasses([
-          { id: '1a9a342f-98a3-11f0-9a5b-a036bc312358', name: 'Lá' },
-          { id: '1a9a3487-98a3-11f0-9a5b-a036bc312358', name: 'Hoa' },
-          { id: '771fc0e3-a4ec-11f0-8498-a036bc312358', name: 'Mầm' },
-          { id: '771fdaee-a4ec-11f0-8498-a036bc312358', name: 'Chồi' }
-        ]);
-      }
+      // Sử dụng danh sách lớp cố định như yêu cầu
+      setClasses([
+        { id: '771fc0e3-a4ec-11f0-8498-a036bc312358', name: 'Mầm' },
+        { id: '1a9a342f-98a3-11f0-9a5b-a036bc312358', name: 'Lá' },
+        { id: '771fdaee-a4ec-11f0-8498-a036bc312358', name: 'Chồi' },
+        { id: '1a9a3487-98a3-11f0-9a5b-a036bc312358', name: 'Hoa' }
+      ]);
     } catch (error) {
       console.error('Error loading classes:', error);
-      // Fallback to hardcoded classes
+      // Fallback to same hardcoded classes
       setClasses([
-        { id: '2d8e12f2-8da3-11f0-a95c-a036bc312358', name: 'Lá' },
-        { id: '4d9a1d57-8da3-11f0-a95c-a036bc312358', name: 'Gạo' },
-        { id: '77f1c63e-a4cc-11f0-8406-a036bc312358', name: 'Mầm' },
-        { id: '77f1baa8-a4cc-11f0-8406-a036bc312358', name: 'Chồi' }
+        { id: '771fc0e3-a4ec-11f0-8498-a036bc312358', name: 'Mầm' },
+        { id: '1a9a342f-98a3-11f0-9a5b-a036bc312358', name: 'Lá' },
+        { id: '771fdaee-a4ec-11f0-8498-a036bc312358', name: 'Chồi' },
+        { id: '1a9a3487-98a3-11f0-9a5b-a036bc312358', name: 'Hoa' }
       ]);
     }
   };
@@ -134,7 +128,7 @@ const TeacherManagement = () => {
 
       // Prepare update data - only send the field being updated
       const updateData = {
-        [field]: newValue
+        [field]: field === 'class_id' && newValue === '' ? null : newValue
       };
 
       console.log(' Frontend sending updateData:', updateData);
@@ -338,14 +332,59 @@ const TeacherManagement = () => {
     );
   };
 
-  // Render class cell
+  // Render class cell with inline editing
   const renderClassCell = (teacher) => {
-    // Tạm thời hiển thị class_id, sau này có thể map với tên lớp
-    const classId = teacher.class_id;
-    const className = getClassName(classId);
+    const isEditing = editingCell.teacherId === teacher.id && editingCell.field === 'class_id';
+    const key = `${teacher.id}_class_id`;
+    const currentClassId = teacher.class_id;
+    const className = getClassName(currentClassId);
+    
+    if (isEditing) {
+      return (
+        <div className="inline-edit-container">
+          <select
+            value={editingValues[key] || ''}
+            onChange={(e) => handleInlineInputChange(teacher.id, 'class_id', e.target.value)}
+            onBlur={() => handleInlineSave(teacher.id, 'class_id')}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter') handleInlineSave(teacher.id, 'class_id');
+              if (e.key === 'Escape') handleInlineCancel(teacher.id, 'class_id');
+            }}
+            className="inline-edit-select"
+            autoFocus
+          >
+            <option value="">-- Chọn lớp --</option>
+            {classes.map((classItem) => (
+              <option key={classItem.id} value={classItem.id}>
+                Lớp {classItem.name}
+              </option>
+            ))}
+          </select>
+          <div className="inline-edit-actions">
+            <button 
+              onClick={() => handleInlineSave(teacher.id, 'class_id')}
+              className="inline-save-btn"
+              disabled={loading}
+            >
+              V
+            </button>
+            <button 
+              onClick={() => handleInlineCancel(teacher.id, 'class_id')}
+              className="inline-cancel-btn"
+            >
+              X
+            </button>
+          </div>
+        </div>
+      );
+    }
     
     return (
-      <div className="class-cell">
+      <div 
+        className="editable-cell class-cell"
+        onClick={() => handleCellClick(teacher.id, 'class_id', currentClassId)}
+        title="Click để chỉnh sửa lớp"
+      >
         {className || 'Chưa phân lớp'}
       </div>
     );

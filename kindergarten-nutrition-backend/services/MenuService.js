@@ -1,12 +1,7 @@
-/**
- * Menu Service - Quản lý thực đơn
- * Sử dụng Database Schema
- */
-
 class MenuService {
-    constructor(dbManager) {
-        this.db = dbManager;
-    }
+  constructor(dbManager) {
+    this.db = dbManager;
+  }
 
     // Tạo thực đơn mới
     async createMenu(data, user) {

@@ -1,8 +1,3 @@
-/**
- * Kindergarten Nutrition Management Server - MVC Architecture
- * Pure Node.js với Database Schema và XAMPP MySQL
- */
-
 const http = require('http');
 const url = require('url');
 const path = require('path');
@@ -18,9 +13,10 @@ const ChildController = require('./controllers/childController');
 const IngredientController = require('./controllers/IngredientController');
 const MealController = require('./controllers/mealController');
 const NutritionController = require('./controllers/nutritionController');
-const ReportController = require('./controllers/ReportController'); //  Thêm ReportControlle
 const ClassController = require('./controllers/ClassController');
 const NutritionReportController = require('./controllers/NutritionrpController');
+const WarehouseController = require('./controllers/WarehouseController.js');
+const ParentFeedbackController = require('./controllers/ParentFeedbackController.js');
 
 // Routes
 const AuthRoutes = require('./routes/auth');
@@ -30,14 +26,13 @@ const IngredientRoutes = require('./routes/ingredients');
 const MealsRoutes = require('./routes/meals');
 const NutritionRoutes = require('./routes/nutrition');
 const DishRoutes = require('./routes/dishes'); 
-const ReportRoutes = require('./routes/report');
 const ClassRoutes = require('./routes/classes');
 const NutritionRpRoutes = require('./routes/nutritionrp');
+const ParentFeedbackRoutes = require('./routes/parentfeedback');
 
 // Services (for backward compatibility)
 const ReportingService = require('./services/ReportingService');
 const MenuService = require('./services/MenuService');
-const HealthService = require('./services/HealthService');
 
 // Load environment variables
 require('dotenv').config();
@@ -59,22 +54,24 @@ class KindergartenServer {
         this.nutritionController = new NutritionController(this.db);
         this.classController = new ClassController(this.db);
         this.nutritionReportController = new NutritionReportController(this.db);
+        this.warehouseController = new WarehouseController(this.db);
+        this.parentFeedbackController = new ParentFeedbackController(this.db);
         
         // Initialize Routes
         this.authRoutes = new AuthRoutes(this.authController);
         this.userRoutes = new UserRoutes(this.userController, this.authController);
         this.childrenRoutes = new ChildrenRoutes(this.childController, this.authController);
         this.ingredientRoutes = new IngredientRoutes(this.ingredientController, this.authController);
-        this.dishRoutes = new DishRoutes(this.authController); // ✅ Truyền authController
+        this.dishRoutes = new DishRoutes(this.authController); 
         this.mealsRoutes = new MealsRoutes(this.mealController, this.authController);
         this.nutritionRoutes = new NutritionRoutes(this.nutritionController, this.authController);
         this.classRoutes = new ClassRoutes(this.classController);
         this.nutritionRpRoutes = new NutritionRpRoutes(this.db);
+        this.parentFeedbackRoutes = new ParentFeedbackRoutes(this.parentFeedbackController, this.authController);
         
         // Initialize Services (for complex business logic)
         this.reportingService = new ReportingService(this.db);
         this.menuService = new MenuService(this.db);
-        this.healthService = new HealthService(this.db);
     }
 
     // Set CORS headers
@@ -172,6 +169,8 @@ class KindergartenServer {
                 console.log('POST /api/meals');
                 console.log('GET  /api/nutrition/records');
                 console.log('POST /api/nutrition/records');
+                console.log('GET  /api/feedback');
+                console.log('POST /api/feedback');
                 console.log('GET  /api/reports');
                 console.log('Static files: /public/*');
             });
@@ -241,6 +240,8 @@ class KindergartenServer {
                 await this.nutritionRpRoutes.handleNutritionRpRoutes(req, res, pathname.replace('/api/nutritionrp', ''), method);
             } else if (pathname.startsWith('/api/nutrition')) {
                 await this.nutritionRoutes.handleNutritionRoutes(req, res);
+            } else if (pathname.startsWith('/api/feedback')) {
+                await this.parentFeedbackRoutes.handleFeedbackRoutes(req, res, pathname.replace('/api/feedback', ''), method);
             } else if (pathname.startsWith('/api/reports')) {
                 await this.handleReports(req, res, pathname.replace('/api/reports', ''), method, query);
             } else if (pathname.startsWith('/public/') || pathname.startsWith('/api/docs')) {
@@ -277,10 +278,12 @@ class KindergartenServer {
                             'GET /api/ingredients/:id',
                             'PUT /api/ingredients/:id'
                         ],
-                        reports: [
-                            'GET /api/reports/health',
-                            'GET /api/reports/nutrition',
-                            'GET /api/reports/inventory'
+                        feedback: [
+                            'GET /api/feedback',
+                            'POST /api/feedback',
+                            'GET /api/feedback/:id',
+                            'PUT /api/feedback/:id',
+                            'DELETE /api/feedback/:id'
                         ]
                     }
                 });
@@ -306,7 +309,7 @@ class KindergartenServer {
             architecture: "Model-View-Controller (MVC)",
             database: "MySQL Schema with XAMPP",
             features: [
-                "Pure Node.js Server",
+                "Node.js Server",
                 "MVC Architecture", 
                 "Role-based Authorization",
                 "RESTful API Design",
@@ -376,6 +379,13 @@ class KindergartenServer {
                     class_stats: "GET /api/nutrition/stats/class",
                     attention_list: "GET /api/nutrition/stats/attention",
                     calculate_bmi: "POST /api/nutrition/calculate-bmi"
+                },
+                feedback: {
+                    list: "GET /api/feedback",
+                    create: "POST /api/feedback",
+                    detail: "GET /api/feedback/:id",
+                    update: "PUT /api/feedback/:id",
+                    delete: "DELETE /api/feedback/:id"
                 }
             }
         };
@@ -584,10 +594,10 @@ class KindergartenServer {
 
             // Parse request body nếu cần
             if (['POST', 'PUT', 'PATCH'].includes(method)) {
-                console.log('🔧 About to parse request body for method:', method);
-                console.log('🔧 Request headers:', req.headers);
+                console.log(' About to parse request body for method:', method);
+                console.log(' Request headers:', req.headers);
                 req.body = await this.parseRequestBody(req);
-                console.log('🔧 After parsing - req.body:', req.body);
+                console.log(' After parsing - req.body:', req.body);
             }
 
             // Route handling
@@ -608,19 +618,12 @@ class KindergartenServer {
                     data: menus
                 });
             } else if (pathname === '/api/meals' && method === 'POST') {
-                // Debug: Log dữ liệu nhận từ frontend
-                console.log('🐛 DEBUG - req.body nhận từ frontend:', req.body);
-                console.log('🐛 DEBUG - nhom_lop trong req.body:', req.body.nhom_lop);
-                
                 // Thêm user ID vào request body
                 const menuData = {
                     ...req.body,
                     created_by: req.user.id // Sử dụng UUID thật của user
                 };
-                
-                console.log('🐛 DEBUG - menuData sau khi merge:', menuData);
-                console.log('🐛 DEBUG - nhom_lop trong menuData:', menuData.nhom_lop);
-                
+
                 const result = await meal.createMenuWithDetails(menuData);
                 this.sendJsonResponse(res, 201, {
                     success: true,
@@ -675,7 +678,7 @@ class KindergartenServer {
                 if (updateData.mon_an_list && Array.isArray(updateData.mon_an_list)) {
                     const invalidDishes = updateData.mon_an_list.filter(dish => !dish.mon_an_id);
                     if (invalidDishes.length > 0) {
-                        console.log('❌ Found invalid dishes (missing mon_an_id):', invalidDishes);
+                        console.log(' Found invalid dishes (missing mon_an_id):', invalidDishes);
                         // Sử dụng smart update thay vì update thông thường
                         const result = await meal.updateMenuSmart(id, { ...updateData, update_mode: 'smart' });
                         this.sendJsonResponse(res, 200, {
@@ -762,17 +765,17 @@ class KindergartenServer {
             });
             req.on('end', () => {
                 try {
-                    console.log('🔧 parseRequestBody - raw body:', body);
-                    console.log('🔧 parseRequestBody - body length:', body.length);
-                    console.log('🔧 parseRequestBody - body type:', typeof body);
+                    console.log(' parseRequestBody - raw body:', body);
+                    console.log(' parseRequestBody - body length:', body.length);
+                    console.log(' parseRequestBody - body type:', typeof body);
                     
                     const parsed = body ? JSON.parse(body) : {};
-                    console.log('🔧 parseRequestBody - parsed:', parsed);
-                    console.log('🔧 parseRequestBody - parsed keys:', Object.keys(parsed));
+                    console.log(' parseRequestBody - parsed:', parsed);
+                    console.log(' parseRequestBody - parsed keys:', Object.keys(parsed));
                     resolve(parsed);
                 } catch (error) {
-                    console.log('🔧 parseRequestBody - JSON parse error:', error.message);
-                    console.log('🔧 parseRequestBody - problematic body:', body);
+                    console.log(' parseRequestBody - JSON parse error:', error.message);
+                    console.log(' parseRequestBody - problematic body:', body);
                     resolve({});
                 }
             });

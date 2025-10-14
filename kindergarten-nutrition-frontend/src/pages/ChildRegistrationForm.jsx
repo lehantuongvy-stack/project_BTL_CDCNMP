@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import childService from '../services/childService';
@@ -16,6 +16,20 @@ const ChildRegistrationForm = () => {
   const [parents, setParents] = useState([]);
   const [classes, setClasses] = useState([]);
   const [loadingData, setLoadingData] = useState(true);
+  
+  // States for autocomplete
+  const [parentSearch, setParentSearch] = useState('');
+  const [teacherSearch, setTeacherSearch] = useState('');
+  const [showParentDropdown, setShowParentDropdown] = useState(false);
+  const [showTeacherDropdown, setShowTeacherDropdown] = useState(false);
+  const [filteredParents, setFilteredParents] = useState([]);
+  const [filteredTeachers, setFilteredTeachers] = useState([]);
+  const [highlightedParentIndex, setHighlightedParentIndex] = useState(-1);
+  const [highlightedTeacherIndex, setHighlightedTeacherIndex] = useState(-1);
+  
+  // Refs for click outside detection
+  const parentDropdownRef = useRef(null);
+  const teacherDropdownRef = useRef(null);
   
   // Child form data
   const [childData, setChildData] = useState({
@@ -50,26 +64,51 @@ const ChildRegistrationForm = () => {
     loadData();
   }, [user, navigate]);
 
+  // Initialize filtered lists when data loads
+  useEffect(() => {
+    setFilteredParents(parents);
+    setFilteredTeachers(teachers);
+  }, [parents, teachers]);
+
+  // Handle click outside to close dropdowns
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (parentDropdownRef.current && !parentDropdownRef.current.contains(event.target)) {
+        setShowParentDropdown(false);
+      }
+      if (teacherDropdownRef.current && !teacherDropdownRef.current.contains(event.target)) {
+        setShowTeacherDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Update search fields when selections change
+  useEffect(() => {
+    if (childData.parent_id && !parentSearch) {
+      setParentSearch(getSelectedParentName());
+    }
+    if (childData.teacher_id && !teacherSearch) {
+      setTeacherSearch(getSelectedTeacherName());
+    }
+  }, [childData.parent_id, childData.teacher_id, parents, teachers]);
+
   const loadTeachers = async () => {
     try {                               
-      console.log('🔧 Loading teachers...');
       const response = await userService.getUsersByRole('teacher');
-      console.log('🔧 Teachers response:', response);
-      console.log('🔧 Teachers response.data:', response.data);
-      console.log('🔧 Teachers response.data type:', typeof response.data);
-      console.log('🔧 Teachers response.data is array:', Array.isArray(response.data));
       
       if (response.success && response.data) {
         // Check if data is an array directly or has a users property
         const teachersArray = Array.isArray(response.data) ? response.data : response.data.users || response.data.data || [];
-        console.log('🔧 Teachers array:', teachersArray);
         setTeachers(teachersArray);
       } else {
-        console.warn('🔧 Teachers response not valid:', response);
         setTeachers([]);
       }
     } catch (error) {
-      console.error('🔧 Load teachers error:', error);
       // Fallback test data
       setTeachers([
         { id: '60db3d8c-a51c-11f0-8498-a036bc312358', username: 'teacher_gv', full_name: 'giaovien' },
@@ -80,24 +119,15 @@ const ChildRegistrationForm = () => {
 
   const loadParents = async () => {
     try {                               
-      console.log('🔧 Loading parents...');
       const response = await userService.getUsersByRole('parent');
-      console.log('🔧 Parents response:', response);
-      console.log('🔧 Parents response.data:', response.data);
-      console.log('🔧 Parents response.data type:', typeof response.data);
-      console.log('🔧 Parents response.data is array:', Array.isArray(response.data));
-      
       if (response.success && response.data) {
         // Check if data is an array directly or has a users property
         const parentsArray = Array.isArray(response.data) ? response.data : response.data.users || response.data.data || [];
-        console.log('🔧 Parents array:', parentsArray);
         setParents(parentsArray);
       } else {
-        console.warn('🔧 Parents response not valid:', response);
         setParents([]);
       }
     } catch (error) {
-      console.error('🔧 Load parents error:', error);
       // Fallback test data  
       setParents([
         { id: '40f72795-a466-11f0-b215-a036bc312358', username: 'parent_tuan', full_name: 'Triệu Anh Tuấn' },
@@ -116,10 +146,147 @@ const ChildRegistrationForm = () => {
     ]);
   };
 
+  // Filter function for search
+  const filterParents = (searchTerm) => {
+    if (!searchTerm.trim()) return parents;
+    return parents.filter(parent => 
+      parent.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      parent.username.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  };
+
+  const filterTeachers = (searchTerm) => {
+    if (!searchTerm.trim()) return teachers;
+    return teachers.filter(teacher => 
+      teacher.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      teacher.username.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  };
+
+  // Handle parent search
+  const handleParentSearch = (e) => {
+    const value = e.target.value;
+    setParentSearch(value);
+    const filtered = filterParents(value);
+    setFilteredParents(filtered);
+    setShowParentDropdown(true);
+    setHighlightedParentIndex(-1);
+    
+    // Clear selection if user is typing
+    if (childData.parent_id && value !== getSelectedParentName()) {
+      setChildData(prev => ({ ...prev, parent_id: '' }));
+    }
+  };
+
+  // Handle teacher search
+  const handleTeacherSearch = (e) => {
+    const value = e.target.value;
+    setTeacherSearch(value);
+    const filtered = filterTeachers(value);
+    setFilteredTeachers(filtered);
+    setShowTeacherDropdown(true);
+    setHighlightedTeacherIndex(-1);
+    
+    // Clear selection if user is typing
+    if (childData.teacher_id && value !== getSelectedTeacherName()) {
+      setChildData(prev => ({ ...prev, teacher_id: '' }));
+    }
+  };
+
+  // Select parent
+  const selectParent = (parent) => {
+    setChildData(prev => ({ ...prev, parent_id: parent.id }));
+    setParentSearch(`${parent.full_name} (${parent.username})`);
+    setShowParentDropdown(false);
+    
+    // Clear error when user selects
+    if (errors.parent_id) {
+      setErrors(prev => ({ ...prev, parent_id: '' }));
+    }
+  };
+
+  // Select teacher
+  const selectTeacher = (teacher) => {
+    setChildData(prev => ({ ...prev, teacher_id: teacher.id }));
+    setTeacherSearch(`${teacher.full_name} (${teacher.username})`);
+    setShowTeacherDropdown(false);
+    
+    // Clear error when user selects
+    if (errors.teacher_id) {
+      setErrors(prev => ({ ...prev, teacher_id: '' }));
+    }
+  };
+
+  // Get selected names
+  const getSelectedParentName = () => {
+    const parent = parents.find(p => p.id === childData.parent_id);
+    return parent ? `${parent.full_name} (${parent.username})` : '';
+  };
+
+  const getSelectedTeacherName = () => {
+    const teacher = teachers.find(t => t.id === childData.teacher_id);
+    return teacher ? `${teacher.full_name} (${teacher.username})` : '';
+  };
+
+  // Handle keyboard navigation for parent
+  const handleParentKeyDown = (e) => {
+    if (!showParentDropdown) return;
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setHighlightedParentIndex(prev => 
+          prev < filteredParents.length - 1 ? prev + 1 : prev
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setHighlightedParentIndex(prev => prev > 0 ? prev - 1 : -1);
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (highlightedParentIndex >= 0 && filteredParents[highlightedParentIndex]) {
+          selectParent(filteredParents[highlightedParentIndex]);
+        }
+        break;
+      case 'Escape':
+        setShowParentDropdown(false);
+        setHighlightedParentIndex(-1);
+        break;
+    }
+  };
+
+  // Handle keyboard navigation for teacher
+  const handleTeacherKeyDown = (e) => {
+    if (!showTeacherDropdown) return;
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setHighlightedTeacherIndex(prev => 
+          prev < filteredTeachers.length - 1 ? prev + 1 : prev
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setHighlightedTeacherIndex(prev => prev > 0 ? prev - 1 : -1);
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (highlightedTeacherIndex >= 0 && filteredTeachers[highlightedTeacherIndex]) {
+          selectTeacher(filteredTeachers[highlightedTeacherIndex]);
+        }
+        break;
+      case 'Escape':
+        setShowTeacherDropdown(false);
+        setHighlightedTeacherIndex(-1);
+        break;
+    }
+  };
+
   // Handle input change
   const handleChange = (e) => {
     const { name, value } = e.target;
-    console.log(`🔧 Child field changed: ${name} = ${value}`);
     setChildData(prev => ({
       ...prev,
       [name]: value
@@ -154,6 +321,14 @@ const ChildRegistrationForm = () => {
       newErrors.class_name = 'Lớp học là bắt buộc';
     }
 
+    if (!childData.parent_id) {
+      newErrors.parent_id = 'Phụ huynh là bắt buộc';
+    }
+
+    if (!childData.teacher_id) {
+      newErrors.teacher_id = 'Giáo viên phụ trách là bắt buộc';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -162,9 +337,6 @@ const ChildRegistrationForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    console.log('🔧 Child form submission started');
-    console.log('🔧 Current user role:', user?.role);
-    
     // Check if user is admin
     if (!user || user.role !== 'admin') {
       setErrors({ general: 'Chỉ admin mới có thể tạo hồ sơ trẻ em' });
@@ -172,7 +344,6 @@ const ChildRegistrationForm = () => {
     }
     
     if (!validateForm()) {
-      console.error('🔧 Child form validation failed');
       return;
     }
 
@@ -183,7 +354,6 @@ const ChildRegistrationForm = () => {
       
       // Prepare data for backend
       const childDataForBackend = { ...childData };
-      console.log('🔧 Original childData:', childData);
       
       // Convert empty strings to null for optional fields
       if (!childDataForBackend.height) childDataForBackend.height = null;
@@ -191,18 +361,13 @@ const ChildRegistrationForm = () => {
       if (!childDataForBackend.parent_id) childDataForBackend.parent_id = null;
       if (!childDataForBackend.teacher_id) childDataForBackend.teacher_id = null;
       
-      console.log('🔧 Final child data for backend:', childDataForBackend);
-      
+    
       // Create child
       const childResponse = await childService.createChild(childDataForBackend);
-      
-      console.log('🔧 Child creation response:', childResponse);
-      
+  
       if (!childResponse.success) {
-        console.warn('🔧 Child creation failed:', childResponse.message);
         setErrors({ submit: childResponse.message });
       } else {
-        console.log('🔧 Child creation successful:', childResponse);
         setSuccessMessage('Tạo hồ sơ trẻ em thành công!');
         
         // Reset form
@@ -222,17 +387,11 @@ const ChildRegistrationForm = () => {
         });
       }
     } catch (error) {
-      console.error('🔧 Child creation error:', error);
       setErrors({ submit: `Có lỗi khi tạo hồ sơ trẻ: ${error.message}` });
     } finally {
       setLoading(false);
     }
   };
-
-  console.log('🔧 ChildRegistrationForm render - loadingData:', loadingData);
-  console.log('🔧 ChildRegistrationForm render - teachers length:', teachers.length);
-  console.log('🔧 ChildRegistrationForm render - parents length:', parents.length);
-  console.log('🔧 ChildRegistrationForm render - classes length:', classes.length);
 
   if (loadingData) {
     return (
@@ -359,42 +518,82 @@ const ChildRegistrationForm = () => {
                 {errors.class_name && <div className="error-message">{errors.class_name}</div>}
               </div>
 
-              <div className="form-group">
-                <label htmlFor="parent_id">Phụ huynh</label>
-                <select
-                  id="parent_id"
-                  name="parent_id"
-                  value={childData.parent_id}
-                  onChange={handleChange}
-                  className="form-control"
-                >
-                  <option value="">-- Chọn phụ huynh --</option>
-                  {Array.isArray(parents) && parents.map((parent) => (
-                    <option key={parent.id} value={parent.id}>
-                      {parent.full_name} ({parent.username})
-                    </option>
-                  ))}
-                </select>
+              <div className="form-group autocomplete-container" ref={parentDropdownRef}>
+                <label htmlFor="parent_search">Phụ huynh</label>
+                <input
+                  type="text"
+                  id="parent_search"
+                  name="parent_search"
+                  value={parentSearch}
+                  onChange={handleParentSearch}
+                  onKeyDown={handleParentKeyDown}
+                  onFocus={() => setShowParentDropdown(true)}
+                  placeholder="Nhập tên hoặc username phụ huynh..."
+                  className={`form-control ${errors.parent_id ? 'is-invalid' : ''}`}
+                  autoComplete="off"
+                />
+                {showParentDropdown && filteredParents.length > 0 && (
+                  <div className="autocomplete-dropdown">
+                    {filteredParents.slice(0, 10).map((parent, index) => (
+                      <div
+                        key={parent.id}
+                        className={`autocomplete-item ${childData.parent_id === parent.id ? 'selected' : ''} ${highlightedParentIndex === index ? 'highlighted' : ''}`}
+                        onClick={() => selectParent(parent)}
+                      >
+                        <span className="name">{parent.full_name}</span>
+                        <span className="username">({parent.username})</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {showParentDropdown && filteredParents.length === 0 && parentSearch && (
+                  <div className="autocomplete-dropdown">
+                    <div className="autocomplete-item no-results">
+                      Không tìm thấy phụ huynh nào
+                    </div>
+                  </div>
+                )}
+                {errors.parent_id && <div className="error-message">{errors.parent_id}</div>}
               </div>
             </div>
 
             <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="teacher_id">Giáo viên phụ trách</label>
-                <select
-                  id="teacher_id"
-                  name="teacher_id"
-                  value={childData.teacher_id}
-                  onChange={handleChange}
-                  className="form-control"
-                >
-                  <option value="">-- Chọn giáo viên --</option>
-                  {Array.isArray(teachers) && teachers.map((teacher) => (
-                    <option key={teacher.id} value={teacher.id}>
-                      {teacher.full_name} ({teacher.username})
-                    </option>
-                  ))}
-                </select>
+              <div className="form-group autocomplete-container" ref={teacherDropdownRef}>
+                <label htmlFor="teacher_search">Giáo viên phụ trách</label>
+                <input
+                  type="text"
+                  id="teacher_search"
+                  name="teacher_search"
+                  value={teacherSearch}
+                  onChange={handleTeacherSearch}
+                  onKeyDown={handleTeacherKeyDown}
+                  onFocus={() => setShowTeacherDropdown(true)}
+                  placeholder="Nhập tên hoặc username giáo viên..."
+                  className={`form-control ${errors.teacher_id ? 'is-invalid' : ''}`}
+                  autoComplete="off"
+                />
+                {showTeacherDropdown && filteredTeachers.length > 0 && (
+                  <div className="autocomplete-dropdown">
+                    {filteredTeachers.slice(0, 10).map((teacher, index) => (
+                      <div
+                        key={teacher.id}
+                        className={`autocomplete-item ${childData.teacher_id === teacher.id ? 'selected' : ''} ${highlightedTeacherIndex === index ? 'highlighted' : ''}`}
+                        onClick={() => selectTeacher(teacher)}
+                      >
+                        <span className="name">{teacher.full_name}</span>
+                        <span className="username">({teacher.username})</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {showTeacherDropdown && filteredTeachers.length === 0 && teacherSearch && (
+                  <div className="autocomplete-dropdown">
+                    <div className="autocomplete-item no-results">
+                      Không tìm thấy giáo viên nào
+                    </div>
+                  </div>
+                )}
+                {errors.teacher_id && <div className="error-message">{errors.teacher_id}</div>}
               </div>
 
               <div className="form-group">

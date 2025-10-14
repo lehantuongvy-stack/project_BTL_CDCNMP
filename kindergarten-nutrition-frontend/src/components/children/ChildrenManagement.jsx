@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import childService from '../../services/childService';
+import userService from '../../services/userService';
 import './ChildrenManagement.css';
 
 const ChildrenManagement = () => {
   const [children, setChildren] = useState([]);
+  const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({
     searchTerm: '',
@@ -28,6 +30,11 @@ const ChildrenManagement = () => {
   useEffect(() => {
     loadChildren();
   }, [filters, pagination.current_page]);
+
+  // Load teachers on component mount
+  useEffect(() => {
+    loadTeachers();
+  }, []);
 
   const loadChildren = async () => {
     try {
@@ -105,6 +112,19 @@ const ChildrenManagement = () => {
     }
   };
 
+  const loadTeachers = async () => {
+    try {
+      const response = await userService.getUsersByRole('teacher');
+      if (response.success) {
+        // Extract users array from response data
+        const teachersData = response.data.users || response.data || [];
+        setTeachers(teachersData);
+      }
+    } catch (error) {
+      console.error('Error loading teachers:', error);
+    }
+  };
+
   const handleFilterChange = (filterName, value) => {
     setFilters(prev => ({
       ...prev,
@@ -174,23 +194,16 @@ const ChildrenManagement = () => {
     const key = `${childId}_${field}`;
     const newValue = editingValues[key];
     const originalValue = originalValues[key];
-    
-    console.log('🔧 handleInlineSave called - childId:', childId, 'field:', field);
-    console.log('🔧 editingValues:', editingValues);
-    console.log('🔧 originalValues:', originalValues);
-    console.log('🔧 newValue:', newValue, 'type:', typeof newValue);
-    console.log('🔧 originalValue:', originalValues[key], 'type:', typeof originalValues[key]);
 
     // Don't save if value hasn't changed
     if (newValue === originalValues[key]) {
-      console.log('🔧 Value unchanged, canceling save');
       handleInlineCancel(childId, field);
       return;
     }
     
     // Validate that we have a valid field (allow empty values for some fields)
     if (!field) {
-      console.log('🔧 Invalid field, canceling save');
+      console.log(' Invalid field, canceling save');
       handleInlineCancel(childId, field);
       return;
     }
@@ -223,21 +236,29 @@ const ChildrenManagement = () => {
         [field]: processedValue
       };
 
-      console.log('🔧 Frontend update data:', updateData);
-      console.log('🔧 Field:', field, 'New Value:', newValue, 'Processed Value:', processedValue, 'Original Value:', originalValue, 'Child ID:', childId);
-      console.log('🔧 typeof updateData:', typeof updateData);
-      console.log('🔧 JSON.stringify(updateData):', JSON.stringify(updateData));
-      console.log('🔧 Object.keys(updateData):', Object.keys(updateData));
-
       const response = await childService.updateChild(childId, updateData);
-      
+
       if (response.success) {
         // Update local state
-        setChildren(prev => prev.map(child => 
-          child.id === childId 
-            ? { ...child, [field]: newValue }
-            : child
-        ));
+        setChildren(prev => prev.map(child => {
+          if (child.id === childId) {
+            const updatedChild = { ...child, [field]: newValue };
+            
+            // Special handling for teacher_id to also update teacher_name
+            if (field === 'teacher_id' && newValue) {
+              const selectedTeacher = teachers.find(teacher => teacher.id === newValue);
+              if (selectedTeacher) {
+                updatedChild.teacher_name = selectedTeacher.full_name || selectedTeacher.name || selectedTeacher.username;
+              }
+            } else if (field === 'teacher_id' && !newValue) {
+              // Clear teacher_name if teacher_id is cleared
+              updatedChild.teacher_name = null;
+            }
+            
+            return updatedChild;
+          }
+          return child;
+        }));
         
         // Clear editing state
         setEditingCell({ childId: null, field: null });
@@ -267,12 +288,22 @@ const ChildrenManagement = () => {
   const handleInlineCancel = (childId, field) => {
     const key = `${childId}_${field}`;
     const originalKey = `${childId}_${field}`;
+    const searchKey = `${childId}_teacher_search`;
     
     // Restore original value
-    setEditingValues(prev => ({
-      ...prev,
-      [key]: originalValues[originalKey]
-    }));
+    setEditingValues(prev => {
+      const newValues = {
+        ...prev,
+        [key]: originalValues[originalKey]
+      };
+      
+      // Clear search value for teacher field
+      if (field === 'teacher_id') {
+        delete newValues[searchKey];
+      }
+      
+      return newValues;
+    });
     
     // Clear editing state
     setEditingCell({ childId: null, field: null });
@@ -413,6 +444,172 @@ const ChildrenManagement = () => {
     );
   };
 
+  const renderTeacherCell = (child) => {
+    // Teachers should now be an array since we fixed loadTeachers
+    const teachersList = Array.isArray(teachers) ? teachers : [];
+
+    // Custom render for teacher select with search
+    const isEditing = editingCell.childId === child.id && editingCell.field === 'teacher_id';
+    const key = `${child.id}_teacher_id`;
+    const searchKey = `${child.id}_teacher_search`;
+    
+    if (isEditing) {
+      // Get search value
+      const searchValue = editingValues[searchKey] || '';
+      
+      // Filter teachers based on search
+      const filteredTeachers = teachersList.filter(teacher => {
+        const teacherName = (teacher.full_name || teacher.name || teacher.username || '').toLowerCase();
+        return teacherName.includes(searchValue.toLowerCase());
+      });
+      
+      // Find current teacher for display
+      const currentTeacher = teachersList.find(teacher => teacher.id === child.teacher_id);
+      const currentTeacherName = currentTeacher ? 
+        (currentTeacher.full_name || currentTeacher.name || currentTeacher.username) : '';
+      
+      return (
+        <div className="inline-edit-container teacher-select-container">
+          {/* Search Input */}
+          <input
+            type="text"
+            value={searchValue}
+            onChange={(e) => {
+              handleInlineInputChange(child.id, 'teacher_search', e.target.value);
+            }}
+            onFocus={() => {
+              // Set initial search to current teacher name when focusing
+              if (!searchValue && currentTeacherName) {
+                handleInlineInputChange(child.id, 'teacher_search', currentTeacherName);
+              }
+            }}
+            placeholder="Nhập tên hoặc username giáo viên..."
+            className="teacher-search-input"
+            autoFocus
+          />
+          
+          {/* Dropdown with filtered results - Always show when editing */}
+          <div className="teacher-dropdown">
+            {/* Show all teachers initially, then filter based on search */}
+            <div 
+              className="teacher-dropdown-item"
+              onClick={() => {
+                
+                // Force update by clearing editing state first
+                setEditingCell({ childId: null, field: null });
+                setEditingValues({});
+                setOriginalValues({});
+                
+                // Update child directly
+                setChildren(prev => prev.map(c => 
+                  c.id === child.id 
+                    ? { ...c, teacher_id: null, teacher_name: null }
+                    : c
+                ));
+                
+                // Also call API to save
+                (async () => {
+                  try {
+                    const response = await childService.updateChild(child.id, { teacher_id: null });
+                    if (!response.success) {
+                      console.error('Failed to clear teacher');
+                    }
+                  } catch (error) {
+                    console.error('Error clearing teacher:', error);
+                  }
+                })();
+              }}
+            >
+              <span className="teacher-clear">-- Xóa giáo viên --</span>
+            </div>
+            
+            {teachersList.length === 0 ? (
+              <div className="teacher-dropdown-item disabled">
+                Không có giáo viên trong hệ thống
+              </div>
+            ) : filteredTeachers.length === 0 && searchValue ? (
+              <div className="teacher-dropdown-item disabled">
+                Không tìm thấy giáo viên phù hợp với "{searchValue}"
+              </div>
+            ) : (
+              (searchValue ? filteredTeachers : teachersList).map(teacher => (
+                <div 
+                  key={teacher.id}
+                  className={`teacher-dropdown-item ${teacher.id === child.teacher_id ? 'selected' : ''}`}
+                  onClick={() => {
+                    // Force update by clearing editing state first
+                    setEditingCell({ childId: null, field: null });
+                    setEditingValues({});
+                    setOriginalValues({});
+                    
+                    // Then update the child directly
+                    const selectedTeacher = teacher;
+                    setChildren(prev => prev.map(c => 
+                      c.id === child.id 
+                        ? { 
+                            ...c, 
+                            teacher_id: selectedTeacher.id,
+                            teacher_name: selectedTeacher.full_name || selectedTeacher.name || selectedTeacher.username
+                          }
+                        : c
+                    ));
+                    
+                    // Also call API to save
+                    (async () => {
+                      try {
+                        const response = await childService.updateChild(child.id, { teacher_id: selectedTeacher.id });
+                        if (!response.success) {
+                          console.error('Failed to update teacher');
+                        }
+                      } catch (error) {
+                        console.error('Error updating teacher:', error);
+                      }
+                    })();
+                  }}
+                >
+                  <span className="teacher-name">{teacher.full_name || teacher.name || teacher.username}</span>
+                  <span className="teacher-username">({teacher.username})</span>
+                </div>
+              ))
+            )}
+          </div>
+          
+          <div className="inline-edit-actions">
+            <button 
+              onClick={() => handleInlineSave(child.id, 'teacher_id')}
+              className="inline-save-btn"
+              disabled={loading}
+            >
+              ✓
+            </button>
+            <button 
+              onClick={() => handleInlineCancel(child.id, 'teacher_id')}
+              className="inline-cancel-btn"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // Find current teacher name to display
+    const currentTeacher = teachersList.find(teacher => teacher.id === child.teacher_id);
+    const displayValue = currentTeacher ? 
+      (currentTeacher.full_name || currentTeacher.name || currentTeacher.username) : 
+      (child.teacher_name || 'Chưa cập nhật');
+    
+    return (
+      <div 
+        className="editable-cell"
+        onClick={() => handleCellClick(child.id, 'teacher_id', child.teacher_id)}
+        title="Click để chỉnh sửa"
+      >
+        {displayValue}
+      </div>
+    );
+  };
+
   return (
     <div className="children-management-container">
       <div className="section-header">
@@ -458,19 +655,6 @@ const ChildrenManagement = () => {
             <option value="">Tất cả</option>
             <option value="Nam">Nam</option>
             <option value="Nữ">Nữ</option>
-          </select>
-        </div>
-
-        <div className="filter-group">
-          <label>Dị ứng</label>
-          <select
-            value={filters.hasAllergy}
-            onChange={(e) => handleFilterChange('hasAllergy', e.target.value)}
-            className="filter-select"
-          >
-            <option value="">Tất cả</option>
-            <option value="true">Có dị ứng</option>
-            <option value="false">Không dị ứng</option>
           </select>
         </div>
 
@@ -550,7 +734,9 @@ const ChildrenManagement = () => {
                           {renderSelectCell(child, 'class_name', child.class_name, classOptions)}
                         </td>
                         <td>{child.parent_name || 'Chưa cập nhật'}</td>
-                        <td>{child.teacher_name || 'Chưa cập nhật'}</td>
+                        <td>
+                          {renderTeacherCell(child)}
+                        </td>
                         <td>
                           {renderEditableCell(child, 'height', child.height || '', 'number')}
                         </td>

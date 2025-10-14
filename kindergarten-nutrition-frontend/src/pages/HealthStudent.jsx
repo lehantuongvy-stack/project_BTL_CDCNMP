@@ -242,11 +242,6 @@ const HealthStudent = () => {
       (child.child_id || child.id) === selectedChildId
     ) || childInfo.data?.children?.[0] || childInfo.children?.[0] || childInfo;
     
-    // Debug log
-    console.log('🔍 selectedChild in renderChildInfo:', selectedChild);
-    console.log('🔍 medical_conditions:', selectedChild?.medical_conditions);
-    console.log('🔍 allergies:', selectedChild?.allergies);
-    
     if (!selectedChild) {
       return (
         <div className="info-box">

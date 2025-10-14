@@ -41,8 +41,6 @@ class Child {
 
     // Tạo child mới
     async create(childData) {
-        console.log('🔧 Child.create called with data:', childData);
-        
         // Generate UUID for the child
         const { v4: uuidv4 } = require('uuid');
         const childId = uuidv4();
@@ -63,14 +61,8 @@ class Child {
             is_active = true
         } = childData;
 
-        console.log('🔧 Destructured class_name:', class_name);
-        console.log('🔧 class_name type:', typeof class_name);
-        console.log('🔧 class_name length:', class_name?.length);
-        console.log('🔧 class_name value in values array:', class_name || null);
-
         // Auto-generate student_id if not provided
         const finalStudentId = student_id || await this.generateStudentId();
-        console.log('🔧 Using student_id:', finalStudentId);
 
         const query = `
             INSERT INTO ${this.tableName} 
@@ -105,29 +97,14 @@ class Child {
             is_active !== undefined ? is_active : true
         ];
         
-        console.log(' Executing query:', query);
-        console.log(' With values:', values);
-        console.log(' Generated child ID:', childId);
-        console.log(' Processed allergies:', allergiesJson);
-        console.log(' Processed medical_conditions:', medicalConditionsJson);
-        
         try {
             const result = await this.db.query(query, values);
-            console.log(' Database query result:', result);
             
             // Use the generated UUID to retrieve the created child
             const newChild = await this.findById(childId);
-            console.log('🔧 Raw database result for findById:', newChild);
-            console.log('🔧 Retrieved class_name:', newChild?.class_name);
-            console.log('🔧 Retrieved class_name type:', typeof newChild?.class_name);
-            console.log(' Retrieved created child:', newChild);
-            return newChild;
+
         } catch (error) {
-            console.error(' Create child database error:', error);
-            console.error(' Error details:', error.message);
-            console.error(' SQL State:', error.sqlState);
-            console.error(' Error Number:', error.errno);
-            
+
             // Provide more specific error message
             if (error.message.includes('allergies')) {
                 throw new Error(`Database constraint error for allergies field: ${error.message}`);
@@ -164,99 +141,61 @@ class Child {
             }
             return this.parseJsonFields(result) || [];
         } catch (error) {
-            console.error('Database query error:', error);
             return [];
         }
     }
 
-    // Tìm child theo ID
-    async findById(id) {
-        const query = `
-            SELECT c.id, c.student_id, c.full_name, c.date_of_birth, c.gender, 
-                   c.class_name, c.nhom, c.parent_id, c.teacher_id, c.height, c.weight,
-                   c.allergies, c.medical_conditions, c.admission_date,
-                   c.is_active, c.created_at, c.updated_at,
-                   u.full_name as parent_name,
-                   u.phone as parent_phone,
-                   t.full_name as teacher_name,
-                   FLOOR(DATEDIFF(CURDATE(), c.date_of_birth) / 365.25) as age
-            FROM ${this.tableName} c
-            LEFT JOIN users u ON c.parent_id = u.id
-            LEFT JOIN users t ON c.teacher_id = t.id
-            WHERE c.id = ? AND c.is_active = 1
-        `;
+    // // Tìm child theo ID
+    // async findById(id) {
+    //     const query = `
+    //         SELECT c.id, c.student_id, c.full_name, c.date_of_birth, c.gender, 
+    //                c.class_name, c.nhom, c.parent_id, c.teacher_id, c.height, c.weight,
+    //                c.allergies, c.medical_conditions, c.admission_date,
+    //                c.is_active, c.created_at, c.updated_at,
+    //                u.full_name as parent_name,
+    //                u.phone as parent_phone,
+    //                t.full_name as teacher_name,
+    //                FLOOR(DATEDIFF(CURDATE(), c.date_of_birth) / 365.25) as age
+    //         FROM ${this.tableName} c
+    //         LEFT JOIN users u ON c.parent_id = u.id
+    //         LEFT JOIN users t ON c.teacher_id = t.id
+    //         WHERE c.id = ? AND c.is_active = 1
+    //     `;
         
-        try {
-            console.log('🔧🔧🔧 FINDBBYID METHOD CALLED 🔧🔧🔧');
-            console.log('🔧 findById query:', query);
-            console.log('🔧 findById id parameter:', id);
+    //     try {
+    //         // Test direct query first
+    //         const directQuery = `SELECT class_name FROM children WHERE id = ?`;
+    //         const directResult = await this.db.query(directQuery, [id]);
             
-            // Test direct query first
-            const directQuery = `SELECT class_name FROM children WHERE id = ?`;
-            const directResult = await this.db.query(directQuery, [id]);
-            console.log('🔧 DIRECT class_name query result:', directResult);
-            
-            const result = await this.db.query(query, [id]);
-            console.log('🔧 findById raw result:', result);
-            // Handle different MySQL2 response formats
-            if (Array.isArray(result) && result.length > 0) {
-                const rows = Array.isArray(result[0]) ? result[0] : result;
-                if (Array.isArray(rows) && rows.length > 0) {
-                    const child = rows[0];
-                    // Parse JSON fields
-                    if (child.allergies && typeof child.allergies === 'string') {
-                        try {
-                            child.allergies = JSON.parse(child.allergies);
-                        } catch (e) {
-                            child.allergies = [];
-                        }
-                    }
-                    if (child.medical_conditions && typeof child.medical_conditions === 'string') {
-                        try {
-                            child.medical_conditions = JSON.parse(child.medical_conditions);
-                        } catch (e) {
-                            child.medical_conditions = [];
-                        }
-                    }
-                    return child;
-                }
-            }
-            return null;
-        } catch (error) {
-            console.error('Database query error:', error);
-            return null;
-        }
-    }
-
-    // Lấy tất cả children
-    async findAll(limit = 50, offset = 0) {
-        const query = `
-            SELECT c.*, 
-                   u.full_name as parent_name,
-                   u.phone as parent_phone,
-                   t.full_name as teacher_name,
-                   FLOOR(DATEDIFF(CURDATE(), c.date_of_birth) / 365.25) as age
-            FROM ${this.tableName} c
-            LEFT JOIN users u ON c.parent_id = u.id
-            LEFT JOIN users t ON c.teacher_id = t.id
-            WHERE c.is_active = 1
-            ORDER BY c.created_at DESC
-            LIMIT ? OFFSET ?
-        `;
-        
-        try {
-            const result = await this.db.query(query, [limit, offset]);
-            // Handle different MySQL2 response formats
-            if (Array.isArray(result)) {
-                const rows = result.length > 0 && Array.isArray(result[0]) ? result[0] : result;
-                return this.parseJsonFields(rows);
-            }
-            return this.parseJsonFields(result) || [];
-        } catch (error) {
-            console.error('Child.findAll error:', error);
-            return [];
-        }
-    }
+    //         const result = await this.db.query(query, [id]);
+    //         // Handle different MySQL2 response formats
+    //         if (Array.isArray(result) && result.length > 0) {
+    //             const rows = Array.isArray(result[0]) ? result[0] : result;
+    //             if (Array.isArray(rows) && rows.length > 0) {
+    //                 const child = rows[0];
+    //                 // Parse JSON fields
+    //                 if (child.allergies && typeof child.allergies === 'string') {
+    //                     try {
+    //                         child.allergies = JSON.parse(child.allergies);
+    //                     } catch (e) {
+    //                         child.allergies = [];
+    //                     }
+    //                 }
+    //                 if (child.medical_conditions && typeof child.medical_conditions === 'string') {
+    //                     try {
+    //                         child.medical_conditions = JSON.parse(child.medical_conditions);
+    //                     } catch (e) {
+    //                         child.medical_conditions = [];
+    //                     }
+    //                 }
+    //                 return child;
+    //             }
+    //         }
+    //         return null;
+    //     } catch (error) {
+    //         return null;
+    //     }
+    // }
 
     // Tìm children theo class_id  
     async findByClassId(classId) {
@@ -279,7 +218,6 @@ class Child {
             }
             return result || [];
         } catch (error) {
-            console.error('Database query error:', error);
             return [];
         }
     }
@@ -308,7 +246,6 @@ class Child {
             }
             return this.parseJsonFields(result) || [];
         } catch (error) {
-            console.error('Database query error:', error);
             return [];
         }
     }
@@ -366,7 +303,6 @@ class Child {
             }
             return result || [];
         } catch (error) {
-            console.error('Database query error:', error);
             return [];
         }
     }
@@ -374,20 +310,15 @@ class Child {
     // Cập nhật child
     async updateById(id, updateData) {
         const allowedFields = [
-            'full_name', 'date_of_birth', 'gender', 'class_name', 'weight', 
+            'full_name', 'date_of_birth', 'gender', 'class_name', 'teacher_id', 'weight', 
             'height', 'allergies', 'medical_conditions', 'is_active'
         ];
         const setClause = [];
         const values = [];
 
-        console.log('🔧 Child.updateById - updateData:', updateData);
-        console.log('🔧 Child.updateById - allowedFields:', allowedFields);
-
         for (const [key, value] of Object.entries(updateData)) {
-            console.log(`🔧 Checking field: ${key} with value:`, value, 'Type:', typeof value);
             
             if (allowedFields.includes(key)) {
-                console.log(`✅ Field ${key} is allowed`);
                 setClause.push(`${key} = ?`);
                 
                 // Handle JSON fields properly
@@ -418,17 +349,11 @@ class Child {
                     values.push(value === undefined ? null : value);
                 }
             } else {
-                console.log(`❌ Field ${key} is NOT allowed`);
+                console.log(` Field ${key} is NOT allowed`);
             }
         }
 
-        console.log('🔧 Final setClause:', setClause);
-        console.log('🔧 Final values:', values);
-
         if (setClause.length === 0) {
-            console.log('❌ No valid fields found in setClause');
-            console.log('❌ updateData was:', updateData);
-            console.log('❌ allowedFields were:', allowedFields);
             throw new Error('No valid fields to update');
         }
 
@@ -457,59 +382,6 @@ class Child {
         return true;
     }
 
-    // Lấy children có dị ứng
-    async findWithAllergies() {
-        const query = `
-            SELECT c.*,
-                   u.full_name as parent_name,
-                   u.phone as parent_phone,
-                   FLOOR(DATEDIFF(CURDATE(), c.date_of_birth) / 365.25) as age
-            FROM ${this.tableName} c
-            LEFT JOIN users u ON c.parent_id = u.id
-            WHERE c.allergies IS NOT NULL AND c.is_active = 1
-            ORDER BY c.full_name
-        `;
-        
-        try {
-            const result = await this.db.query(query);
-            // Handle different MySQL2 response formats
-            if (Array.isArray(result)) {
-                return result.length > 0 && Array.isArray(result[0]) ? result[0] : result;
-            }
-            return result || [];
-        } catch (error) {
-            console.error('Database query error:', error);
-            return [];
-        }
-    }
-
-    // Lấy children theo độ tuổi
-    async findByAgeRange(minAge, maxAge) {
-        const query = `
-            SELECT c.*,
-                   u.full_name as parent_name,
-                   u.phone as parent_phone,
-                   TIMESTAMPDIFF(YEAR, c.date_of_birth, CURDATE()) as age
-            FROM ${this.tableName} c
-            LEFT JOIN users u ON c.parent_id = u.id
-            WHERE c.is_active = 1
-            HAVING age BETWEEN ? AND ?
-            ORDER BY age, c.full_name
-        `;
-        
-        try {
-            const result = await this.db.query(query, [minAge, maxAge]);
-            // Handle different MySQL2 response formats
-            if (Array.isArray(result)) {
-                return result.length > 0 && Array.isArray(result[0]) ? result[0] : result;
-            }
-            return result || [];
-        } catch (error) {
-            console.error('Database query error:', error);
-            return [];
-        }
-    }
-
     // Thống kê children theo class
     async getStatsByClass() {
         const query = `
@@ -523,41 +395,6 @@ class Child {
 
         try {
             const result = await this.db.query(query);
-            // Handle different MySQL2 response formats
-            if (Array.isArray(result)) {
-                return result.length > 0 && Array.isArray(result[0]) ? result[0] : result;
-            }
-            return result || [];
-        } catch (error) {
-            console.error('Database query error:', error);
-            return [];
-        }
-    }
-
-    // Lấy children sinh nhật trong tháng
-    async findBirthdaysInMonth(month, year = null) {
-        let query = `
-            SELECT c.*,
-                   u.full_name as parent_name,
-                   u.phone as parent_phone,
-                   DAY(c.date_of_birth) as birth_day,
-                   FLOOR(DATEDIFF(CURDATE(), c.date_of_birth) / 365.25) as age
-            FROM ${this.tableName} c
-            LEFT JOIN users u ON c.parent_id = u.id
-            WHERE MONTH(c.date_of_birth) = ? AND c.is_active = 1
-        `;
-        
-        const values = [month];
-        
-        if (year) {
-            query += ' AND YEAR(c.date_of_birth) = ?';
-            values.push(year);
-        }
-        
-        query += ' ORDER BY DAY(c.date_of_birth), c.full_name';
-        
-        try {
-            const result = await this.db.query(query, values);
             // Handle different MySQL2 response formats
             if (Array.isArray(result)) {
                 return result.length > 0 && Array.isArray(result[0]) ? result[0] : result;

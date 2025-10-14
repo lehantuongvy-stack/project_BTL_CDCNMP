@@ -41,10 +41,8 @@ export default function Home() {
         setError(null);
         
         const today = getToday();
-        console.log('🏠 Fetching menu for today:', today);
         
         const response = await mealService.getDailyMeals(today);
-        console.log('🏠 Menu response:', response);
         
         if (response.success && response.data) {
           // Chuyển đổi dữ liệu API thành format cho component
@@ -72,7 +70,6 @@ export default function Home() {
           ]);
         }
       } catch (error) {
-        console.error('🏠 Error fetching today menu:', error);
         setError('Không thể tải thực đơn hôm nay');
         // Fallback data khi có lỗi
         setMenuData([
@@ -103,15 +100,12 @@ export default function Home() {
 
   // Hàm chuyển đổi dữ liệu API thành format cho component
   const convertApiDataToMenuFormat = (apiData) => {
-    console.log('🔄 Converting API data:', apiData);
-    
     const nhaTreData = { Sáng: '', Trưa: '', Chiều: '' };
     const mauGiaoData = { Sáng: '', Trưa: '', Chiều: '' };
 
     // Duyệt qua các key trong API data (format: {loai_bua_an}_{lop_ap_dung})
     Object.keys(apiData).forEach(key => {
       const mealInfo = apiData[key];
-      console.log(`🔄 Processing key: ${key}`, mealInfo);
       
       if (mealInfo && mealInfo.mon_an_list && mealInfo.mon_an_list.length > 0) {
         const dishNames = mealInfo.mon_an_list.map(dish => dish.ten_mon_an).join(', ');
