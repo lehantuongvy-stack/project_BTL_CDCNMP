@@ -42,7 +42,7 @@ function ProtectedRoute({ children, requiredRole = null }) {
           onClick={() => window.history.back()}
           style={{
             padding: '0.5rem 1rem',
-            background: '#667eea',
+            background: '#ffced2',
             color: 'white',
             border: 'none',
             borderRadius: '0.5rem',
@@ -54,8 +54,6 @@ function ProtectedRoute({ children, requiredRole = null }) {
       </div>
     );
   }
-
-  // Render children if authenticated and authorized
   return children;
 }
 

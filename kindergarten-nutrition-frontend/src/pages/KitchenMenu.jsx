@@ -45,7 +45,6 @@ function KitchenMenu() {
   // Helper function để lấy headers với token
   const getAuthHeaders = () => {
     const token = localStorage.getItem('authToken'); // Sửa key từ 'token' thành 'authToken'
-    console.log('🔍 Getting token from localStorage:', token); // Debug log
     return {
       'Content-Type': 'application/json',
       ...(token && { 'Authorization': `Bearer ${token}` })
@@ -115,13 +114,9 @@ function KitchenMenu() {
       });
       const result = await response.json();
       
-      console.log('🍽️ API Response for date:', date, result);
-      
       if (result.success) {
-        console.log('📊 API Data:', result.data);
         // Convert API data to component format
         const convertedData = convertApiDataToComponentFormat(result.data);
-        console.log('🔄 Converted Data:', convertedData);
         
         const dayName = getDayOfWeek(date);
         setWeeklyMealData(prev => {
@@ -129,9 +124,6 @@ function KitchenMenu() {
             ...prev,
             [dayName]: convertedData
           };
-          
-          console.log('📅 Setting weeklyMealData for day:', dayName);
-          console.log('🗂️ New weeklyMealData:', newWeeklyMealData);
           
           return newWeeklyMealData;
         });
@@ -166,45 +158,35 @@ function KitchenMenu() {
     };
 
     // Process API data and map to component format
-    console.log('🔍 Processing API Data keys:', Object.keys(apiData));
+    console.log(' Processing API Data keys:', Object.keys(apiData));
     Object.keys(apiData).forEach(key => {
       const menu = apiData[key];
-      console.log(`📋 Processing menu key: ${key}`, menu);
+      console.log(` Processing menu key: ${key}`, menu);
       
       // Kiểm tra xem menu có dữ liệu không
       if (!menu || !menu.thuc_don_info) {
-        console.log('❌ Menu data not found for key:', key);
+        console.log(' Menu data not found for key:', key);
         return;
       }
       
       const { loai_bua_an, nhom_lop, mon_an_list = [] } = menu.thuc_don_info;
-      console.log(`📝 Menu details - loai_bua_an: ${loai_bua_an}, nhom_lop: "${nhom_lop}"`);
-      console.log(`🍱 mon_an_list:`, menu.mon_an_list);
       
       const lopGroup = nhom_lop === 'nha_tre' ? 'Nhà Trẻ' : 'Mẫu Giáo';
-      console.log(`🔄 nhom_lop "${nhom_lop}" === 'nha_tre'? ${nhom_lop === 'nha_tre'}`);
-      console.log(`➡️ Final lopGroup: "${lopGroup}"`);
-      console.log(`🎯 DEBUG CRITICAL - Raw nhom_lop value: [${typeof nhom_lop}] "${nhom_lop}"`);
-      console.log(`🎯 DEBUG CRITICAL - String comparison 'nha_tre': ${JSON.stringify(nhom_lop)} === ${JSON.stringify('nha_tre')}`);
-      console.log(`🎯 DEBUG CRITICAL - Will be mapped to: "${lopGroup}"`);
+
       const mealIndex = loai_bua_an === 'breakfast' ? 0 : 
                        loai_bua_an === 'lunch' ? 1 : 
                        loai_bua_an === 'dinner' ? 2 : 0;
-      console.log(`🎯 Mapping to lopGroup: ${lopGroup}, mealIndex: ${mealIndex}`);
       
       if (converted[lopGroup] && converted[lopGroup][mealIndex]) {
         // Use mon_an_list from menu.mon_an_list instead of thuc_don_info
         const dishes = menu.mon_an_list || [];
-        console.log(`🍽️ Using dishes:`, dishes);
         
         // Combine dish names and calculate calories per serving (not total)
         const dishNames = dishes.map(item => item.ten_mon_an).join(', ');
         const totalKcal = dishes.reduce((sum, item) => 
-          sum + (item.calories_per_serving || 0), 0 // Only calories_per_serving, not multiply by so_khau_phan
+          sum + (item.calories_per_serving || 0), 0 
         );
-        
-        console.log(`🏷️ dishNames: "${dishNames}", totalKcal per serving: ${totalKcal}`);
-        
+            
         converted[lopGroup][mealIndex] = {
           ...converted[lopGroup][mealIndex],
           dish: dishNames,
@@ -212,8 +194,6 @@ function KitchenMenu() {
           menuId: menu.thuc_don_info.id,
           dishes: dishes
         };
-        
-        console.log(`✅ Updated converted[${lopGroup}][${mealIndex}]:`, converted[lopGroup][mealIndex]);
       }
     });
 
@@ -388,42 +368,10 @@ function KitchenMenu() {
     });
   };
 
-  // Remove dish from meal by index
-  const handleRemoveDish = (day, group, mealIndex, dishIndex) => {
-    setTempMealData((prev) => {
-      const updated = { ...prev };
-      
-      if (updated[day][group][mealIndex].dishes && updated[day][group][mealIndex].dishes.length > dishIndex) {
-        // Remove dish at specific index
-        updated[day][group][mealIndex].dishes.splice(dishIndex, 1);
-        
-        // Update combined display text and total calories
-        const remainingDishes = updated[day][group][mealIndex].dishes;
-        const dishNames = remainingDishes.map(dish => dish.ten_mon_an);
-        const totalKcal = remainingDishes.reduce((sum, dish) => 
-          sum + (dish.calories_per_serving || 0), 0
-        );
-        
-        updated[day][group][mealIndex] = {
-          ...updated[day][group][mealIndex],
-          dish: dishNames.length > 0 ? dishNames.join(', ') : '',
-          kcal: totalKcal
-        };
-      }
-      
-      return updated;
-    });
-  };
-
   // Save all changes
   const handleSave = async () => {
     try {
       setLoading(true);
-      
-      // Debug user info
-      console.log('Current userInfo:', userInfo);
-      console.log('userInfo?.user?.id:', userInfo?.user?.id);
-      
       // Kiểm tra user đã đăng nhập chưa
       if (!userInfo?.user?.id) {
         console.log('User not logged in or no user ID');
@@ -464,25 +412,13 @@ function KitchenMenu() {
       const promises = [];
       const currentDayName = getDayOfWeek(selectedDate);
       
-      console.log('💿 Before saving - tempMealData:', tempMealData);
-      console.log('📅 Current day name:', currentDayName);
-      
       if (tempMealData && tempMealData[currentDayName]) {
         const dayData = tempMealData[currentDayName];
-        console.log('📊 Day data to save:', dayData);
-        console.log('🏠 Nhà Trẻ meals to save:', dayData["Nhà Trẻ"]);
-        console.log('🎓 Mẫu Giáo meals to save:', dayData["Mẫu Giáo"]);
         
         Object.keys(dayData).forEach(group => {
-          console.log(`🔄 Processing group: "${group}" with ${dayData[group].length} meals`);
           dayData[group].forEach((meal, index) => {
             // Check if meal has dishes array with at least one dish
             if (meal.dishes && meal.dishes.length > 0) {
-              // Debug: Log group value to see exact string
-              console.log(`🐛 DEBUG - Raw group value: "${group}" (length: ${group.length})`);
-              console.log(`🐛 DEBUG - Group === 'Nhà Trẻ':`, group === 'Nhà Trẻ');
-              console.log(`🐛 DEBUG - Group.trim() === 'Nhà Trẻ':`, group.trim() === 'Nhà Trẻ');
-              
               // More robust mapping with explicit checks
               let nhomLop;
               if (group.trim() === 'Nhà Trẻ') {
@@ -490,15 +426,12 @@ function KitchenMenu() {
               } else if (group.trim() === 'Mẫu Giáo') {
                 nhomLop = 'mau_giao';
               } else {
-                console.warn(`⚠️ Unknown group: "${group}", defaulting to mau_giao`);
+                console.warn(` Unknown group: "${group}", defaulting to mau_giao`);
                 nhomLop = 'mau_giao';
               }
               
               const loaiBuaAn = meal.title === 'Bữa sáng' ? 'breakfast' : 
                                meal.title === 'Bữa trưa' ? 'lunch' : 'dinner';
-              
-              console.log(`💾 Saving menu - group: "${group}", nhomLop: "${nhomLop}", loaiBuaAn: "${loaiBuaAn}"`);
-              console.log(`🍽️ Dishes to save:`, meal.dishes);
               
               const menuData = {
                 id: meal.menuId || null,
@@ -508,8 +441,7 @@ function KitchenMenu() {
                 nhom_lop: nhomLop,
                 so_tre_du_kien: 30,
                 trang_thai: 'active',
-                ghi_chu: '', // Explicitly set to empty string
-                // created_by sẽ được server tự động thêm từ token
+                ghi_chu: '', 
                 mon_an_list: meal.dishes.map(dish => ({
                   mon_an_id: dish.id,
                   so_khau_phan: 30,
@@ -543,9 +475,7 @@ function KitchenMenu() {
   // Render table
   const renderWeekTable = (data) => {
     const currentDayName = getDayOfWeek(selectedDate);
-    console.log('📋 renderWeekTable - currentDayName:', currentDayName);
-    console.log('📋 renderWeekTable - input data:', data);
-    
+
     const dayData = data[currentDayName] || {
       "Nhà Trẻ": [
         { title: "Bữa sáng", dish: "", kcal: 0 },
@@ -558,11 +488,6 @@ function KitchenMenu() {
         { title: "Bữa xế", dish: "", kcal: 0 }
       ]
     };
-    
-    console.log('📊 renderWeekTable - dayData:', dayData);
-    console.log('🏠 Nhà Trẻ data:', dayData["Nhà Trẻ"]);
-    console.log('🎓 Mẫu Giáo data:', dayData["Mẫu Giáo"]);
-
     return (
       <table className="menu-table">
         <thead>
@@ -605,7 +530,7 @@ function KitchenMenu() {
                         value=""
                         onChange={(e) => {
                           handleDishChange(currentDayName, group, i, e.target.value);
-                          e.target.value = ""; // Reset dropdown after selection
+                          e.target.value = ""; 
                         }}
                         className="dish-selector"
                       >
@@ -646,7 +571,6 @@ function KitchenMenu() {
   return (
     <div className="menu-container home">
       <BackButton />
-
       <div className="menu-header">
         <div className="menu-title">Thực đơn</div>
         <div className="tabs">
@@ -677,7 +601,6 @@ function KitchenMenu() {
           >
             Xóa
           </button>
-
           <button
             className="btn-edit"
             onClick={() => {
@@ -704,6 +627,10 @@ function KitchenMenu() {
           value={selectedDate}
           onChange={(e) => setSelectedDate(e.target.value)}
           disabled={loading}
+          style={{
+            color: 'black',
+            fontWeight: '500'
+          }}
         />
         <span className="weekday">{getDayOfWeek(selectedDate)}</span>
       </div>
@@ -713,8 +640,6 @@ function KitchenMenu() {
       ) : (
         (() => {
           const dataToRender = isEditing ? tempMealData : weeklyMealData;
-          console.log('🖼️ Rendering table with data:', dataToRender);
-          console.log('🔄 isEditing:', isEditing);
           return renderWeekTable(dataToRender);
         })()
       )}

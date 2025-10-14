@@ -38,7 +38,6 @@ const ParentCorner = () => {
         danh_gia_sao: parseInt(formData.danh_gia_sao) || 5
       };
 
-      console.log('📩 Sending feedback:', feedbackData);
       const response = await parentFeedbackService.createFeedback(feedbackData);
 
       if (response.success) {
@@ -64,8 +63,8 @@ const ParentCorner = () => {
 
           {/* --- KHU VỰC GỬI Ý KIẾN --- */}
           <section className="feedback-section">
-            <h2>Gửi ý kiến đến nhà trường</h2>
-            <p>Chúng tôi luôn lắng nghe mọi góp ý và phản hồi từ quý phụ huynh ❤️</p>
+            <h2 style={{color: '#ffced2'}}>Gửi ý kiến đến nhà trường</h2>
+            <p style={{color: 'black'}}>Chúng tôi luôn lắng nghe mọi góp ý và phản hồi từ quý phụ huynh ❤️</p>
 
             {message.text && (
               <div
@@ -156,7 +155,7 @@ const ParentCorner = () => {
               </div>
               <div className="contact-item">
                 <h4>Địa chỉ</h4>
-                <p>123 Đường ABC, Quận XYZ, TP.HCM</p>
+                <p>Số 18 Phố Viên</p>
               </div>
             </div>
           </section>

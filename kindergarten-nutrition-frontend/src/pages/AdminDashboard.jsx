@@ -33,10 +33,9 @@ function AdminDashboard() {
   const loadFeedbacks = async () => {
     try {
       setLoadingFeedbacks(true);
-      console.log('📬 Đang tải ý kiến phụ huynh...');
+ 
       const response = await parentFeedbackService.getAllFeedback();
-      console.log('📬 Feedback API response:', response);
-
+    
       // Lấy tối đa 5 ý kiến mới nhất
       const feedbackList = response.data?.slice(0, 5) || [];
       setFeedbacks(feedbackList);
@@ -52,42 +51,34 @@ function AdminDashboard() {
   useEffect(() => {
     // Chỉ load data khi user đã được load từ AuthContext
     if (!user) {
-      console.log('⏳ User not loaded yet, waiting...');
       return;
     }
 
     const loadDashboardData = async () => {
       try {
         setLoading(true);
-        console.log('📊 Loading dashboard data...');
-        console.log('👤 Current user role:', user?.role);
         
         // Lấy tổng số trẻ em từ API
         const childrenResponse = await childService.getAllChildren();
-        console.log('👶 Children API response:', childrenResponse);
         
         const totalChildren = childrenResponse.data?.children?.length || 0;
-        console.log('👶 Total children count:', totalChildren);
         
         let totalTeachers = 0;
         
         // Chỉ gọi API stats khi user là admin
         if (user?.role === 'admin') {
           try {
-            console.log('👥 Loading user stats (admin only)...');
             const userStatsResponse = await userService.getUserStats();
-            console.log('👥 User stats API response:', userStatsResponse);
             
             // Parse user stats để lấy số lượng giáo viên
             const userStats = userStatsResponse.data?.stats || [];
             const teacherStats = userStats.find(stat => stat.role === 'teacher');
             totalTeachers = teacherStats ? teacherStats.count : 0;
-            console.log('👩‍🏫 Total teachers count:', totalTeachers);
           } catch (statsError) {
-            console.warn('⚠️ Could not load user stats (may not be admin):', statsError.message);
+            console.warn(' Could not load user stats (may not be admin):', statsError.message);
           }
         } else {
-          console.log('ℹ️ User is not admin, skipping user stats API');
+          console.log(' User is not admin, skipping user stats API');
         }
         
         setDashboardData(prev => ({
@@ -96,10 +87,10 @@ function AdminDashboard() {
           totalTeachers
         }));
         
-        console.log('✅ Dashboard data loaded successfully');
+        console.log(' Dashboard data loaded successfully');
         
       } catch (error) {
-        console.error('❌ Error loading dashboard data:', error);
+        console.error(' Error loading dashboard data:', error);
       } finally {
         setLoading(false);
       }
@@ -183,9 +174,7 @@ function AdminDashboard() {
   const loadReports = async () => {
     try {
       setLoadingReports(true);
-      console.log('📊 Loading reports data...');
       const response = await reportService.getAllReports();
-      console.log('📊 Reports API response:', response);
       setReports(response.data || []);
     } catch (error) {
       console.error('Error loading reports:', error);
@@ -500,15 +489,6 @@ function AdminDashboard() {
               <span className="welcome-text">Chào mừng</span>
               <span className="user-name">{user?.full_name || user?.username}</span>
             </div>
-            <button 
-              className="logout-button" 
-              onClick={(e) => {
-                e.stopPropagation();
-                handleLogout();
-              }}
-              title="Đăng xuất"
-            >
-            </button>
           </div>
         </div>
       </nav>

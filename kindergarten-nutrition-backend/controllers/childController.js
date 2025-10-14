@@ -90,7 +90,7 @@ class ChildController extends BaseController {
         }
     }
 
-    // API GET /api/children/my-class - Lấy danh sách học sinh của teacher đang đăng nhập
+    // Lấy danh sách học sinh của teacher đang đăng nhập
     async getMyClassChildren(req, res) {
         try {
             console.log(' getMyClassChildren called for teacher:', req.user.id);
