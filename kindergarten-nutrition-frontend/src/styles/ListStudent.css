@@ -25,7 +25,20 @@
   box-sizing: border-box;
 }
 
-/* Header - removed separate header styling since using common Header component */
+
+/* Header */
+.list-header {
+  background-color: #f8cce6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+  position: relative;
+}
+
 
 
 /* Title */
