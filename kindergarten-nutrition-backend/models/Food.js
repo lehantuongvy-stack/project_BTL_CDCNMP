@@ -129,48 +129,48 @@ class Food {
         }
     }
 
-    /**
-     * Lấy nguyên liệu của món ăn
-     */
-    async getFoodIngredients(foodId) {
-        try {
-            const query = `
-                SELECT 
-                    nl.id, nl.ten_nguyen_lieu, nl.don_vi_tinh,
-                    ctma.so_luong, ctma.ghi_chu
-                FROM chi_tiet_mon_an ctma
-                JOIN nguyen_lieu nl ON ctma.nguyen_lieu_id = nl.id
-                WHERE ctma.mon_an_id = ?
-                ORDER BY nl.ten_nguyen_lieu
-            `;
+    // /**
+    //  * Lấy nguyên liệu của món ăn
+    //  */
+    // async getFoodIngredients(foodId) {
+    //     try {
+    //         const query = `
+    //             SELECT 
+    //                 nl.id, nl.ten_nguyen_lieu, nl.don_vi_tinh,
+    //                 ctma.so_luong, ctma.ghi_chu
+    //             FROM chi_tiet_mon_an ctma
+    //             JOIN nguyen_lieu nl ON ctma.nguyen_lieu_id = nl.id
+    //             WHERE ctma.mon_an_id = ?
+    //             ORDER BY nl.ten_nguyen_lieu
+    //         `;
             
-            return await this.db.query(query, [foodId]);
+    //         return await this.db.query(query, [foodId]);
 
-        } catch (error) {
-            console.error('Error getting food ingredients:', error);
-            throw new Error('Lỗi khi lấy nguyên liệu món ăn');
-        }
-    }
+    //     } catch (error) {
+    //         console.error('Error getting food ingredients:', error);
+    //         throw new Error('Lỗi khi lấy nguyên liệu món ăn');
+    //     }
+    // }
 
-    /**
-     * Thêm nguyên liệu vào món ăn
-     */
-    async addIngredient(foodId, ingredientId, quantity, notes = '') {
-        try {
-            const query = `
-                INSERT INTO chi_tiet_mon_an (mon_an_id, nguyen_lieu_id, so_luong, ghi_chu)
-                VALUES (?, ?, ?, ?)
-                ON DUPLICATE KEY UPDATE so_luong = ?, ghi_chu = ?
-            `;
+    // /**
+    //  * Thêm nguyên liệu vào món ăn
+    //  */
+    // async addIngredient(foodId, ingredientId, quantity, notes = '') {
+    //     try {
+    //         const query = `
+    //             INSERT INTO chi_tiet_mon_an (mon_an_id, nguyen_lieu_id, so_luong, ghi_chu)
+    //             VALUES (?, ?, ?, ?)
+    //             ON DUPLICATE KEY UPDATE so_luong = ?, ghi_chu = ?
+    //         `;
             
-            await this.db.query(query, [foodId, ingredientId, quantity, notes, quantity, notes]);
-            return true;
+    //         await this.db.query(query, [foodId, ingredientId, quantity, notes, quantity, notes]);
+    //         return true;
 
-        } catch (error) {
-            console.error('Error adding ingredient to food:', error);
-            throw new Error('Lỗi khi thêm nguyên liệu vào món ăn');
-        }
-    }
+    //     } catch (error) {
+    //         console.error('Error adding ingredient to food:', error);
+    //         throw new Error('Lỗi khi thêm nguyên liệu vào món ăn');
+    //     }
+    // }
 
     /**
      * Cập nhật món ăn
@@ -263,31 +263,31 @@ class Food {
         }
     }
 
-    /**
-     * Lấy thống kê dinh dưỡng theo loại món
-     */
-    async getNutritionStats() {
-        try {
-            const query = `
-                SELECT 
-                    loai_mon,
-                    COUNT(*) as total_foods,
-                    AVG(total_calories) as avg_calories,
-                    AVG(total_protein) as avg_protein,
-                    AVG(total_carbs) as avg_carbs,
-                    AVG(total_fat) as avg_fat
-                FROM mon_an 
-                GROUP BY loai_mon
-                ORDER BY loai_mon
-            `;
+    // /**
+    //  * Lấy thống kê dinh dưỡng theo loại món
+    //  */
+    // async getNutritionStats() {
+    //     try {
+    //         const query = `
+    //             SELECT 
+    //                 loai_mon,
+    //                 COUNT(*) as total_foods,
+    //                 AVG(total_calories) as avg_calories,
+    //                 AVG(total_protein) as avg_protein,
+    //                 AVG(total_carbs) as avg_carbs,
+    //                 AVG(total_fat) as avg_fat
+    //             FROM mon_an 
+    //             GROUP BY loai_mon
+    //             ORDER BY loai_mon
+    //         `;
 
-            return await this.db.query(query);
+    //         return await this.db.query(query);
 
-        } catch (error) {
-            console.error('Error getting nutrition stats:', error);
-            throw new Error('Lỗi khi lấy thống kê dinh dưỡng');
-        }
-    }
+    //     } catch (error) {
+    //         console.error('Error getting nutrition stats:', error);
+    //         throw new Error('Lỗi khi lấy thống kê dinh dưỡng');
+    //     }
+    // }
 }
 
 module.exports = Food;

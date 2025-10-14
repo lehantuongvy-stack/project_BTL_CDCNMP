@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom"; 
 import Header from '../components/common/Header.jsx';
 import "../styles/thuvienmonan.css";
 
 function ThuvienMonan() {
+  const [search, setSearch] = useState("");
   const monAn = [
     { id: 1, ten: "Cháo gà", anh: "/src/assets/chao-ga.jpg" },
     { id: 2, ten: "Canh rau ngót", anh: "/src/assets/canh-rau-ngot.jpg" },
@@ -23,22 +24,45 @@ function ThuvienMonan() {
     { id: 16, ten: "Cháo đậu xanh", anh: "/src/assets/chao-dau-xanh.jpg" },   
   ];
 
+  // Lọc món ăn theo từ khóa tìm kiếm
+  const filteredMonAn = monAn.filter(item => 
+    item.ten.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
+    
     <div className="thu-vien-page">
       <Header />
       <div className="thu-vien">
+      {/* Ô tìm kiếm góc trên bên phải */}
+      <input
+        type="text"
+        className="search-box"
+        placeholder="Tìm món ăn..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
+        {/* Tiêu đề ở chính giữa */}
+
         <h1 className="title"><strong>THƯ VIỆN MÓN ĂN</strong></h1>
+
         <div className="grid">
-          {monAn.map((item) => (
-            <div className="card" key={item.id}>
-              <img src={item.anh} alt={item.ten} />
-              <p>{item.ten}</p>
-              {/* Nút link sang trang chi tiết */}
-              <Link to={`/mon/${item.id}`} className="detail-btn">
-                Xem chi tiết
-              </Link>
+          {filteredMonAn.length > 0 ? (
+            filteredMonAn.map((item) => (
+              <div className="card" key={item.id}>
+                <img src={item.anh} alt={item.ten} />
+                <p>{item.ten}</p>
+                {/* Nút link sang trang chi tiết */}
+                <Link to={`/mon/${item.id}`} className="detail-btn">
+                  Xem chi tiết
+                </Link>
+              </div>
+            ))
+          ) : (
+            <div className="no-results">
+              <p>Không tìm thấy món ăn nào với từ khóa "{search}"</p>
             </div>
-          ))}
+          )}
         </div>
       </div>
     </div>

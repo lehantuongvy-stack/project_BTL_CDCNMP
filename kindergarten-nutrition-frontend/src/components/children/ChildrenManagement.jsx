@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import childService from '../../services/childService';
+import userService from '../../services/userService';
 import './ChildrenManagement.css';
 
 const ChildrenManagement = () => {
   const [children, setChildren] = useState([]);
+  const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({
     searchTerm: '',
@@ -19,10 +21,20 @@ const ChildrenManagement = () => {
     items_per_page: 10
   });
 
+  // For inline editing
+  const [editingCell, setEditingCell] = useState({ childId: null, field: null });
+  const [editingValues, setEditingValues] = useState({});
+  const [originalValues, setOriginalValues] = useState({});
+
   // Load children on component mount and filter change
   useEffect(() => {
     loadChildren();
   }, [filters, pagination.current_page]);
+
+  // Load teachers on component mount
+  useEffect(() => {
+    loadTeachers();
+  }, []);
 
   const loadChildren = async () => {
     try {
@@ -40,7 +52,7 @@ const ChildrenManagement = () => {
       if (filters.gender) {
         queryParams.append('gender', filters.gender);
       }
-      if (filters.hasAllergy) {
+      if (filters.hasAllergy !== '') {
         queryParams.append('has_allergy', filters.hasAllergy);
       }
       if (filters.hasMedicalCondition) {
@@ -51,7 +63,7 @@ const ChildrenManagement = () => {
       queryParams.append('limit', pagination.items_per_page.toString());
       
       let response;
-      const hasFilters = Object.values(filters).some(value => value);
+      const hasFilters = filters.searchTerm || filters.className || filters.gender || filters.hasAllergy !== '' || filters.hasMedicalCondition;
       
       if (hasFilters) {
         // Use search API when filters are applied
@@ -65,8 +77,8 @@ const ChildrenManagement = () => {
       }
       
       if (response.success) {
-        console.log('📊 Children response data:', response.data);
-        console.log('📊 First child data:', response.data.children?.[0]);
+        console.log(' Children response data:', response.data);
+        console.log(' First child data:', response.data.children?.[0]);
         
         // Process children data to handle emergency_contact if it's JSON
         const processedChildren = (response.data.children || []).map(child => {
@@ -97,6 +109,19 @@ const ChildrenManagement = () => {
       console.error('Error loading children:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadTeachers = async () => {
+    try {
+      const response = await userService.getUsersByRole('teacher');
+      if (response.success) {
+        // Extract users array from response data
+        const teachersData = response.data.users || response.data || [];
+        setTeachers(teachersData);
+      }
+    } catch (error) {
+      console.error('Error loading teachers:', error);
     }
   };
 
@@ -149,232 +174,599 @@ const ChildrenManagement = () => {
     return new Date(dateString).toLocaleDateString('vi-VN');
   };
 
+  // Handle inline edit start
+  const handleCellClick = (childId, field, currentValue) => {
+    setEditingCell({ childId, field });
+    setEditingValues({ [`${childId}_${field}`]: currentValue || '' });
+    setOriginalValues({ [`${childId}_${field}`]: currentValue || '' });
+  };
+
+  // Handle input change during inline edit
+  const handleInlineInputChange = (childId, field, value) => {
+    setEditingValues(prev => ({
+      ...prev,
+      [`${childId}_${field}`]: value
+    }));
+  };
+
+  // Handle save inline edit
+  const handleInlineSave = async (childId, field) => {
+    const key = `${childId}_${field}`;
+    const newValue = editingValues[key];
+    const originalValue = originalValues[key];
+
+    // Don't save if value hasn't changed
+    if (newValue === originalValues[key]) {
+      handleInlineCancel(childId, field);
+      return;
+    }
+    
+    // Validate that we have a valid field (allow empty values for some fields)
+    if (!field) {
+      console.log(' Invalid field, canceling save');
+      handleInlineCancel(childId, field);
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      
+      // Prepare update data with proper type conversion
+      let processedValue = newValue;
+      
+      // Handle special cases for different field types
+      if (field === 'height' || field === 'weight') {
+        processedValue = newValue ? parseFloat(newValue) : null;
+      } else if (field === 'date_of_birth') {
+        // Ensure date is in proper format
+        processedValue = newValue || null;
+      } else if (field === 'gender') {
+        // Ensure gender is 'male' or 'female'
+        processedValue = newValue === 'male' || newValue === 'female' ? newValue : 'male';
+      } else if (field === 'allergies' || field === 'medical_conditions') {
+        // Handle JSON fields
+        if (newValue && newValue.trim()) {
+          processedValue = newValue.trim();
+        } else {
+          processedValue = null;
+        }
+      }
+      
+      const updateData = {
+        [field]: processedValue
+      };
+
+      const response = await childService.updateChild(childId, updateData);
+
+      if (response.success) {
+        // Update local state
+        setChildren(prev => prev.map(child => {
+          if (child.id === childId) {
+            const updatedChild = { ...child, [field]: newValue };
+            
+            // Special handling for teacher_id to also update teacher_name
+            if (field === 'teacher_id' && newValue) {
+              const selectedTeacher = teachers.find(teacher => teacher.id === newValue);
+              if (selectedTeacher) {
+                updatedChild.teacher_name = selectedTeacher.full_name || selectedTeacher.name || selectedTeacher.username;
+              }
+            } else if (field === 'teacher_id' && !newValue) {
+              // Clear teacher_name if teacher_id is cleared
+              updatedChild.teacher_name = null;
+            }
+            
+            return updatedChild;
+          }
+          return child;
+        }));
+        
+        // Clear editing state
+        setEditingCell({ childId: null, field: null });
+        setEditingValues({});
+        setOriginalValues({});
+        
+        console.log('Cập nhật thành công!');
+      } else {
+        throw new Error(response.message || 'Cập nhật thất bại');
+      }
+    } catch (error) {
+      console.error('Error updating child:', error);
+      alert('Cập nhật thất bại: ' + (error.message || 'Unknown error'));
+      
+      // Restore original value
+      const originalKey = `${childId}_${field}`;
+      setEditingValues(prev => ({
+        ...prev,
+        [key]: originalValues[originalKey]
+      }));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle cancel inline edit
+  const handleInlineCancel = (childId, field) => {
+    const key = `${childId}_${field}`;
+    const originalKey = `${childId}_${field}`;
+    const searchKey = `${childId}_teacher_search`;
+    
+    // Restore original value
+    setEditingValues(prev => {
+      const newValues = {
+        ...prev,
+        [key]: originalValues[originalKey]
+      };
+      
+      // Clear search value for teacher field
+      if (field === 'teacher_id') {
+        delete newValues[searchKey];
+      }
+      
+      return newValues;
+    });
+    
+    // Clear editing state
+    setEditingCell({ childId: null, field: null });
+    setEditingValues({});
+    setOriginalValues({});
+  };
+
+  // Handle Enter key press
+  const handleKeyPress = (e, childId, field) => {
+    if (e.key === 'Enter') {
+      handleInlineSave(childId, field);
+    } else if (e.key === 'Escape') {
+      handleInlineCancel(childId, field);
+    }
+  };
+
+  // Handle delete child
+  const handleDelete = async (child) => {
+    if (!confirm(`Bạn có chắc chắn muốn xóa "${child.full_name}"?`)) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await childService.deleteChild(child.id);
+      
+      if (response.success) {
+        alert('Xóa thành công!');
+        loadChildren(); // Reload list
+      }
+    } catch (error) {
+      console.error('Error deleting child:', error);
+      alert('Lỗi khi xóa: ' + (error.message || 'Unknown error'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Render editable cell
+  const renderEditableCell = (child, field, displayValue, inputType = 'text') => {
+    const isEditing = editingCell.childId === child.id && editingCell.field === field;
+    const key = `${child.id}_${field}`;
+    
+    if (isEditing) {
+      return (
+        <div className="inline-edit-container">
+          <input
+            type={inputType}
+            value={editingValues[key] || ''}
+            onChange={(e) => handleInlineInputChange(child.id, field, e.target.value)}
+            onKeyPress={(e) => handleKeyPress(e, child.id, field)}
+            onBlur={() => handleInlineSave(child.id, field)}
+            className="inline-edit-input"
+            autoFocus
+          />
+          <div className="inline-edit-actions">
+            <button 
+              onClick={() => handleInlineSave(child.id, field)}
+              className="inline-save-btn"
+              disabled={loading}
+            >
+              ✓
+            </button>
+            <button 
+              onClick={() => handleInlineCancel(child.id, field)}
+              className="inline-cancel-btn"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      );
+    }
+    
+    return (
+      <div 
+        className="editable-cell"
+        onClick={() => handleCellClick(child.id, field, displayValue)}
+        title="Click để chỉnh sửa"
+      >
+        {displayValue || 'Chưa cập nhật'}
+      </div>
+    );
+  };
+
+  // Render select editable cell (for gender, class)
+  const renderSelectCell = (child, field, displayValue, options) => {
+    const isEditing = editingCell.childId === child.id && editingCell.field === field;
+    const key = `${child.id}_${field}`;
+    
+    if (isEditing) {
+      return (
+        <div className="inline-edit-container">
+          <select
+            value={editingValues[key] || displayValue || ''}
+            onChange={(e) => handleInlineInputChange(child.id, field, e.target.value)}
+            onBlur={() => handleInlineSave(child.id, field)}
+            className="inline-edit-select"
+            autoFocus
+          >
+            {options.map(option => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <div className="inline-edit-actions">
+            <button 
+              onClick={() => handleInlineSave(child.id, field)}
+              className="inline-save-btn"
+              disabled={loading}
+            >
+              ✓
+            </button>
+            <button 
+              onClick={() => handleInlineCancel(child.id, field)}
+              className="inline-cancel-btn"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      );
+    }
+    
+    // Find the label for display
+    const selectedOption = options.find(opt => opt.value === displayValue);
+    const displayLabel = selectedOption ? selectedOption.label : displayValue;
+    
+    return (
+      <div 
+        className="editable-cell"
+        onClick={() => handleCellClick(child.id, field, displayValue)}
+        title="Click để chỉnh sửa"
+      >
+        {displayLabel || 'Chưa cập nhật'}
+      </div>
+    );
+  };
+
+  const renderTeacherCell = (child) => {
+    // Teachers should now be an array since we fixed loadTeachers
+    const teachersList = Array.isArray(teachers) ? teachers : [];
+
+    // Custom render for teacher select with search
+    const isEditing = editingCell.childId === child.id && editingCell.field === 'teacher_id';
+    const key = `${child.id}_teacher_id`;
+    const searchKey = `${child.id}_teacher_search`;
+    
+    if (isEditing) {
+      // Get search value
+      const searchValue = editingValues[searchKey] || '';
+      
+      // Filter teachers based on search
+      const filteredTeachers = teachersList.filter(teacher => {
+        const teacherName = (teacher.full_name || teacher.name || teacher.username || '').toLowerCase();
+        return teacherName.includes(searchValue.toLowerCase());
+      });
+      
+      // Find current teacher for display
+      const currentTeacher = teachersList.find(teacher => teacher.id === child.teacher_id);
+      const currentTeacherName = currentTeacher ? 
+        (currentTeacher.full_name || currentTeacher.name || currentTeacher.username) : '';
+      
+      return (
+        <div className="inline-edit-container teacher-select-container">
+          {/* Search Input */}
+          <input
+            type="text"
+            value={searchValue}
+            onChange={(e) => {
+              handleInlineInputChange(child.id, 'teacher_search', e.target.value);
+            }}
+            onFocus={() => {
+              // Set initial search to current teacher name when focusing
+              if (!searchValue && currentTeacherName) {
+                handleInlineInputChange(child.id, 'teacher_search', currentTeacherName);
+              }
+            }}
+            placeholder="Nhập tên hoặc username giáo viên..."
+            className="teacher-search-input"
+            autoFocus
+          />
+          
+          {/* Dropdown with filtered results - Always show when editing */}
+          <div className="teacher-dropdown">
+            {/* Show all teachers initially, then filter based on search */}
+            <div 
+              className="teacher-dropdown-item"
+              onClick={() => {
+                
+                // Force update by clearing editing state first
+                setEditingCell({ childId: null, field: null });
+                setEditingValues({});
+                setOriginalValues({});
+                
+                // Update child directly
+                setChildren(prev => prev.map(c => 
+                  c.id === child.id 
+                    ? { ...c, teacher_id: null, teacher_name: null }
+                    : c
+                ));
+                
+                // Also call API to save
+                (async () => {
+                  try {
+                    const response = await childService.updateChild(child.id, { teacher_id: null });
+                    if (!response.success) {
+                      console.error('Failed to clear teacher');
+                    }
+                  } catch (error) {
+                    console.error('Error clearing teacher:', error);
+                  }
+                })();
+              }}
+            >
+              <span className="teacher-clear">-- Xóa giáo viên --</span>
+            </div>
+            
+            {teachersList.length === 0 ? (
+              <div className="teacher-dropdown-item disabled">
+                Không có giáo viên trong hệ thống
+              </div>
+            ) : filteredTeachers.length === 0 && searchValue ? (
+              <div className="teacher-dropdown-item disabled">
+                Không tìm thấy giáo viên phù hợp với "{searchValue}"
+              </div>
+            ) : (
+              (searchValue ? filteredTeachers : teachersList).map(teacher => (
+                <div 
+                  key={teacher.id}
+                  className={`teacher-dropdown-item ${teacher.id === child.teacher_id ? 'selected' : ''}`}
+                  onClick={() => {
+                    // Force update by clearing editing state first
+                    setEditingCell({ childId: null, field: null });
+                    setEditingValues({});
+                    setOriginalValues({});
+                    
+                    // Then update the child directly
+                    const selectedTeacher = teacher;
+                    setChildren(prev => prev.map(c => 
+                      c.id === child.id 
+                        ? { 
+                            ...c, 
+                            teacher_id: selectedTeacher.id,
+                            teacher_name: selectedTeacher.full_name || selectedTeacher.name || selectedTeacher.username
+                          }
+                        : c
+                    ));
+                    
+                    // Also call API to save
+                    (async () => {
+                      try {
+                        const response = await childService.updateChild(child.id, { teacher_id: selectedTeacher.id });
+                        if (!response.success) {
+                          console.error('Failed to update teacher');
+                        }
+                      } catch (error) {
+                        console.error('Error updating teacher:', error);
+                      }
+                    })();
+                  }}
+                >
+                  <span className="teacher-name">{teacher.full_name || teacher.name || teacher.username}</span>
+                  <span className="teacher-username">({teacher.username})</span>
+                </div>
+              ))
+            )}
+          </div>
+          
+          <div className="inline-edit-actions">
+            <button 
+              onClick={() => handleInlineSave(child.id, 'teacher_id')}
+              className="inline-save-btn"
+              disabled={loading}
+            >
+              ✓
+            </button>
+            <button 
+              onClick={() => handleInlineCancel(child.id, 'teacher_id')}
+              className="inline-cancel-btn"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // Find current teacher name to display
+    const currentTeacher = teachersList.find(teacher => teacher.id === child.teacher_id);
+    const displayValue = currentTeacher ? 
+      (currentTeacher.full_name || currentTeacher.name || currentTeacher.username) : 
+      (child.teacher_name || 'Chưa cập nhật');
+    
+    return (
+      <div 
+        className="editable-cell"
+        onClick={() => handleCellClick(child.id, 'teacher_id', child.teacher_id)}
+        title="Click để chỉnh sửa"
+      >
+        {displayValue}
+      </div>
+    );
+  };
+
   return (
-    <div className="children-management" style={{ color: '#333' }}>
-      <div className="children-header">
+    <div className="children-management-container">
+      <div className="section-header">
         <h2>Quản lý trẻ em</h2>
         <p>Tìm kiếm và quản lý thông tin trẻ em trong hệ thống</p>
       </div>
 
-      {/* Filters Section */}
+      {/* Search Filters */}
       <div className="filters-section">
-        <div className="filters-grid">
-          <div className="filter-group">
-            <label htmlFor="searchTerm">Tìm kiếm</label>
-            <input
-              type="text"
-              id="searchTerm"
-              placeholder="Tìm theo tên, mã học sinh, ID..."
-              value={filters.searchTerm}
-              onChange={(e) => handleFilterChange('searchTerm', e.target.value)}
-              className="filter-input"
-            />
-          </div>
-
-          <div className="filter-group">
-            <label htmlFor="className">Lớp học</label>
-            <select
-              id="className"
-              value={filters.className}
-              onChange={(e) => handleFilterChange('className', e.target.value)}
-              className="filter-select"
-            >
-              <option value="">Tất cả lớp</option>
-              <option value="Mầm 1">Mầm 1</option>
-              <option value="Mầm 2">Mầm 2</option>
-              <option value="Chồi 1">Chồi 1</option>
-              <option value="Chồi 2">Chồi 2</option>
-              <option value="Lá 1">Lá 1</option>
-              <option value="Lá 2">Lá 2</option>
-            </select>
-          </div>
-
-          <div className="filter-group">
-            <label htmlFor="gender">Giới tính</label>
-            <select
-              id="gender"
-              value={filters.gender}
-              onChange={(e) => handleFilterChange('gender', e.target.value)}
-              className="filter-select"
-            >
-              <option value="">Tất cả</option>
-              <option value="M">Nam</option>
-              <option value="F">Nữ</option>
-            </select>
-          </div>
-
-          <div className="filter-group">
-            <label htmlFor="hasAllergy">Dị ứng</label>
-            <select
-              id="hasAllergy"
-              value={filters.hasAllergy}
-              onChange={(e) => handleFilterChange('hasAllergy', e.target.value)}
-              className="filter-select"
-            >
-              <option value="">Tất cả</option>
-              <option value="true">Có dị ứng</option>
-              <option value="false">Không dị ứng</option>
-            </select>
-          </div>
-
-          <div className="filter-group">
-            <label htmlFor="hasMedicalCondition">Tình trạng y tế</label>
-            <select
-              id="hasMedicalCondition"
-              value={filters.hasMedicalCondition}
-              onChange={(e) => handleFilterChange('hasMedicalCondition', e.target.value)}
-              className="filter-select"
-            >
-              <option value="">Tất cả</option>
-              <option value="true">Có vấn đề</option>
-              <option value="false">Bình thường</option>
-            </select>
-          </div>
-
-          <div className="filter-actions">
-            <button 
-              onClick={clearFilters}
-              className="btn btn-secondary"
-            >
-              Xóa bộ lọc
-            </button>
-          </div>
+        <div className="filter-group">
+          <label>Tìm kiếm</label>
+          <input
+            type="text"
+            placeholder="Tìm theo tên"
+            value={filters.searchTerm}
+            onChange={(e) => handleFilterChange('searchTerm', e.target.value)}
+            className="filter-input"
+          />
         </div>
+
+        <div className="filter-group">
+          <label>Lớp học</label>
+          <select
+            value={filters.className}
+            onChange={(e) => handleFilterChange('className', e.target.value)}
+            className="filter-select"
+          >
+            <option value="">Tất cả lớp</option>
+            <option value="Mầm">Mầm</option>
+            <option value="Lá">Lá</option>
+            <option value="Chồi">Chồi</option>
+            <option value="Hoa">Hoa</option>
+          </select>
+        </div>
+
+        <div className="filter-group">
+          <label>Giới tính</label>
+          <select
+            value={filters.gender}
+            onChange={(e) => handleFilterChange('gender', e.target.value)}
+            className="filter-select"
+          >
+            <option value="">Tất cả</option>
+            <option value="Nam">Nam</option>
+            <option value="Nữ">Nữ</option>
+          </select>
+        </div>
+
+        <button onClick={clearFilters} className="clear-filters-btn">
+          Xóa bộ lọc
+        </button>
       </div>
 
-      {/* Results Section */}
-      <div className="results-section">
-        <div className="results-header">
-          <div className="results-info">
-            <span className="results-count">
-              Tìm thấy {pagination.total_items} trẻ em
-            </span>
-          </div>
-        </div>
+      {/* Results Summary */}
+      <div className="results-summary">
+        <p>Tìm thấy {pagination.total_items} trẻ em</p>
+      </div>
 
+      {/* Children Table */}
+      <div className="table-container">
         {loading ? (
-          <div className="loading-container">
-            <div className="loading-spinner">⏳</div>
+          <div className="loading-message">
             <p>Đang tải danh sách trẻ em...</p>
           </div>
-        ) : children.length > 0 ? (
-          <>
-            <div className="children-table">
-              <table style={{ color: '#333' }}>
-                <thead style={{ color: '#333' }}>
-                  <tr style={{ color: '#333' }}>
-                    <th style={{ color: '#333' }}>Mã học sinh</th>
-                    <th style={{ color: '#333' }}>Họ và tên</th>
-                    <th style={{ color: '#333' }}>Ngày sinh</th>
-                    <th style={{ color: '#333' }}>Tuổi</th>
-                    <th style={{ color: '#333' }}>Giới tính</th>
-                    <th style={{ color: '#333' }}>Lớp</th>
-                    <th style={{ color: '#333' }}>Phụ huynh</th>
-                    <th style={{ color: '#333' }}>Giáo viên</th>
-                    <th style={{ color: '#333' }}>Chiều cao</th>
-                    <th style={{ color: '#333' }}>Cân nặng</th>
-                    <th style={{ color: '#333' }}>Dị ứng</th>
-                    <th style={{ color: '#333' }}>Tình trạng y tế</th>
-                    <th style={{ color: '#333' }}>Liên hệ khẩn cấp</th>
-                  </tr>
-                </thead>
-                <tbody style={{ color: '#333' }}>
-                  {children.map((child) => (
-                    <tr key={child.id} style={{ color: '#333' }}>
-                      <td className="student-id" style={{ color: '#333' }}>{child.student_id || 'NULL'}</td>
-                      <td className="name" style={{ color: '#333' }}>{child.name || child.full_name || 'NULL'}</td>
-                      <td className="birth-date" style={{ color: '#333' }}>{formatDate(child.birth_date || child.date_of_birth)}</td>
-                      <td className="age" style={{ color: '#333' }}>{child.age || calculateAge(child.birth_date || child.date_of_birth)}</td>
-                      <td className="gender" style={{ color: '#333' }}>
-                        {child.gender === 'M' ? 'Nam' : child.gender === 'F' ? 'Nữ' : 'NULL'}
-                      </td>
-                      <td className="class-name" style={{ color: '#333' }}>{child.class_name || 'NULL'}</td>
-                      <td className="parent-name" style={{ color: '#333' }}>{child.parent_name || 'NULL'}</td>
-                      <td className="teacher-name" style={{ color: '#333' }}>{child.teacher_name || 'NULL'}</td>
-                      <td className="height" style={{ color: '#333' }}>{child.height ? `${child.height} cm` : 'NULL'}</td>
-                      <td className="weight" style={{ color: '#333' }}>{child.weight ? `${child.weight} kg` : 'NULL'}</td>
-                      <td style={{ color: '#333' }}>
-                        {child.allergies ? (
-                          <span className="allergy-badge has-allergy" title={child.allergies} style={{ color: '#333' }}>
-                            ⚠️ {child.allergies}
-                          </span>
-                        ) : (
-                          <span className="allergy-badge no-allergy" style={{ color: '#333' }}>
-                            NULL
-                          </span>
-                        )}
-                      </td>
-                      <td className="medical-conditions" style={{ color: '#333' }}>
-                        {child.medical_conditions ? (
-                          <span className="medical-note" title={child.medical_conditions} style={{ color: '#333' }}>
-                            🏥 {child.medical_conditions}
-                          </span>
-                        ) : (
-                          <span style={{ color: '#333' }}>NULL</span>
-                        )}
-                      </td>
-                      <td className="emergency-contact" style={{ color: '#333' }}>
-                        {child.emergency_contact ? (
-                          <span className="contact-info" title={
-                            typeof child.emergency_contact === 'object' 
-                              ? `${child.emergency_contact.name} - ${child.emergency_contact.phone} (${child.emergency_contact.relationship})`
-                              : child.emergency_contact
-                          } style={{ color: '#333' }}>
-                            📞 {
-                              typeof child.emergency_contact === 'object'
-                                ? `${child.emergency_contact.name} - ${child.emergency_contact.phone}`
-                                : child.emergency_contact
-                            }
-                          </span>
-                        ) : (
-                          <span style={{ color: '#333' }}>NULL</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+        ) : children.length === 0 ? (
+          <div className="no-results">
+            <p>Không tìm thấy trẻ em nào phù hợp với bộ lọc</p>
+          </div>
+        ) : (
+          <table className="children-table">
+            <thead>
+              <tr>
+                <th>MÃ HỌC SINH</th>
+                <th>HỌ VÀ TÊN</th>
+                <th>NGÀY SINH</th>
+                <th>TUỔI</th>
+                <th>GIỚI TÍNH</th>
+                <th>LỚP</th>
+                <th>PHỤ HUYNH</th>
+                <th>GIÁO VIÊN</th>
+                <th>CHIỀU CAO</th>
+                <th>CÂN NẶNG</th>
+                <th>DỊ ỨNG</th>
+                <th>THAO TÁC</th>
+              </tr>
+            </thead>
+                <tbody>
+                  {children.map((child) => {
+                    const genderOptions = [
+                      { value: 'male', label: 'Nam' },
+                      { value: 'female', label: 'Nữ' }
+                    ];
+                    
+                    const classOptions = [
+                      { value: 'Mầm', label: 'Mầm' },
+                      { value: 'Lá', label: 'Lá' },
+                      { value: 'Chồi', label: 'Chồi' },
+                      { value: 'Hoa', label: 'Hoa' }
+                    ];
+
+                    return (
+                      <tr key={child.id}>
+                        <td>{child.student_id || 'Chưa cập nhật'}</td>
+                        <td>
+                          {renderEditableCell(child, 'full_name', child.name || child.full_name)}
+                        </td>
+                        <td>
+                          {renderEditableCell(child, 'date_of_birth', 
+                            (child.birth_date || child.date_of_birth) ? 
+                            new Date(child.birth_date || child.date_of_birth).toISOString().split('T')[0] : '',
+                            'date'
+                          )}
+                        </td>
+                        <td>{child.age || calculateAge(child.birth_date || child.date_of_birth)}</td>
+                        <td>
+                          {renderSelectCell(child, 'gender', 
+                            child.gender || 'male', 
+                            genderOptions
+                          )}
+                        </td>
+                        <td>
+                          {renderSelectCell(child, 'class_name', child.class_name, classOptions)}
+                        </td>
+                        <td>{child.parent_name || 'Chưa cập nhật'}</td>
+                        <td>
+                          {renderTeacherCell(child)}
+                        </td>
+                        <td>
+                          {renderEditableCell(child, 'height', child.height || '', 'number')}
+                        </td>
+                        <td>
+                          {renderEditableCell(child, 'weight', child.weight || '', 'number')}
+                        </td>
+                        <td className="allergies">
+                          {renderEditableCell(child, 'allergies', 
+                            Array.isArray(child.allergies) ? child.allergies.join(', ') : child.allergies || ''
+                          )}
+                        </td>
+                        <td>
+                          <div className="action-buttons">
+                            <button 
+                              onClick={() => handleDelete(child)}
+                              className="delete-btn"
+                              disabled={loading}
+                            >
+                              Xóa
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
-            </div>
-
-            {/* Pagination */}
-            {pagination.total_pages > 1 && (
-              <div className="pagination">
-                <button
-                  onClick={() => handlePageChange(pagination.current_page - 1)}
-                  disabled={pagination.current_page === 1}
-                  className="pagination-btn"
-                >
-                  « Trước
-                </button>
-                
-                {Array.from({length: pagination.total_pages}, (_, i) => i + 1).map(page => (
-                  <button
-                    key={page}
-                    onClick={() => handlePageChange(page)}
-                    className={`pagination-btn ${page === pagination.current_page ? 'active' : ''}`}
-                  >
-                    {page}
-                  </button>
-                ))}
-                
-                <button
-                  onClick={() => handlePageChange(pagination.current_page + 1)}
-                  disabled={pagination.current_page === pagination.total_pages}
-                  className="pagination-btn"
-                >
-                  Sau »
-                </button>
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="no-results">
-            <div className="no-results-icon">👶</div>
-            <h3>Không tìm thấy trẻ em nào</h3>
-            <p>Hãy thử thay đổi điều kiện tìm kiếm</p>
-          </div>
         )}
       </div>
+
     </div>
   );
 };

@@ -70,7 +70,6 @@ const Header = () => {
   return (
     <header className="modern-header">
       <div className="header-wrapper">
-        {/* Navigation Menu - Center */}
         <nav className="center-navigation">
           <ul className="nav-menu-horizontal">
             {navItems.map((item) => (

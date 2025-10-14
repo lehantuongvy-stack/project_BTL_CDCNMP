@@ -46,8 +46,8 @@ class NutritionRecord {
 
             const values = [
                 child_id, teacher_id, ngay_danh_gia || new Date().toISOString().split('T')[0], 
-                chieu_cao, can_nang, healthStatus, 
-                ket_luan || ghi_chu || '', khuyen_cao || '',
+                chieu_cao, can_nang,
+                healthStatus, ket_luan || ghi_chu || '', khuyen_cao || '',
                 an_uong || 'good', hoat_dong || 'normal', tinh_than || 'normal'
             ];
 
@@ -62,6 +62,66 @@ class NutritionRecord {
         } catch (error) {
             console.error('Error creating nutrition record:', error);
             throw new Error('Lỗi khi tạo hồ sơ dinh dưỡng: ' + error.message);
+        }
+    }
+
+    /**
+     * Cập nhật hồ sơ dinh dưỡng
+     */
+    async update(recordData) {
+        try {
+            console.log(' Update method - recordData received:', recordData);
+            
+            // Sử dụng optional chaining và default values
+            const id = recordData.id;
+            const teacher_id = recordData.teacher_id;
+            const chieu_cao = recordData.chieu_cao;
+            const can_nang = recordData.can_nang;
+            const tinh_trang_suc_khoe = recordData.tinh_trang_suc_khoe;
+            const ket_luan = recordData.ket_luan || '';
+            const khuyen_cao = recordData.khuyen_cao || '';
+            const an_uong = recordData.an_uong || 'good';
+            const hoat_dong = recordData.hoat_dong || 'normal';
+            const tinh_than = recordData.tinh_than || 'normal';
+
+            // Validate required fields
+            if (!id || !chieu_cao || !can_nang) {
+                throw new Error(`Missing required fields: id=${id}, chieu_cao=${chieu_cao}, can_nang=${can_nang}`);
+            }
+
+            const query = `
+                UPDATE danh_gia_suc_khoe SET 
+                    teacher_id = ?, chieu_cao = ?, can_nang = ?,
+                    tinh_trang_suc_khoe = ?, ket_luan = ?, khuyen_cao = ?,
+                    an_uong = ?, hoat_dong = ?, tinh_than = ?
+                WHERE id = ?
+            `;
+
+            const values = [
+                teacher_id, chieu_cao, can_nang,
+                tinh_trang_suc_khoe, ket_luan, khuyen_cao,
+                an_uong, hoat_dong, tinh_than,
+                id
+            ];
+
+            console.log(' Update query:', query);
+            console.log(' Update values:', values);
+
+            await this.db.query(query, values);
+            
+            // Tính BMI sau khi update
+            const calculatedBMI = this.calculateBMI(can_nang, chieu_cao);
+            
+            return { 
+                id, 
+                bmi: calculatedBMI, 
+                tinh_trang_suc_khoe, 
+                ...recordData 
+            };
+
+        } catch (error) {
+            console.error('Error updating nutrition record:', error);
+            throw new Error('Lỗi khi cập nhật hồ sơ dinh dưỡng: ' + error.message);
         }
     }
 

@@ -23,12 +23,6 @@
   max-width: 90%;
 }
 
-/* Logo */
-/* .logo {
-  width: 60px;
-  margin-bottom: 0.5rem;
-} */
-
 /* Tiêu đề */
 .title {
   font-size: 32px;
@@ -43,7 +37,7 @@
   font-size: 22px;
   color: #333; 
   margin-top: 0.8rem;
-  font-family: 'Dancing Script', cursive; /* Font chữ đẹp, điệu đà */
+  font-family: 'Dancing Script', cursive; 
   font-weight: 600;
 }
 
@@ -56,11 +50,19 @@ form input {
   border-radius: 20px;
   outline: none;
   font-size: 14px;
+  background-color: #f8f9fa; /* Màu nền xám nhạt */
+  color: #333; /* Màu chữ đen */
 }
 
 form input:focus {
   border-color: #ffced2;
   box-shadow: 0 0 6px rgba(255, 206, 210, 0.6);
+  background-color: #fff; /* Nền trắng khi focus */
+}
+
+form input::placeholder {
+  color: #6c757d; /* Màu placeholder xám */
+  opacity: 1;
 }
 
 /* Captcha */
@@ -88,7 +90,8 @@ button {
   margin-top: 1rem;
   border: none;
   border-radius: 20px;
-  background-color: #fff3d4; /* vàng nhạt */
+  background-color: #ffeaaa; /* vàng nhạt */
+  color: #333;
   font-weight: bold;
   font-size: 15px;
   cursor: pointer;
@@ -97,6 +100,24 @@ button {
 
 button:hover {
   background-color: #ffeaaa;
+}
+
+/* Nút reload captcha */
+.reload-btn {
+  width: auto !important;
+  padding: 8px 12px !important;
+  margin-top: 0 !important;
+  margin-left: 0.5rem;
+  background-color: #e9ecef !important; /* Màu xám nhạt */
+  color: #495057 !important; /* Màu chữ xám đậm */
+  font-size: 16px !important;
+  min-width: 40px;
+  border-radius: 8px !important;
+}
+
+.reload-btn:hover {
+  background-color: #dee2e6 !important;
+  color: #212529 !important;
 }
 
 /* Success and Error Messages */
@@ -112,7 +133,8 @@ button:hover {
   animation: slideIn 0.3s ease-out;
 }
 
-.error-message {
+.error-message,
+.error {
   color: #ff4757;
   text-align: center;
   margin-bottom: 15px;
@@ -121,6 +143,7 @@ button:hover {
   border: 1px solid #ff4757;
   border-radius: 8px;
   animation: slideIn 0.3s ease-out;
+  font-weight: 500;
 }
 
 @keyframes slideIn {

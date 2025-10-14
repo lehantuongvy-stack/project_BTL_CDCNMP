@@ -2,7 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useNavigate } from 'react-router-dom';
 import childService from '../services/childService.js';
+import userService from '../services/userService.js';
+import reportService from '../services/nutritionrpService.js';
+import parentFeedbackService from '../services/parentFeedbackService.js';
 import ChildrenManagement from '../components/children/ChildrenManagement.jsx';
+import TeacherManagement from '../components/teachers/TeacherManagement.jsx';
+import ParentManagement from '../components/parents/ParentManagement.jsx';
 import '../styles/AdminDashboard.css';
 
 function AdminDashboard() {
@@ -19,37 +24,96 @@ function AdminDashboard() {
   const [childrenDetails, setChildrenDetails] = useState([]);
   const [showChildrenModal, setShowChildrenModal] = useState(false);
   const [showCreateAccountDropdown, setShowCreateAccountDropdown] = useState(false);
+  const [reports, setReports] = useState([]);
+  const [loadingReports, setLoadingReports] = useState(false);
+  const [feedbacks, setFeedbacks] = useState([]);
+  const [loadingFeedbacks, setLoadingFeedbacks] = useState(false);
+
+  // Load danh sách ý kiến phụ huynh
+  const loadFeedbacks = async () => {
+    try {
+      setLoadingFeedbacks(true);
+      console.log('📬 Đang tải ý kiến phụ huynh...');
+      const response = await parentFeedbackService.getAllFeedback();
+      console.log('📬 Feedback API response:', response);
+
+      // Lấy tối đa 5 ý kiến mới nhất
+      const feedbackList = response.data?.slice(0, 5) || [];
+      setFeedbacks(feedbackList);
+    } catch (error) {
+      console.error('Lỗi khi tải ý kiến phụ huynh:', error);
+      setFeedbacks([]);
+    } finally {
+      setLoadingFeedbacks(false);
+    }
+  };
 
   // Load dashboard data
   useEffect(() => {
+    // Chỉ load data khi user đã được load từ AuthContext
+    if (!user) {
+      console.log('⏳ User not loaded yet, waiting...');
+      return;
+    }
+
     const loadDashboardData = async () => {
       try {
         setLoading(true);
-        console.log(' Loading dashboard data...');
+        console.log('📊 Loading dashboard data...');
+        console.log('👤 Current user role:', user?.role);
         
         // Lấy tổng số trẻ em từ API
         const childrenResponse = await childService.getAllChildren();
-        console.log(' Children API response:', childrenResponse);
+        console.log('👶 Children API response:', childrenResponse);
         
         const totalChildren = childrenResponse.data?.children?.length || 0;
-        console.log(' Total children count:', totalChildren);
+        console.log('👶 Total children count:', totalChildren);
+        
+        let totalTeachers = 0;
+        
+        // Chỉ gọi API stats khi user là admin
+        if (user?.role === 'admin') {
+          try {
+            console.log('👥 Loading user stats (admin only)...');
+            const userStatsResponse = await userService.getUserStats();
+            console.log('👥 User stats API response:', userStatsResponse);
+            
+            // Parse user stats để lấy số lượng giáo viên
+            const userStats = userStatsResponse.data?.stats || [];
+            const teacherStats = userStats.find(stat => stat.role === 'teacher');
+            totalTeachers = teacherStats ? teacherStats.count : 0;
+            console.log('👩‍🏫 Total teachers count:', totalTeachers);
+          } catch (statsError) {
+            console.warn('⚠️ Could not load user stats (may not be admin):', statsError.message);
+          }
+        } else {
+          console.log('ℹ️ User is not admin, skipping user stats API');
+        }
         
         setDashboardData(prev => ({
           ...prev,
-          totalChildren
+          totalChildren,
+          totalTeachers
         }));
         
-        console.log(' Dashboard data loaded successfully');
+        console.log('✅ Dashboard data loaded successfully');
         
       } catch (error) {
-        console.error(' Error loading dashboard data:', error);
+        console.error('❌ Error loading dashboard data:', error);
       } finally {
         setLoading(false);
       }
     };
 
     loadDashboardData();
-  }, []);
+  }, [user]);
+
+  // Load feedbacks when dashboard section is active
+  useEffect(() => {
+    if (activeSection === 'dashboard' && user?.role === 'admin') {
+      loadFeedbacks();
+    }
+  }, [activeSection, user]);
 
   // Handle logout
   const handleLogout = async () => {
@@ -91,6 +155,8 @@ function AdminDashboard() {
       navigate('/admin/register?type=teacher');
     } else if (itemId === 'create-parent') {
       navigate('/admin/register?type=parent');
+    } else if (itemId === 'create-child') {
+      navigate('/admin/create-child');
     } else if (itemId === 'create-account') {
       setShowCreateAccountDropdown(!showCreateAccountDropdown);
     }
@@ -105,8 +171,53 @@ function AdminDashboard() {
       // Navigate to children management section
       setActiveSection('children');
       console.log(' activeSection set, current value:', 'children');
+    } else if (statType === 'teachers') {
+      console.log(' Setting activeSection to teachers');
+      // Navigate to teachers management section
+      setActiveSection('teachers');
+      console.log(' activeSection set, current value:', 'teachers');
     }
   };
+
+  // Load reports data
+  const loadReports = async () => {
+    try {
+      setLoadingReports(true);
+      console.log('📊 Loading reports data...');
+      const response = await reportService.getAllReports();
+      console.log('📊 Reports API response:', response);
+      setReports(response.data || []);
+    } catch (error) {
+      console.error('Error loading reports:', error);
+      setReports([]);
+    } finally {
+      setLoadingReports(false);
+    }
+  };
+
+  // Handle delete report
+  const handleDeleteReport = async (reportId) => {
+    if (!window.confirm('Bạn có chắc chắn muốn xóa báo cáo này?')) {
+      return;
+    }
+    
+    try {
+      await reportService.deleteReport(reportId);
+      // Reload reports after successful deletion
+      await loadReports();
+      alert('Xóa báo cáo thành công!');
+    } catch (error) {
+      console.error('Error deleting report:', error);
+      alert('Có lỗi khi xóa báo cáo!');
+    }
+  };
+
+  // Load reports when reports section is active
+  useEffect(() => {
+    if (activeSection === 'reports') {
+      loadReports();
+    }
+  }, [activeSection]);
 
   // Dashboard stats with real data
   const dashboardStats = [
@@ -118,16 +229,11 @@ function AdminDashboard() {
       moreInfo: true 
     },
     { 
-      title: 'Tỷ lệ có mặt', 
-      value: dashboardData.attendanceRate, 
-      color: 'green', 
-      description: 'Tỷ lệ điểm danh hôm nay' 
-    },
-    { 
       title: 'Giáo viên', 
-      value: dashboardData.totalTeachers,  
+      value: loading ? '...' : dashboardData.totalTeachers,  
       color: 'orange', 
-      description: 'Đội ngũ giáo viên' 
+      description: 'Đội ngũ giáo viên',
+      moreInfo: true 
     },
     { 
       title: 'Bữa ăn phục vụ', 
@@ -149,17 +255,15 @@ function AdminDashboard() {
     { id: 'dashboard', name: 'Dashboard' },
     { id: 'children', name: 'Quản lý trẻ em'},
     { id: 'teachers', name: 'Quản lý giáo viên'},
+    { id: 'parents', name: 'Quản lý phụ huynh'},
     { id: 'meals', name: 'Quản lý bữa ăn'},
     { id: 'nutrition', name: 'Dinh dưỡng' },
     { id: 'reports', name: 'Báo cáo' },
     { id: 'warehouse', name: 'Kho hàng' },
-    { id: 'settings', name: 'Cài đặt' }
   ];
 
   const userMenuItems = [
-    { id: 'profile', name: 'Profile' },
     { id: 'create-account', name: 'Tạo tài khoản' },
-    { id: 'settings', name: 'Settings' },
     { id: 'logout', name: 'Logout' }
   ];
 
@@ -174,13 +278,6 @@ function AdminDashboard() {
               <h1 className="page-title">
                 <strong>Dashboard</strong>
               </h1>
-              <div className="page-actions">
-                <button className="btn btn-primary">Share</button>
-                <button className="btn btn-secondary">Export</button>
-                <div className="dropdown">
-                  <button className="btn btn-outline"> This week ▼</button>
-                </div>
-              </div>
             </div>
 
             {/* Stats Cards */}
@@ -197,11 +294,16 @@ function AdminDashboard() {
                       className="more-info" 
                       onClick={() => {
                         console.log(' More info clicked for:', stat.title);
-                        if (stat.moreInfo && stat.title === 'Tổng số trẻ em') {
-                          console.log(' Condition met, calling handleMoreInfo');
-                          handleMoreInfo('children');
+                        if (stat.moreInfo) {
+                          if (stat.title === 'Tổng số trẻ em') {
+                            console.log(' Navigating to children management');
+                            handleMoreInfo('children');
+                          } else if (stat.title === 'Giáo viên') {
+                            console.log(' Navigating to teachers management');
+                            handleMoreInfo('teachers');
+                          }
                         } else {
-                          console.log(' Condition not met, stat.moreInfo:', stat.moreInfo, 'title:', stat.title);
+                          console.log(' No moreInfo available for:', stat.title);
                         }
                       }}
                       style={{ cursor: stat.moreInfo ? 'pointer' : 'default' }}
@@ -215,24 +317,37 @@ function AdminDashboard() {
 
             {/* Recent Activities */}
             <div className="activity-section">
-              <h3>Hoạt động gần đây</h3>
-              <div className="activities-list">
-                {recentActivities.map(activity => (
-                  <div key={activity.id} className="activity-item">
-                    <div className="activity-icon">
-                      {activity.type === 'meal' }
-                      {activity.type === 'child'}
-                      {activity.type === 'report'}
-                      {activity.type === 'ingredient' }
-                      {activity.type === 'menu'}
-                    </div>
-                    <div className="activity-info">
-                      <p className="activity-action">{activity.action}</p>
-                      <p className="activity-meta">bởi <strong>{activity.user}</strong> • {activity.time}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <h3>Ý kiến đóng góp phụ huynh</h3>
+
+              {/* Danh sách ý kiến phụ huynh */}
+              {loadingFeedbacks ? (
+                <p>Đang tải ý kiến...</p>
+              ) : feedbacks.length > 0 ? (
+                <ul className="feedback-list">
+                  {feedbacks.map((fb, index) => (
+                    <li key={fb.id || index} className="feedback-item">
+                      <div className="feedback-header">
+                        <strong>{fb.parent_name || 'Phụ huynh'}</strong>
+                        {fb.danh_gia_sao && (
+                          <span className="feedback-stars">
+                            {'⭐'.repeat(fb.danh_gia_sao)}
+                          </span>
+                        )}
+                      </div>
+                      <div className="feedback-body">
+                        <p><b>{fb.tieu_de || 'Không có tiêu đề'}</b></p>
+                        <p>{fb.noi_dung}</p>
+                      </div>
+                      <div className="feedback-footer">
+                        <small>Trẻ: {fb.child_name || 'N/A'}</small>
+                        <small> | Ngày: {new Date(fb.created_at).toLocaleString('vi-VN')}</small>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p>Chưa có ý kiến phụ huynh nào.</p>
+              )}
             </div>
           </div>
         );
@@ -240,13 +355,21 @@ function AdminDashboard() {
       case 'children':
         console.log(' Rendering ChildrenManagement component');
         return <ChildrenManagement />;
+
+      case 'teachers':
+        console.log(' Rendering TeacherManagement component');
+        return <TeacherManagement />;
+
+      case 'parents':
+        console.log(' Rendering ParentManagement component');
+        return <ParentManagement />;
       
       case 'meals':
         return (
           <div className="section-content">
             <h2>Quản lý bữa ăn</h2>
             <p>Chức năng quản lý thực đơn và bữa ăn...</p>
-            <button className="btn-primary" onClick={() => navigate('/menu')}>
+            <button className="btn-primary" onClick={() => navigate('/kitchen-menu')}>
               Xem thực đơn
             </button>
           </div>
@@ -255,11 +378,87 @@ function AdminDashboard() {
       case 'reports':
         return (
           <div className="section-content">
-            <h2>Báo cáo</h2>
-            <p>Tạo và xem các báo cáo dinh dưỡng...</p>
-            <button className="btn-primary" onClick={() => navigate('/report')}>
-              Xem báo cáo
-            </button>
+            <div className="reports-header">
+              <h2>Báo cáo</h2>
+              <p>Tạo và xem các báo cáo dinh dưỡng...</p>
+              <button 
+                className="btn-primary create-report-btn" 
+                onClick={() => navigate('/create')}
+              >
+                + Tạo báo cáo
+              </button>
+            </div>
+
+            <div className="reports-list-section">
+              <div className="reports-table-container">
+                <table className="reports-table">
+                  <thead>
+                    <tr>
+                      <th>Tên báo cáo</th>
+                      <th>Tên trường</th>
+                      <th>Ngày báo cáo</th>
+                      <th>Số trẻ</th>
+                      <th>Số suất/ngày</th>
+                      <th>Người tạo</th>
+                      <th>Hành động</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {loadingReports ? (
+                      <tr>
+                        <td colSpan="7" className="loading-cell">
+                          Đang tải báo cáo...
+                        </td>
+                      </tr>
+                    ) : reports.length > 0 ? (
+                      reports.map((report, index) => (
+                        <tr key={report.id || index}>
+                          <td>{report.report_name || 'Không có tên'}</td>
+                          <td>{report.school_name || 'Không có tên trường'}</td>
+                          <td>
+                            {report.report_date ? 
+                              new Date(report.report_date).toLocaleDateString('vi-VN') : 
+                              'Không có ngày'
+                            }
+                          </td>
+                          <td>{report.num_children || 0}</td>
+                          <td>{report.meals_per_day || 0}</td>
+                          <td>{report.created_by || 'Không rõ'}</td>
+                          <td>
+                            <div className="action-buttons">
+                              <button 
+                                className="btn-action btn-view"
+                                onClick={() => navigate(`/reports/${report.id}`)}
+                                title="Xem chi tiết"
+                              >
+                                Xem
+                              </button>
+                              <button 
+                                className="btn-action btn-delete"
+                                onClick={() => handleDeleteReport(report.id)}
+                                title="Xóa báo cáo"
+                              >
+                                Xóa
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="7" className="no-data-cell">
+                          Không có báo cáo nào. Hãy tạo báo cáo đầu tiên!
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="reports-summary">
+                <p>Tổng cộng: <strong>{reports.length}</strong> báo cáo</p>
+              </div>
+            </div>
           </div>
         );
       
@@ -290,12 +489,6 @@ function AdminDashboard() {
           </div>
         </div>
         <div className="navbar-actions">
-          <div className="notification-badge">
-            <span className="badge badge-danger">8</span>
-          </div>
-          <div className="notification-badge">
-            <span className="badge badge-success">6</span>
-          </div>
           <div className="user-dropdown" onClick={() => setShowCreateAccountDropdown(!showCreateAccountDropdown)}>
             <div 
               className="dynamic-avatar" 
@@ -334,7 +527,6 @@ function AdminDashboard() {
                 >
                   <span className="nav-icon">{item.icon}</span>
                   <span className="nav-text">{item.name}</span>
-                  {item.id === 'dashboard' && <span className="badge badge-primary">14</span>}
                 </div>
               ))}
             </nav>
@@ -351,7 +543,6 @@ function AdminDashboard() {
                   >
                     <span className="nav-icon">{item.icon}</span>
                     <span className="nav-text">{item.name}</span>
-                    {item.id === 'profile' && <span className="badge badge-info">3</span>}
                     {item.id === 'create-account' && (
                       <span className="dropdown-arrow">
                         {showCreateAccountDropdown ? '▲' : '▼'}
@@ -379,6 +570,16 @@ function AdminDashboard() {
                         }}
                       >
                         <span className="nav-text">Tạo tài khoản phụ huynh</span>
+                      </div>
+                      
+                      <div 
+                        className="nav-dropdown-item"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleNavigation('create-child');
+                        }}
+                      >
+                        <span className="nav-text">Tạo hồ sơ trẻ em</span>
                       </div>
                     </div>
                   )}

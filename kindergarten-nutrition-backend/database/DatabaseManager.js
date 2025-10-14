@@ -1,5 +1,5 @@
 /**
- * Database Manager - Pure MySQL Connection với Database Schema
+ * Database Manager - MySQL Connection với Database Schema
  * Unified version - Kết hợp Basic + Advanced features
  * Quản lý kết nối và truy vấn MySQL cho Kindergarten Nutrition Management
  */
@@ -393,7 +393,7 @@ class DatabaseManager {
         return await this.query(sql);
     }
 
-    // -------------------- KHO HÀNG (INVENTORY) --------------------
+    // -------------------- KHO HÀNG --------------------
     async getInventoryStatus() {
         const sql = 'SELECT * FROM v_ton_kho ORDER BY trang_thai_ton DESC, ten_nguyen_lieu';
         return await this.query(sql);

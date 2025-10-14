@@ -1,6 +1,6 @@
 /**
  * User Model
- * Mô hình dữ liệu cho người dùng
+ * Các chức năng của User 
  */
 
 class User {
@@ -20,13 +20,14 @@ class User {
             phone,
             role,
             address,
+            class_id,
             is_active = true
         } = userData;
 
         const query = `
             INSERT INTO ${this.tableName} 
-            (username, password_hash, full_name, email, phone, role, address, is_active, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
+            (username, password_hash, full_name, email, phone, role, address, class_id, is_active, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
         `;
 
         const values = [
@@ -37,16 +38,12 @@ class User {
             phone_number || phone || null,
             role, 
             address || null,
+            class_id || null,
             is_active
         ];
         
-        // Debug log
-        console.log('Create user values:', values);
-        console.log('Has undefined?', values.some(v => v === undefined));
-        
         const result = await this.db.query(query, values);
         
-        // Handle different MySQL2 response formats
         let insertId;
         if (Array.isArray(result) && result.length > 0) {
             insertId = result[0].insertId || result.insertId;
@@ -62,6 +59,7 @@ class User {
             phone: phone_number || phone,
             role,
             address,
+            class_id,
             is_active,
             created_at: new Date()
         };
@@ -70,7 +68,7 @@ class User {
     // Tìm user theo ID
     async findById(id) {
         const query = `
-            SELECT id, username, full_name, email, phone, role, address, is_active, created_at, updated_at
+            SELECT id, username, full_name, email, phone, role, address, class_id, is_active, created_at, updated_at
             FROM ${this.tableName} 
             WHERE id = ? AND is_active = 1
         `;
@@ -85,7 +83,7 @@ class User {
     // Tìm user theo ID với password_hash (dùng cho đổi mật khẩu)
     async findByIdWithPassword(id) {
         const query = `
-            SELECT id, username, password_hash, full_name, email, phone, role, address, is_active, created_at, updated_at
+            SELECT id, username, password_hash, full_name, email, phone, role, address, class_id, is_active, created_at, updated_at
             FROM ${this.tableName} 
             WHERE id = ? AND is_active = 1
         `;
@@ -100,7 +98,7 @@ class User {
     // Tìm user theo username
     async findByUsername(username) {
         const query = `
-            SELECT id, username, password_hash, full_name, email, phone, role, address, is_active, created_at, updated_at
+            SELECT id, username, password_hash, full_name, email, phone, role, address, class_id, is_active, created_at, updated_at
             FROM ${this.tableName} 
             WHERE username = ? AND is_active = 1
         `;
@@ -115,7 +113,7 @@ class User {
     // Tìm user theo email
     async findByEmail(email) {
         const query = `
-            SELECT id, username, password_hash, full_name, email, phone, role, address, is_active, created_at, updated_at
+            SELECT id, username, password_hash, full_name, email, phone, role, address, class_id, is_active, created_at, updated_at
             FROM ${this.tableName} 
             WHERE email = ? AND is_active = 1
         `;
@@ -127,7 +125,7 @@ class User {
     // Lấy tất cả users
     async findAll(limit = 50, offset = 0) {
         const query = `
-            SELECT id, username, full_name, email, phone, role, address, is_active, created_at, updated_at
+            SELECT id, username, full_name, email, phone, role, address, class_id, is_active, created_at, updated_at
             FROM ${this.tableName} 
             WHERE is_active = 1
             ORDER BY created_at DESC
@@ -145,26 +143,29 @@ class User {
     // Lấy users theo role
     async findByRole(role) {
         const query = `
-            SELECT id, username, full_name, email, phone, role, address, is_active, created_at, updated_at
+            SELECT id, username, full_name, email, phone, role, address, class_id, is_active, created_at, updated_at
             FROM ${this.tableName} 
             WHERE role = ? AND is_active = 1
             ORDER BY created_at DESC
         `;
-        
         const result = await this.db.query(query, [role]);
+
         if (Array.isArray(result) && result.length > 0) {
-            return Array.isArray(result[0]) ? result[0][0] : result[0];
+            const users = Array.isArray(result[0]) ? result[0] : result;
+            return users;
         }
-        return null;
+        console.log(' No users found, returning empty array');
+        return [];
     }
 
     // Cập nhật user
     async updateById(id, updateData) {
-        const allowedFields = ['full_name', 'email', 'phone', 'address', 'role', 'is_active'];
+        const allowedFields = ['username', 'full_name', 'email', 'phone', 'address', 'role', 'is_active', 'class_id'];
         const setClause = [];
         const values = [];
 
         for (const [key, value] of Object.entries(updateData)) {
+            console.log(` Checking field: ${key} = ${value}, allowed: ${allowedFields.includes(key)}`);
             if (allowedFields.includes(key)) {
                 setClause.push(`${key} = ?`);
                 values.push(value);
@@ -200,7 +201,6 @@ class User {
         return true;
     }
 
-    // Soft delete user
     async deleteById(id) {
         const query = `
             UPDATE ${this.tableName}
@@ -270,7 +270,6 @@ class User {
             let queryParams = [];
             let paramIndex = 1;
 
-            // Tìm kiếm theo username, email hoặc full_name
             if (searchTerm) {
                 whereConditions.push(`(username LIKE ? OR email LIKE ? OR full_name LIKE ?)`);
                 const searchPattern = `%${searchTerm}%`;
@@ -278,14 +277,12 @@ class User {
                 paramIndex += 3;
             }
 
-            // Lọc theo role
             if (role) {
                 whereConditions.push(`role = ?`);
                 queryParams.push(role);
                 paramIndex++;
             }
 
-            // Lọc theo trạng thái kích hoạt
             if (isActive !== undefined) {
                 whereConditions.push(`is_active = ?`);
                 queryParams.push(isActive ? 1 : 0);
@@ -295,7 +292,6 @@ class User {
             const whereClause = whereConditions.length > 0 ? 
                 `WHERE ${whereConditions.join(' AND ')}` : '';
 
-            // Đếm tổng số kết quả
             const countQuery = `
                 SELECT COUNT(*) as total 
                 FROM users 
@@ -305,7 +301,6 @@ class User {
             const countResult = await this.db.query(countQuery, queryParams);
             const total = countResult[0]?.total || 0;
 
-            // Lấy kết quả phân trang
             const searchQuery = `
                 SELECT id, username, email, full_name, phone, role, is_active, 
                        created_at, updated_at

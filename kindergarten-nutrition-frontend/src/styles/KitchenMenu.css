@@ -25,4 +25,175 @@
   color: #000;
 }
 
+.menu-actions .btn-edit.cancel {
+  background: #dc3545; /* đỏ */
+  color: #fff;
+}
+
+.menu-actions .btn-edit:disabled {
+  background: #6c757d;
+  color: #fff;
+  cursor: not-allowed;
+}
+
+/* Additional states for KitchenMenu */
+.saving-message {
+  text-align: center;
+  padding: 20px;
+  font-size: 16px;
+  color: #007bff;
+  background: #e3f2fd;
+  border: 1px solid #bbdefb;
+  border-radius: 8px;
+  margin: 20px 0;
+}
+
+/* Week navigation styles */
+.date-field {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.date-field label {
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+  white-space: nowrap;
+}
+
+.week-navigation {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-week-nav {
+  padding: 6px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #fff;
+  color: #333;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-week-nav:hover {
+  background: #f8f9fa;
+  border-color: #007bff;
+  color: #007bff;
+}
+
+.btn-week-nav:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-week-nav:disabled:hover {
+  background: initial;
+  border-color: initial;
+  color: initial;
+}
+
+/* Select dropdown styling in edit mode */
+.menu-table select {
+  width: 100%;
+  padding: 4px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 12px;
+  background: white;
+}
+
+.menu-table select:disabled {
+  background: #f5f5f5;
+  cursor: not-allowed;
+}
+
+/* Styles for multiple dishes display */
+.meal-editor {
+  min-height: 60px;
+}
+
+.selected-dishes {
+  margin-bottom: 8px;
+}
+
+.selected-dish-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #e7f3ff;
+  border: 1px solid #b3d9ff;
+  border-radius: 4px;
+  padding: 4px 8px;
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+
+.selected-dish-item .dish-name {
+  font-weight: 500;
+  color: #333;
+  flex: 1;
+}
+
+.selected-dish-item .dish-kcal {
+  color: #666;
+  font-size: 11px;
+  margin: 0 8px;
+}
+
+.dish-selector {
+  width: 100%;
+  padding: 4px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 12px;
+  background: white;
+}
+
+/* Styles for viewing mode */
+.meal-display {
+  min-height: 40px;
+}
+
+.dishes-list {
+  text-align: left;
+}
+
+.dish-item {
+  margin-bottom: 2px;
+  padding: 2px 0;
+}
+
+.dish-item .dish-name {
+  font-weight: 500;
+  color: #333;
+  font-size: 13px;
+}
+
+.dish-item .dish-kcal {
+  color: #666;
+  font-size: 11px;
+  margin-left: 8px;
+}
+
+.total-kcal {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid #eee;
+  font-weight: 600;
+  color: #007bff;
+  font-size: 12px;
+}
+
+.no-menu {
+  color: #999;
+  font-style: italic;
+  font-size: 13px;
+}
+
 

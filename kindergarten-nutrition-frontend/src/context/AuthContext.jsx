@@ -72,8 +72,9 @@ export const AuthProvider = ({ children }) => {
         setToken(token);                                     
         setIsAuthenticated(true);
 
-        localStorage.setItem('authToken', token);             
+        localStorage.setItem('authToken', token);
         localStorage.setItem('user', JSON.stringify(user));
+
         return response;
       } else {
         throw new Error(response.message || 'Đăng nhập thất bại');

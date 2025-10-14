@@ -16,11 +16,6 @@ export default function ListStudent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch dữ liệu từ API khi component mount
-  useEffect(() => {
-    fetchStudents();
-  }, []);
-
   const fetchStudents = async () => {
     try {
       setLoading(true);
@@ -46,15 +41,33 @@ export default function ListStudent() {
   // Hàm tìm kiếm
   const handleSearch = () => {
     if (searchTerm.trim() === "") {
-      setStudents(allStudents); // reset lại danh sách nếu không nhập
-    } else {
-      const filtered = allStudents.filter((s) =>
-        s.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        s.parent_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        s.class_name?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setStudents(filtered);
+      setStudents(allStudents);
+      return;
     }
+    
+    const searchTermLower = searchTerm.toLowerCase();
+    const filtered = allStudents.filter((s) => {
+      // Tìm kiếm theo tên học sinh
+      const nameMatch = s.full_name?.toLowerCase().includes(searchTermLower);
+      
+      // Tìm kiếm theo giới tính 
+      const genderVietnamese = s.gender === 'male' ? 'nam' : s.gender === 'female' ? 'nữ' : s.gender?.toLowerCase();
+      const genderMatch = s.gender?.toLowerCase().includes(searchTermLower) || 
+                         genderVietnamese?.includes(searchTermLower);
+      
+      // Tìm kiếm theo tên phụ huynh
+      const parentMatch = s.parent_name?.toLowerCase().includes(searchTermLower);
+      
+      // Tìm kiếm theo tuổi (chuyển số thành chuỗi để tìm kiếm)
+      const ageMatch = s.age?.toString().includes(searchTerm.trim());
+      
+      // Tìm kiếm theo lớp
+      const classMatch = s.class_name?.toLowerCase().includes(searchTermLower);
+      
+      return nameMatch || genderMatch || parentMatch || ageMatch || classMatch;
+    });
+    
+    setStudents(filtered);
   };
 
 

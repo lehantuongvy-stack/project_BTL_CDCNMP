@@ -12,6 +12,10 @@ class ApiService {
     
     const config = {
       mode: 'cors',
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
       ...options,
     };
 
@@ -28,8 +32,15 @@ class ApiService {
       url,
       method: config.method,
       headers: config.headers,
-      body: config.body
+      body: config.body,
+      bodyType: typeof config.body
     });
+    
+    // Additional debug for PUT requests
+    if (config.method === 'PUT') {
+      console.log(' PUT request body details:', config.body);
+      console.log(' PUT request body length:', config.body?.length);
+    }
 
     try {
       const response = await fetch(url, config);

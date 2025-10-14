@@ -46,6 +46,12 @@ class ChildrenRoutes {
                     await this.childController.getChildren(req, res);
                     break;
 
+                // GET /api/children/basic-info - Lấy thông tin cơ bản cho parent filtering
+                case path === '/basic-info' && method === 'GET':
+                    console.log('🔍 Calling getBasicInfo');
+                    await this.childController.getBasicInfo(req, res);
+                    break;
+
                 // GET /api/children/list - Lấy danh sách children (alias)
                 case path === '/list' && method === 'GET':
                     console.log('Calling getChildren via /list');
@@ -105,6 +111,8 @@ class ChildrenRoutes {
 
                 // PUT /api/children/:id - Cập nhật child
                 case childId && this.isValidUUID(childId) && method === 'PUT':
+                    console.log('🔧 Route PUT - childId:', childId);
+                    console.log('🔧 Route PUT - req.body before controller:', req.body);
                     req.params = { id: childId };
                     await this.childController.updateChild(req, res);
                     break;
@@ -157,14 +165,36 @@ class ChildrenRoutes {
             req.on('end', () => {
                 try {
                     const contentType = req.headers['content-type'] || '';
+                    console.log('🔧 parseRequestBody - contentType:', contentType);
+                    console.log('🔧 parseRequestBody - raw body:', body);
+                    
                     if (contentType.includes('application/json')) {
-                        resolve(JSON.parse(body));
+                        const parsed = JSON.parse(body);
+                        console.log('🔧 parseRequestBody - parsed JSON:', parsed);
+                        resolve(parsed);
                     } else if (contentType.includes('application/x-www-form-urlencoded')) {
-                        resolve(querystring.parse(body));
+                        const parsed = querystring.parse(body);
+                        console.log('🔧 parseRequestBody - parsed form:', parsed);
+                        resolve(parsed);
                     } else {
-                        resolve({});
+                        // Try to parse as JSON even if content-type is wrong
+                        console.log('🔧 parseRequestBody - unknown content type, trying JSON parse...');
+                        try {
+                            if (body.trim().startsWith('{') || body.trim().startsWith('[')) {
+                                const parsed = JSON.parse(body);
+                                console.log('🔧 parseRequestBody - successfully parsed as JSON:', parsed);
+                                resolve(parsed);
+                            } else {
+                                console.log('🔧 parseRequestBody - not JSON format, returning empty object');
+                                resolve({});
+                            }
+                        } catch (jsonError) {
+                            console.log('🔧 parseRequestBody - JSON parse failed, returning empty object');
+                            resolve({});
+                        }
                     }
                 } catch (error) {
+                    console.log('🔧 parseRequestBody - parse error:', error);
                     reject(error);
                 }
             });

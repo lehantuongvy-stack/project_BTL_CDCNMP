@@ -8,13 +8,13 @@ import CreateReport from "./pages/CreateReport";
 import HealthManager from "./pages/HealthManager";
 import HealthStudent from "./pages/HealthStudent";
 import Home from "./pages/Home";
-import Menu from "./pages/Menu";
 import Login from "./pages/login";
 import ThuvienMonan from "./pages/thuvienmonan";
 import ChitietMon from "./pages/chitietmonan";
 import AdminDashboard from "./pages/AdminDashboard";
 import UserRegistration from "./pages/UserRegistration";
 import ParentRegistration from "./pages/ParentRegistration";
+import ChildRegistrationForm from "./pages/ChildRegistrationForm";
 import AccountInfo from "./pages/AccountInfo";
 import ParentCorner from "./pages/ParentCorner";
 import Tre from "./pages/Tre";
@@ -37,9 +37,14 @@ function App() {
               <ParentRegistration />
             </ProtectedRoute>
           } />
-          <Route path="/admin/user-registration" element={
+          <Route path="/admin/register/type/:type" element={
             <ProtectedRoute requiredRole="admin">
-              <UserRegistration />
+              <ParentRegistration />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/create-child" element={
+            <ProtectedRoute requiredRole="admin">
+              <ChildRegistrationForm />
             </ProtectedRoute>
           } />
           <Route path="/account-info" element={
@@ -77,7 +82,6 @@ function App() {
               <ThuvienMonan />
             </ProtectedRoute>
           } />
-          <Route path="/menu" element={<Menu />} />
           <Route path="/kitchen-menu" element={
             <ProtectedRoute requiredRole="teacher">
               <KitchenMenu />
@@ -93,8 +97,16 @@ function App() {
               <ListStudent />
             </ProtectedRoute>
           } />
-          <Route path="/report" element={<Report />} />
+          <Route path="/report" element={
+            <ProtectedRoute requiredRole="teacher">
+              <Report />
+            </ProtectedRoute>} />
           <Route path="/create" element={<CreateReport />} />
+          <Route path="/reports/:id" element={
+            <ProtectedRoute requiredRole="teacher">
+              <CreateReport readOnly={true} />
+            </ProtectedRoute>
+          } />
           <Route path="/mon/:id" element={<ChitietMon />} />
         </Routes>
       </BrowserRouter>

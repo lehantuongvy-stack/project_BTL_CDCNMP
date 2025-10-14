@@ -1,43 +1,21 @@
-/**
- * Meal Service
- * Quản lý thông tin bữa ăn
- */
-
 const { v4: uuidv4 } = require('uuid');
 
 class MealService {
-    constructor(db) {
-        this.db = db;
-    }
+  constructor(db) {
+    this.db = db;
+  }
 
-    // Lấy tất cả bữa ăn
-    async getAllMeals() {
-        try {
-            const meals = await this.db.select(`
-                SELECT 
-                    m.*,
-                    creator.full_name as created_by_name,
-                    approver.full_name as approved_by_name
-                FROM meals m
-                LEFT JOIN users creator ON m.created_by = creator.id
-                LEFT JOIN users approver ON m.approved_by = approver.id
-                WHERE m.is_active = true
-                ORDER BY m.date DESC, m.meal_type ASC
-            `);
-
-            return {
-                success: true,
-                data: meals,
-                count: meals.length
-            };
-        } catch (error) {
-            console.error('Get all meals error:', error);
-            return {
-                success: false,
-                message: 'Lỗi khi lấy danh sách bữa ăn'
-            };
-        }
-    }
+  async getAllMeals() {
+    const meals = await this.db.select(`
+      SELECT m.*, creator.full_name as created_by_name, approver.full_name as approved_by_name
+      FROM meals m
+      LEFT JOIN users creator ON m.created_by = creator.id
+      LEFT JOIN users approver ON m.approved_by = approver.id
+      WHERE m.is_active = true
+      ORDER BY m.date DESC, m.meal_type ASC
+    `);
+    return { success: true, data: meals, count: meals.length };
+  }
 
     // Tạo bữa ăn mới
     async createMeal(mealData) {

@@ -15,10 +15,17 @@ const UserRegistration = () => {
     full_name: '',
     email: '',
     phone_number: '',
-    role: 'parent' // default to parent
+    role: 'parent', // default to parent
+    class_id: '' // thêm class_id cho giáo viên
   });
   const [errors, setErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState('');
+  const [classes, setClasses] = useState([
+    { id: '771fc0e3-a4ec-11f0-8498-a036bc312358', name: 'Mầm' },
+    { id: '1a9a342f-98a3-11f0-9a5b-a036bc312358', name: 'Lá' },
+    { id: '771fdaee-a4ec-11f0-8498-a036bc312358', name: 'Chồi' },
+    { id: '1a9a3487-98a3-11f0-9a5b-a036bc312358', name: 'Hoa' }
+  ]);
 
   // Debug auth info
   React.useEffect(() => {
@@ -30,10 +37,19 @@ const UserRegistration = () => {
   // Handle input change
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        [name]: value
+      };
+      
+      // Reset class_id when role changes to parent
+      if (name === 'role' && value === 'parent') {
+        newData.class_id = '';
+      }
+      
+      return newData;
+    });
     
     // Clear error when user starts typing
     if (errors[name]) {
@@ -89,6 +105,11 @@ const UserRegistration = () => {
       newErrors.role = 'Vui lòng chọn vai trò';
     }
 
+    // Class validation for teachers
+    if (formData.role === 'teacher' && !formData.class_id) {
+      newErrors.class_id = 'Vui lòng chọn lớp cho giáo viên';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -138,7 +159,8 @@ const UserRegistration = () => {
           full_name: '',
           email: '',
           phone_number: '',
-          role: 'parent'
+          role: 'parent',
+          class_id: ''
         });
         
         // Auto redirect after 2 seconds
@@ -149,7 +171,61 @@ const UserRegistration = () => {
       
     } catch (error) {
       console.error(' Registration failed:', error);
-      setErrors({ submit: error.message || 'Có lỗi xảy ra khi tạo tài khoản' });
+      
+      // Extract clean error message
+      let errorMessage = error.message || 'Có lỗi xảy ra khi tạo tài khoản';
+      
+      console.log(' Original error message:', errorMessage);
+      
+      // Remove HTTP status code prefix if exists (more comprehensive)
+      errorMessage = errorMessage.replace(/^HTTP \d+:\s*/i, '');
+      
+      console.log(' After HTTP prefix removal:', errorMessage);
+      
+      // Try to parse JSON and extract message
+      try {
+        // Check if the message starts with { or [
+        if (errorMessage.trim().startsWith('{') || errorMessage.trim().startsWith('[')) {
+          const parsed = JSON.parse(errorMessage);
+          if (parsed.message) {
+            errorMessage = parsed.message;
+          } else if (parsed.error) {
+            errorMessage = parsed.error;
+          }
+        }
+      } catch (parseError) {
+        console.log(' JSON parse failed, using as is:', errorMessage);
+      }
+      
+      console.log(' Final error message:', errorMessage);
+      
+      // Map specific error messages to form fields
+      const fieldErrorMap = {
+        'Username đã tồn tại': 'username',
+        'Tên đăng nhập đã tồn tại': 'username', 
+        'Email đã tồn tại': 'email',
+        'Số điện thoại đã tồn tại': 'phone_number'
+      };
+      
+      // Check if error message matches a specific field
+      const fieldWithError = Object.keys(fieldErrorMap).find(msg => 
+        errorMessage.toLowerCase().includes(msg.toLowerCase())
+      );
+      
+      if (fieldWithError) {
+        // Set error on specific field
+        setErrors({
+          [fieldErrorMap[fieldWithError]]: errorMessage
+        });
+        console.log(' Field-specific error set:', fieldErrorMap[fieldWithError], '→', errorMessage);
+      } else {
+        // Set general error
+        setErrors({ 
+          submit: errorMessage 
+        });
+        console.log(' General error set:', errorMessage);
+      }
+      
     } finally {
       setLoading(false);
     }
@@ -206,6 +282,28 @@ const UserRegistration = () => {
             </select>
             {errors.role && <span className="error-message">{errors.role}</span>}
           </div>
+
+          {/* Class Selection - only show for teachers */}
+          {formData.role === 'teacher' && (
+            <div className="form-group">
+              <label htmlFor="class_id">Lớp phụ trách *</label>
+              <select
+                id="class_id"
+                name="class_id"
+                value={formData.class_id}
+                onChange={handleChange}
+                className={`form-control ${errors.class_id ? 'is-invalid' : ''}`}
+              >
+                <option value="">-- Chọn lớp --</option>
+                {classes.map((classItem) => (
+                  <option key={classItem.id} value={classItem.id}>
+                    Lớp {classItem.name}
+                  </option>
+                ))}
+              </select>
+              {errors.class_id && <span className="error-message">{errors.class_id}</span>}
+            </div>
+          )}
 
           {/* Username */}
           <div className="form-group">

@@ -1,7 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Header from '../components/common/Header.jsx';
 import "./../styles/HealthManager.css";
 import "../styles/background.css";
+import childService from '../services/childService.js';
+import healthService from '../services/healthService.js';
+import { useAuth } from '../context/AuthContext.jsx';
 
 const HealthManager = () => {
   // State thông tin bé

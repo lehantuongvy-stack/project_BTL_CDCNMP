@@ -273,10 +273,17 @@ const HealthStudent = () => {
         <div className="form-row">
           <label>Dị ứng:</label>
           <div className="allergies-display">
-            {selectedChild.allergies ? (
+            {selectedChild.allergies && (
+              Array.isArray(selectedChild.allergies) ? selectedChild.allergies.length > 0 : selectedChild.allergies.trim() !== ''
+            ) ? (
               <ul className="allergies-list">
-                {selectedChild.allergies.split(',').map((allergy, index) => (
-                  <li key={index} className="allergy-item">{allergy.trim()}</li>
+                {(Array.isArray(selectedChild.allergies) 
+                  ? selectedChild.allergies 
+                  : selectedChild.allergies.split(',')
+                ).map((allergy, index) => (
+                  <li key={index} className="allergy-item">
+                    {typeof allergy === 'string' ? allergy.trim() : allergy}
+                  </li>
                 ))}
               </ul>
             ) : (

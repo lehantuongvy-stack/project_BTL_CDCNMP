@@ -84,6 +84,11 @@ class NutritionRoutes {
                 return await this.calculateBMI(req, res);
             }
 
+            // Parent routes - Lấy đánh giá sức khỏe của tất cả con theo parent
+            if (pathname === '/api/nutrition/parent/records' && method === 'GET') {
+                return await this.getParentChildrenRecords(req, res, query);
+            }
+
             // Route không tìm thấy
             this.sendResponse(res, 404, {
                 success: false,
@@ -153,10 +158,14 @@ class NutritionRoutes {
             }
 
             const body = await this.parseRequestBody(req);
+            console.log('🔧 Received body data:', body);
+            
             const recordData = {
                 ...body,
                 teacher_id: authResult.user.id  // Sử dụng teacher_id thay vì created_by
             };
+            
+            console.log('🔧 Final record data:', recordData);
 
             const record = await this.nutritionController.createNutritionRecord(recordData);
 
@@ -537,6 +546,90 @@ class NutritionRoutes {
                 }
             });
         });
+    }
+
+    /**
+     * GET /api/nutrition/parent/records - Lấy đánh giá sức khỏe của tất cả con theo parent
+     */
+    async getParentChildrenRecords(req, res, query) {
+        try {
+            const authResult = await this.authController.verifyTokenFromRequest(req);
+            if (!authResult.success) {
+                return this.sendResponse(res, 401, authResult);
+            }
+
+            // Chỉ parent mới có quyền truy cập route này
+            if (authResult.user.role !== 'parent') {
+                return this.sendResponse(res, 403, {
+                    success: false,
+                    message: 'Chỉ phủ huynh mới có quyền xem thông tin này'
+                });
+            }
+
+            const parentId = authResult.user.id;
+            
+            // Lấy danh sách tất cả con của parent này
+            const childrenQuery = `
+                SELECT id, full_name, date_of_birth, class_name 
+                FROM children 
+                WHERE parent_id = ? AND is_active = 1
+                ORDER BY full_name
+            `;
+            
+            const children = await this.nutritionController.db.query(childrenQuery, [parentId]);
+            
+            if (!children || children.length === 0) {
+                return this.sendResponse(res, 200, {
+                    success: true,
+                    data: {
+                        children: [],
+                        message: 'Không tìm thấy con nào trong hệ thống'
+                    }
+                });
+            }
+
+            // Lấy đánh giá sức khỏe cho từng con
+            const childrenWithRecords = await Promise.all(
+                children.map(async (child) => {
+                    const recordsQuery = `
+                        SELECT dg.*, u.full_name as teacher_name
+                        FROM danh_gia_suc_khoe dg
+                        LEFT JOIN users u ON dg.teacher_id = u.id
+                        WHERE dg.child_id = ?
+                        ORDER BY dg.ngay_danh_gia DESC
+                        LIMIT 10
+                    `;
+                    
+                    const records = await this.nutritionController.db.query(recordsQuery, [child.id]);
+                    
+                    return {
+                        child_info: {
+                            id: child.id,
+                            full_name: child.full_name,
+                            date_of_birth: child.date_of_birth,
+                            class_name: child.class_name
+                        },
+                        health_records: records || []
+                    };
+                })
+            );
+
+            this.sendResponse(res, 200, {
+                success: true,
+                data: {
+                    parent_id: parentId,
+                    children: childrenWithRecords,
+                    total_children: children.length
+                }
+            });
+
+        } catch (error) {
+            console.error('Error getting parent children records:', error);
+            this.sendResponse(res, 500, {
+                success: false,
+                message: error.message || 'Lỗi khi lấy thông tin đánh giá sức khỏe'
+            });
+        }
     }
 
     /**

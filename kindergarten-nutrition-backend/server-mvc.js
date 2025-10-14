@@ -1,8 +1,3 @@
-/**
- * Kindergarten Nutrition Management Server - MVC Architecture
- * Pure Node.js với Database Schema và XAMPP MySQL
- */
-
 const http = require('http');
 const url = require('url');
 const path = require('path');
@@ -14,26 +9,30 @@ const DatabaseManager = require('./database/DatabaseManager');
 // Controllers
 const AuthController = require('./controllers/authController');
 const UserController = require('./controllers/UserController');
-const ChildController = require('./controllers/ChildController');
+const ChildController = require('./controllers/childController');
 const IngredientController = require('./controllers/IngredientController');
-const MealController = require('./controllers/MealController');
-const NutritionController = require('./controllers/NutritionController');
-const ReportController = require('./controllers/ReportController'); //  Thêm ReportControlle
+const MealController = require('./controllers/mealController');
+const NutritionController = require('./controllers/nutritionController');
+const ClassController = require('./controllers/ClassController');
+const NutritionReportController = require('./controllers/NutritionrpController');
+const WarehouseController = require('./controllers/WarehouseController.js');
+const ParentFeedbackController = require('./controllers/ParentFeedbackController.js');
 
 // Routes
 const AuthRoutes = require('./routes/auth');
 const UserRoutes = require('./routes/users');
 const ChildrenRoutes = require('./routes/children');
 const IngredientRoutes = require('./routes/ingredients');
-const MealsRoutes = require('./routes/meals-fixed');
+const MealsRoutes = require('./routes/meals');
 const NutritionRoutes = require('./routes/nutrition');
 const DishRoutes = require('./routes/dishes'); 
-const ReportRoutes = require('./routes/report');
+const ClassRoutes = require('./routes/classes');
+const NutritionRpRoutes = require('./routes/nutritionrp');
+const ParentFeedbackRoutes = require('./routes/parentfeedback');
 
 // Services (for backward compatibility)
 const ReportingService = require('./services/ReportingService');
 const MenuService = require('./services/MenuService');
-const HealthService = require('./services/HealthService');
 
 // Load environment variables
 require('dotenv').config();
@@ -53,20 +52,26 @@ class KindergartenServer {
         this.ingredientController = new IngredientController(this.db);
         this.mealController = new MealController(this.db);
         this.nutritionController = new NutritionController(this.db);
+        this.classController = new ClassController(this.db);
+        this.nutritionReportController = new NutritionReportController(this.db);
+        this.warehouseController = new WarehouseController(this.db);
+        this.parentFeedbackController = new ParentFeedbackController(this.db);
         
         // Initialize Routes
         this.authRoutes = new AuthRoutes(this.authController);
         this.userRoutes = new UserRoutes(this.userController, this.authController);
         this.childrenRoutes = new ChildrenRoutes(this.childController, this.authController);
         this.ingredientRoutes = new IngredientRoutes(this.ingredientController, this.authController);
-        this.dishRoutes = new DishRoutes(this.authController); // ✅ Truyền authController
+        this.dishRoutes = new DishRoutes(this.authController); 
         this.mealsRoutes = new MealsRoutes(this.mealController, this.authController);
         this.nutritionRoutes = new NutritionRoutes(this.nutritionController, this.authController);
+        this.classRoutes = new ClassRoutes(this.classController);
+        this.nutritionRpRoutes = new NutritionRpRoutes(this.db);
+        this.parentFeedbackRoutes = new ParentFeedbackRoutes(this.parentFeedbackController, this.authController);
         
         // Initialize Services (for complex business logic)
         this.reportingService = new ReportingService(this.db);
         this.menuService = new MenuService(this.db);
-        this.healthService = new HealthService(this.db);
     }
 
     // Set CORS headers
@@ -164,6 +169,8 @@ class KindergartenServer {
                 console.log('POST /api/meals');
                 console.log('GET  /api/nutrition/records');
                 console.log('POST /api/nutrition/records');
+                console.log('GET  /api/feedback');
+                console.log('POST /api/feedback');
                 console.log('GET  /api/reports');
                 console.log('Static files: /public/*');
             });
@@ -212,10 +219,29 @@ class KindergartenServer {
                 await this.ingredientRoutes.handleIngredientRoutes(req, res, pathname.replace('/api/ingredients', ''), method);
             } else if (pathname.startsWith('/api/dishes')) {
                 await this.dishRoutes.handleDishRoutes(req, res, pathname.replace('/api/dishes', ''), method);
+            } else if (pathname.startsWith('/api/classes')) {
+                await this.classRoutes.handleClassRoutes(req, res, pathname.replace('/api/classes', ''), method);
             } else if (pathname.startsWith('/api/meals')) {
-                await this.mealsRoutes.handleMealsRoutes(req, res, pathname.replace('/api/meals', ''), method);
+                // Sử dụng Express router cho các endpoint đơn giản
+                const simplePaths = ['/dishes', '/by-date'];
+                const isSimplePath = simplePaths.some(path => pathname.includes(path)) || 
+                                   (pathname === '/api/meals' && ['GET', 'POST'].includes(method)) ||
+                                   (pathname.match(/^\/api\/meals\/[^\/]+$/) && ['GET', 'PUT'].includes(method));
+                
+                if (isSimplePath) {
+                    await this.handleSimpleMealsEndpoints(req, res, pathname, method);
+                } else {
+                    // Sử dụng custom handler cho các endpoint phức tạp
+                    await this.mealsRoutes.handleMealsRoutes(req, res, pathname.replace('/api/meals', ''), method);
+                }
+            } else if (pathname === '/api/foods' && method === 'GET') {
+                await this.handleFoodsLibrary(req, res);
+            } else if (pathname.startsWith('/api/nutritionrp')) {
+                await this.nutritionRpRoutes.handleNutritionRpRoutes(req, res, pathname.replace('/api/nutritionrp', ''), method);
             } else if (pathname.startsWith('/api/nutrition')) {
                 await this.nutritionRoutes.handleNutritionRoutes(req, res);
+            } else if (pathname.startsWith('/api/feedback')) {
+                await this.parentFeedbackRoutes.handleFeedbackRoutes(req, res, pathname.replace('/api/feedback', ''), method);
             } else if (pathname.startsWith('/api/reports')) {
                 await this.handleReports(req, res, pathname.replace('/api/reports', ''), method, query);
             } else if (pathname.startsWith('/public/') || pathname.startsWith('/api/docs')) {
@@ -252,10 +278,12 @@ class KindergartenServer {
                             'GET /api/ingredients/:id',
                             'PUT /api/ingredients/:id'
                         ],
-                        reports: [
-                            'GET /api/reports/health',
-                            'GET /api/reports/nutrition',
-                            'GET /api/reports/inventory'
+                        feedback: [
+                            'GET /api/feedback',
+                            'POST /api/feedback',
+                            'GET /api/feedback/:id',
+                            'PUT /api/feedback/:id',
+                            'DELETE /api/feedback/:id'
                         ]
                     }
                 });
@@ -281,7 +309,7 @@ class KindergartenServer {
             architecture: "Model-View-Controller (MVC)",
             database: "MySQL Schema with XAMPP",
             features: [
-                "Pure Node.js Server",
+                "Node.js Server",
                 "MVC Architecture", 
                 "Role-based Authorization",
                 "RESTful API Design",
@@ -351,6 +379,13 @@ class KindergartenServer {
                     class_stats: "GET /api/nutrition/stats/class",
                     attention_list: "GET /api/nutrition/stats/attention",
                     calculate_bmi: "POST /api/nutrition/calculate-bmi"
+                },
+                feedback: {
+                    list: "GET /api/feedback",
+                    create: "POST /api/feedback",
+                    detail: "GET /api/feedback/:id",
+                    update: "PUT /api/feedback/:id",
+                    delete: "DELETE /api/feedback/:id"
                 }
             }
         };
@@ -386,6 +421,49 @@ class KindergartenServer {
         };
 
         this.sendResponse(res, dbHealthy ? 200 : 503, health);
+    }
+
+    // Xử lý Foods Library API
+    async handleFoodsLibrary(req, res) {
+        try {
+            // Apply authentication
+            const authHeader = req.headers.authorization;
+            if (!authHeader || !authHeader.startsWith('Bearer ')) {
+                this.sendResponse(res, 401, {
+                    success: false,
+                    message: 'Token không hợp lệ'
+                });
+                return;
+            }
+
+            // Verify token
+            const token = authHeader.split(' ')[1];
+            try {
+                const decoded = await this.authController.verifyToken(token);
+                req.user = decoded;
+            } catch (error) {
+                this.sendResponse(res, 401, {
+                    success: false,
+                    message: 'Token không hợp lệ'
+                });
+                return;
+            }
+
+            // Get query parameters
+            const urlObj = new URL(req.url, `http://${req.headers.host}`);
+            req.query = Object.fromEntries(urlObj.searchParams);
+
+            // Call meal controller
+            await this.mealController.getFoodLibrary(req, res);
+
+        } catch (error) {
+            console.error('Error in handleFoodsLibrary:', error);
+            this.sendResponse(res, 500, {
+                success: false,
+                message: 'Lỗi server',
+                error: error.message
+            });
+        }
     }
 
     // Xử lý reports (backward compatibility với Services)
@@ -461,6 +539,7 @@ class KindergartenServer {
             });
         }
     }
+
     // Graceful shutdown
     async stop() {
         if (this.server) {
@@ -471,6 +550,237 @@ class KindergartenServer {
         if (this.db) {
             await this.db.close();
         }
+    }
+
+    // Xử lý các endpoint đơn giản trực tiếp
+    async handleSimpleMealsEndpoints(req, res, pathname, method) {
+        try {
+            const Meal = require('./models/Meal');
+            const meal = new Meal(this.db); // Truyền database instance
+
+            // Apply authentication cho các endpoints cần auth
+            let user = null;
+            if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
+                // Require auth cho create/update operations
+                const authHeader = req.headers.authorization;
+                if (!authHeader || !authHeader.startsWith('Bearer ')) {
+                    this.sendJsonResponse(res, 401, {
+                        success: false,
+                        message: 'Token không được cung cấp hoặc không đúng định dạng'
+                    });
+                    return;
+                }
+
+                const token = authHeader.substring(7);
+                try {
+                    const decoded = await this.authController.verifyToken(token);
+                    user = await this.authController.userModel.findById(decoded.id);
+                    if (!user) {
+                        this.sendJsonResponse(res, 401, {
+                            success: false,
+                            message: 'User không tồn tại'
+                        });
+                        return;
+                    }
+                    req.user = user;
+                } catch (error) {
+                    this.sendJsonResponse(res, 401, {
+                        success: false,
+                        message: 'Token không hợp lệ hoặc đã hết hạn'
+                    });
+                    return;
+                }
+            }
+
+            // Parse request body nếu cần
+            if (['POST', 'PUT', 'PATCH'].includes(method)) {
+                console.log(' About to parse request body for method:', method);
+                console.log(' Request headers:', req.headers);
+                req.body = await this.parseRequestBody(req);
+                console.log(' After parsing - req.body:', req.body);
+            }
+
+            // Route handling
+            if (pathname === '/api/meals/dishes' && method === 'GET') {
+                const dishes = await meal.getAllDishes();
+                this.sendJsonResponse(res, 200, {
+                    success: true,
+                    data: dishes
+                });
+            } else if (pathname.startsWith('/api/meals/by-date/') && method === 'GET') {
+                const urlParts = pathname.split('/');
+                const date = urlParts[4];
+                const { lop_ap_dung } = this.parseQuery(req.url);
+                
+                const menus = await meal.getMenuByDateWithDetails(date, lop_ap_dung);
+                this.sendJsonResponse(res, 200, {
+                    success: true,
+                    data: menus
+                });
+            } else if (pathname === '/api/meals' && method === 'POST') {
+                // Thêm user ID vào request body
+                const menuData = {
+                    ...req.body,
+                    created_by: req.user.id // Sử dụng UUID thật của user
+                };
+
+                const result = await meal.createMenuWithDetails(menuData);
+                this.sendJsonResponse(res, 201, {
+                    success: true,
+                    data: result,
+                    message: 'Tạo thực đơn thành công'
+                });
+            } else if (pathname.match(/^\/api\/meals\/[^\/]+$/) && method === 'GET') {
+                const urlParts = pathname.split('/');
+                const id = urlParts[3];
+                
+                const menu = await meal.getMenuWithDetails(id);
+                if (!menu) {
+                    this.sendJsonResponse(res, 404, {
+                        success: false,
+                        message: 'Không tìm thấy thực đơn'
+                    });
+                    return;
+                }
+                
+                this.sendJsonResponse(res, 200, {
+                    success: true,
+                    data: menu
+                });
+            } else if (pathname.match(/^\/api\/meals\/[^\/]+\/smart$/) && method === 'PUT') {
+                // API mới cho cập nhật thông minh (không mất dữ liệu)
+                const urlParts = pathname.split('/');
+                const id = urlParts[3];
+                
+                const updateData = {
+                    ...req.body,
+                    updated_by: req.user.id,
+                    update_mode: 'smart' // Force smart mode
+                };
+                
+                const result = await meal.updateMenuSmart(id, updateData);
+                this.sendJsonResponse(res, 200, {
+                    success: true,
+                    data: result,
+                    message: 'Cập nhật thực đơn thông minh thành công'
+                });
+            } else if (pathname.match(/^\/api\/meals\/[^\/]+$/) && method === 'PUT') {
+                const urlParts = pathname.split('/');
+                const id = urlParts[3];
+                
+                // Kiểm tra dữ liệu trước khi cập nhật
+                const updateData = {
+                    ...req.body,
+                    updated_by: req.user.id
+                };
+                
+                // Validate món ăn nếu có
+                if (updateData.mon_an_list && Array.isArray(updateData.mon_an_list)) {
+                    const invalidDishes = updateData.mon_an_list.filter(dish => !dish.mon_an_id);
+                    if (invalidDishes.length > 0) {
+                        console.log(' Found invalid dishes (missing mon_an_id):', invalidDishes);
+                        // Sử dụng smart update thay vì update thông thường
+                        const result = await meal.updateMenuSmart(id, { ...updateData, update_mode: 'smart' });
+                        this.sendJsonResponse(res, 200, {
+                            success: true,
+                            data: result,
+                            message: 'Cập nhật thực đơn thành công (dùng smart mode vì có lỗi dữ liệu)'
+                        });
+                        return;
+                    }
+                }
+                
+                const result = await meal.updateMenuWithDetails(id, updateData);
+                this.sendJsonResponse(res, 200, {
+                    success: true,
+                    data: result,
+                    message: 'Cập nhật thực đơn thành công'
+                });
+            } else if (pathname.match(/^\/api\/meals\/[^\/]+$/) && method === 'DELETE') {
+                const urlParts = pathname.split('/');
+                const id = urlParts[3];
+                
+                const result = await meal.deleteMenuWithDetails(id);
+                this.sendJsonResponse(res, 200, {
+                    success: true,
+                    data: result,
+                    message: 'Xóa thực đơn thành công'
+                });
+            } else {
+                this.sendJsonResponse(res, 404, {
+                    success: false,
+                    message: 'Endpoint không tồn tại'
+                });
+            }
+            
+        } catch (error) {
+            console.error('Simple meals endpoint error:', error);
+            this.sendJsonResponse(res, 500, {
+                success: false,
+                message: error.message
+            });
+        }
+    }
+
+    // Helper method để parse query string
+    parseQuery(url) {
+        try {
+            const urlParts = url.split('?');
+            if (urlParts.length < 2) return {};
+            
+            const queryString = urlParts[1];
+            const query = {};
+            
+            queryString.split('&').forEach(param => {
+                const [key, value] = param.split('=');
+                if (key) {
+                    query[decodeURIComponent(key)] = value ? decodeURIComponent(value) : '';
+                }
+            });
+            
+            return query;
+        } catch (error) {
+            console.error('Error parsing query:', error);
+            return {};
+        }
+    }
+
+    // Helper method để send JSON response
+    sendJsonResponse(res, statusCode, data) {
+        res.writeHead(statusCode, {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+        });
+        res.end(JSON.stringify(data));
+    }
+
+    // Parse request body helper
+    async parseRequestBody(req) {
+        return new Promise((resolve, reject) => {
+            let body = '';
+            req.on('data', chunk => {
+                body += chunk.toString();
+            });
+            req.on('end', () => {
+                try {
+                    console.log(' parseRequestBody - raw body:', body);
+                    console.log(' parseRequestBody - body length:', body.length);
+                    console.log(' parseRequestBody - body type:', typeof body);
+                    
+                    const parsed = body ? JSON.parse(body) : {};
+                    console.log(' parseRequestBody - parsed:', parsed);
+                    console.log(' parseRequestBody - parsed keys:', Object.keys(parsed));
+                    resolve(parsed);
+                } catch (error) {
+                    console.log(' parseRequestBody - JSON parse error:', error.message);
+                    console.log(' parseRequestBody - problematic body:', body);
+                    resolve({});
+                }
+            });
+            req.on('error', reject);
+        });
     }
 }
 
