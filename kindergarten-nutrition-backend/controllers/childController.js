@@ -289,9 +289,31 @@ class ChildController extends BaseController {
 
         } catch (error) {
             console.error('Create child error:', error);
-            this.sendResponse(res, 500, {
+            
+            // Parse error message for better user feedback
+            let errorMessage = 'Lỗi server khi tạo child';
+            let statusCode = 500;
+            
+            // Check for duplicate entry error
+            if (error.message && error.message.includes('Duplicate entry')) {
+                const match = error.message.match(/Duplicate entry '([^']+)' for key '([^']+)'/);
+                if (match) {
+                    const duplicateValue = match[1];
+                    const keyName = match[2];
+                    
+                    if (keyName.includes('student_id')) {
+                        errorMessage = `Mã học sinh "${duplicateValue}" đã tồn tại trong hệ thống`;
+                        statusCode = 409; // Conflict
+                    } else {
+                        errorMessage = `Giá trị "${duplicateValue}" đã tồn tại trong hệ thống`;
+                        statusCode = 409;
+                    }
+                }
+            }
+            
+            this.sendResponse(res, statusCode, {
                 success: false,
-                message: 'Lỗi server khi tạo child',
+                message: errorMessage,
                 error: error.message
             });
         }

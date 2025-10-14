@@ -66,7 +66,7 @@ class KindergartenServer {
         this.mealsRoutes = new MealsRoutes(this.mealController, this.authController);
         this.nutritionRoutes = new NutritionRoutes(this.nutritionController, this.authController);
         this.classRoutes = new ClassRoutes(this.classController);
-        this.nutritionRpRoutes = new NutritionRpRoutes(this.db);
+        this.nutritionRpRoutes = new NutritionRpRoutes(this.db, this.authController);
         this.parentFeedbackRoutes = new ParentFeedbackRoutes(this.parentFeedbackController, this.authController);
         
         // Initialize Services (for complex business logic)

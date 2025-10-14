@@ -254,7 +254,6 @@ class NutritionReportController {
     // Test method để tạo dummy data
     async createTestReports(req, res) {
         try {
-            console.log('🧪 Creating test reports...');
             const testReports = [
                 {
                     id: require('uuid').v4(),

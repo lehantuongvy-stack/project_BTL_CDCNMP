@@ -103,8 +103,7 @@ class MealController extends BaseController {
     }
 
     /**
-     * Lấy thực đơn theo ngày với format chuẩn cho API
-     * GET /api/meals/date?date=YYYY-MM-DD&nhom=nha_tre|mau_giao
+     * Lấy thực đơn theo ngày 
      */
     async getMealsByDateForAPI(req, res) {
         try {

@@ -82,10 +82,32 @@ class DatabaseManager {
             throw error;
         }
     }
+    
+    // Đóng kết nối
+    async close() {
+        if (this.pool) {
+            await this.pool.end();
+            this.isConnected = false;
+            console.log('Enhanced Database connection closed');
+        }
+    }
 
-    // ==============================================
-    // ENHANCED CRUD OPERATIONS
-    // ==============================================
+    // Transaction support
+    async beginTransaction() {
+        const connection = await this.pool.getConnection();
+        await connection.beginTransaction();
+        return connection;
+    }
+
+    async commit(connection) {
+        await connection.commit();
+        connection.release();
+    }
+
+    async rollback(connection) {
+        await connection.rollback();
+        connection.release();
+    }
 
     // -------------------- USERS --------------------
     async createUser(userData) {
@@ -545,32 +567,6 @@ class DatabaseManager {
         `;
         const results = await this.query(sql, [child_id]);
         return results[0] || null;
-    }
-
-    // Đóng kết nối
-    async close() {
-        if (this.pool) {
-            await this.pool.end();
-            this.isConnected = false;
-            console.log('Enhanced Database connection closed');
-        }
-    }
-
-    // Transaction support
-    async beginTransaction() {
-        const connection = await this.pool.getConnection();
-        await connection.beginTransaction();
-        return connection;
-    }
-
-    async commit(connection) {
-        await connection.commit();
-        connection.release();
-    }
-
-    async rollback(connection) {
-        await connection.rollback();
-        connection.release();
     }
 
     // Test database với sample data

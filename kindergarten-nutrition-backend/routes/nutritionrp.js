@@ -7,8 +7,9 @@ const url = require('url');
 const querystring = require('querystring');
 
 class NutritionRpRoutes {
-    constructor(db) {
+    constructor(db, authController) {
         this.db = db;
+        this.authController = authController;
         this.NutritionReportController = require("../controllers/NutritionrpController");
         this.controller = new this.NutritionReportController(db);
     }
@@ -16,6 +17,23 @@ class NutritionRpRoutes {
     // Xử lý các nutrition report routes
     async handleNutritionRpRoutes(req, res, path, method) {
         try {
+            // Apply authentication middleware (QUAN TRỌNG: Kiểm tra quyền truy cập)
+            const isAuthenticated = await this.applyAuthMiddleware(req, res, this.authController);
+            if (!isAuthenticated) {
+                console.log('Authentication failed for nutrition reports');
+                return;
+            }
+            
+            // Kiểm tra quyền: Chỉ admin và teacher mới xem được báo cáo
+            if (!['admin', 'teacher'].includes(req.user.role)) {
+                return this.sendResponse(res, 403, {
+                    success: false,
+                    message: 'Chỉ admin và giáo viên mới có quyền xem báo cáo'
+                });
+            }
+            
+            console.log(' User authenticated:', req.user.role);
+            
             // Parse request body cho POST/PUT requests
             if (['POST', 'PUT'].includes(method)) {
                 req.body = await this.parseRequestBody(req);
@@ -101,6 +119,47 @@ class NutritionRpRoutes {
             });
             req.on('error', reject);
         });
+    }
+
+    // Apply authentication middleware
+    async applyAuthMiddleware(req, res, authController) {
+        try {
+            const authHeader = req.headers['authorization'];
+            
+            if (!authHeader || !authHeader.startsWith('Bearer ')) {
+                this.sendResponse(res, 401, {
+                    success: false,
+                    message: 'Không có token xác thực. Vui lòng đăng nhập.'
+                });
+                return false;
+            }
+
+            const token = authHeader.substring(7);
+            
+            // Verify token using authController
+            const decoded = await authController.verifyToken(token);
+            
+            if (!decoded) {
+                this.sendResponse(res, 401, {
+                    success: false,
+                    message: 'Token không hợp lệ hoặc đã hết hạn'
+                });
+                return false;
+            }
+
+            // Attach user info to request
+            req.user = decoded;
+            return true;
+            
+        } catch (error) {
+            console.error('Auth middleware error:', error);
+            this.sendResponse(res, 401, {
+                success: false,
+                message: 'Xác thực thất bại',
+                error: error.message
+            });
+            return false;
+        }
     }
 }
 

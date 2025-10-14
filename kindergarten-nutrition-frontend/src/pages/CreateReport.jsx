@@ -379,7 +379,7 @@ const handleSubmit = async (e) => {
         <div className="report-header">
           <div className="report-title">
             {saved || readOnly ? (
-            <span>{form.tenBaoCao || "Chưa nhập tên báo cáo"}</span>
+            <span style={{ color:"black" }}>{form.tenBaoCao || "Chưa nhập tên báo cáo"}</span>
             ) : (
               <>
             <input
@@ -397,7 +397,7 @@ const handleSubmit = async (e) => {
 
         {/* 1. Thông tin chung */}
         <section className="section">
-          <h2>1. Thông tin chung</h2>
+          <h2 style={{ color:"black" }}>1. Thông tin chung</h2>
           <ul className="info-list">
             <li>
               <strong>Tên trường:</strong>{" "}
@@ -436,11 +436,11 @@ const handleSubmit = async (e) => {
 
         {/* 2. Dinh dưỡng */}
         <section className="section">
-          <h2>2. So sánh với chuẩn khuyến nghị</h2>
+          <h2 style={{ color:"black" }}>2. So sánh với chuẩn khuyến nghị</h2>
           <table className="simple-table">
             <thead>
-              <tr>
-                <th>Nhóm chất</th>
+              <tr style={{ color:"black" }}>
+                <th >Nhóm chất</th>
                 <th>Trung bình/ngày/bé</th>
                 <th>Chuẩn khuyến nghị</th>
                 <th>% Đạt</th>
@@ -449,8 +449,8 @@ const handleSubmit = async (e) => {
             <tbody>
               {nutrientData.map((d, i) => (
                 <tr key={i}>
-                  <td>{d.subject}</td>
-                  <td>
+                  <td style={{ color:"black" }}>{d.subject}</td>
+                  <td style={{ color:"black" }}>
                     {saved || readOnly ? (
                       d.A
                     ) : (
@@ -470,7 +470,7 @@ const handleSubmit = async (e) => {
                       />
                     )}
                   </td>
-                  <td>
+                  <td style={{ color:"black" }}>
                     {saved || readOnly ? (
                       d.full
                     ) : (
@@ -490,7 +490,7 @@ const handleSubmit = async (e) => {
                       />
                     )}
                   </td>
-                  <td>{((d.A / d.full) * 100).toFixed(0)}%</td>
+                  <td style={{ color:"black" }}>{((d.A / d.full) * 100).toFixed(0)}%</td>
                 </tr>
               ))}
             </tbody>
@@ -531,10 +531,10 @@ const handleSubmit = async (e) => {
 
         {/* 3. Tăng trưởng */}
         <section className="section">
-          <h2>3. Theo dõi tăng trưởng trẻ</h2>
+          <h2 style={{ color:"black" }}>3. Theo dõi tăng trưởng trẻ</h2>
           <table className="simple-table">
             <thead>
-              <tr>
+              <tr style={{ color:"black" }}>
                 <th>Nhóm tuổi</th>
                 <th>Số trẻ</th>
                 <th>TB Cân nặng (kg)</th>
@@ -545,7 +545,7 @@ const handleSubmit = async (e) => {
             <tbody>
               {form.growth.map((row, i) => (
                 <tr key={i}>
-                  <td>{row.name}</td>
+                  <td style={{ color:"black" }}>{row.name}</td>
                   <td>
                     {saved || readOnly ? (
                       row.soTre
@@ -564,7 +564,7 @@ const handleSubmit = async (e) => {
                       />
                     )}
                   </td>
-                  <td>
+                  <td style={{ color:"black" }}>
                     {saved || readOnly ? (
                       row.canNang
                     ) : (
@@ -582,7 +582,7 @@ const handleSubmit = async (e) => {
                       />
                     )}
                   </td>
-                  <td>
+                  <td style={{ color:"black" }}>
                     {saved || readOnly ? (
                       row.chieuCao
                     ) : (
@@ -600,7 +600,7 @@ const handleSubmit = async (e) => {
                       />
                     )}
                   </td>
-                  <td>
+                  <td style={{ color:"black" }}>
                     {saved || readOnly ? (
                       row.tyLe
                     ) : (

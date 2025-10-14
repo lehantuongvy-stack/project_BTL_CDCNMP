@@ -98,12 +98,12 @@ function App() {
             </ProtectedRoute>
           } />
           <Route path="/report" element={
-            <ProtectedRoute requiredRole="teacher">
+            <ProtectedRoute requiredRole={["teacher", "admin"]}>
               <Report />
             </ProtectedRoute>} />
           <Route path="/create" element={<CreateReport />} />
           <Route path="/reports/:id" element={
-            <ProtectedRoute requiredRole="teacher">
+            <ProtectedRoute requiredRole={["teacher", "admin"]}>
               <CreateReport readOnly={true} />
             </ProtectedRoute>
           } />
