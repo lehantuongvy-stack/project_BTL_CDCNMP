@@ -14,11 +14,9 @@ class AuthRoutes {
     // Xử lý các auth routes
     async handleAuthRoutes(req, res, path, method) {
         try {
-            // Parse request body cho POST requests (except logout which may have empty body)
             if (method === 'POST' && path !== '/logout') {
                 req.body = await this.parseRequestBody(req);
             } else if (method === 'POST' && path === '/logout') {
-                // For logout, we don't need body parsing, just set empty object
                 req.body = {};
             }
 
@@ -29,29 +27,25 @@ class AuthRoutes {
                     break;
 
                 case path === '/register' && method === 'POST':
-                    // Apply authentication middleware
                     const isAuthenticated = await this.applyAuthMiddleware(req, res, this.authController);
-                    if (!isAuthenticated) return; // Authentication failed
+                    if (!isAuthenticated) return; 
                     await this.authController.register(req, res);
                     break;
 
                 case path === '/me' && method === 'GET':
-                    // Apply authentication middleware
                     const authResultMe = await this.applyAuthMiddleware(req, res, this.authController);
-                    if (!authResultMe) return; // Authentication failed
+                    if (!authResultMe) return; 
                     await this.authController.getCurrentUser(req, res);
                     break;
 
                 case path === '/change-password' && method === 'POST':
-                    // Apply authentication middleware
                     const authResultPassword = await this.applyAuthMiddleware(req, res, this.authController);
-                    if (!authResultPassword) return; // Authentication failed
+                    if (!authResultPassword) return; 
                     await this.authController.changePassword(req, res);
                     break;
 
                 case path === '/logout' && method === 'POST':
                     console.log(' Logout route matched');
-                    // Apply authentication middleware
                     const authLogout = await this.applyAuthMiddleware(req, res, this.authController);
                     if (!authLogout) return;
                     await this.authController.logoutHandler(req, res);
@@ -106,7 +100,6 @@ class AuthRoutes {
                 try {
                     const contentType = req.headers['content-type'] || '';
                     
-                    // If body is empty, resolve with empty object
                     if (!body || body.trim() === '') {
                         resolve({});
                         return;
@@ -121,7 +114,6 @@ class AuthRoutes {
                     }
                 } catch (error) {
                     console.error('Error parsing request body:', error, 'Body:', body);
-                    // Return empty object instead of rejecting to avoid crashes
                     resolve({});
                 }
             });
@@ -129,13 +121,11 @@ class AuthRoutes {
         });
     }
 
-    // Send response helper
     sendResponse(res, statusCode, data) {
         res.writeHead(statusCode, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(data));
     }
 
-    // Apply authentication middleware for Pure Node.js
     async applyAuthMiddleware(req, res, controller) {
         try {
             const authHeader = req.headers.authorization;

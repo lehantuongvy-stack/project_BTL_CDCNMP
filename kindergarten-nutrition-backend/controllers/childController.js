@@ -260,7 +260,6 @@ class ChildController extends BaseController {
                 childData.parent_id = req.user.id;
                 console.log('Set parent_id from user:', req.user.id);
             } else if (req.user.role === 'admin' || req.user.role === 'teacher') {
-                // Admin/teacher có thể tạo child cho parent khác
                 if (!childData.parent_id) {
                     console.log('Missing parent_id for admin/teacher');
                     return this.sendResponse(res, 400, {
@@ -290,11 +289,9 @@ class ChildController extends BaseController {
         } catch (error) {
             console.error('Create child error:', error);
             
-            // Parse error message for better user feedback
             let errorMessage = 'Lỗi server khi tạo child';
             let statusCode = 500;
-            
-            // Check for duplicate entry error
+
             if (error.message && error.message.includes('Duplicate entry')) {
                 const match = error.message.match(/Duplicate entry '([^']+)' for key '([^']+)'/);
                 if (match) {

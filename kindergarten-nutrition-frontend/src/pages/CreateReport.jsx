@@ -21,12 +21,12 @@ export default function CreateReport({ onSave, onCancel, reportData, readOnly = 
 
   // Load report data from API if ID exists
   useEffect(() => {
-    console.log('🔍 CreateReport useEffect - ID:', id, 'reportData:', reportData);
+    console.log(' CreateReport useEffect - ID:', id, 'reportData:', reportData);
     if (id && !reportData) {
-      console.log('🔍 Loading report data for ID:', id);
+      console.log(' Loading report data for ID:', id);
       loadReportData(id);
     } else if (reportData) {
-      console.log('🔍 Using provided reportData:', reportData);
+      console.log(' Using provided reportData:', reportData);
     }
   }, [id, reportData]);
 
@@ -88,7 +88,7 @@ export default function CreateReport({ onSave, onCancel, reportData, readOnly = 
           growth: growthData
         });
         
-        console.log('📊 Form updated with data:', {
+        console.log('Form updated with data:', {
           tenBaoCao: data.report_name,
           nutritionData,
           growthData
@@ -208,8 +208,8 @@ export default function CreateReport({ onSave, onCancel, reportData, readOnly = 
     },
   ];
   
-  console.log('📊 Chart nutrientData:', nutrientData);
-  console.log('📊 Form values for charts:', {
+  console.log(' Chart nutrientData:', nutrientData);
+  console.log(' Form values for charts:', {
     nangLuong: form.nangLuong,
     protein: form.protein,
     lipid: form.lipid,

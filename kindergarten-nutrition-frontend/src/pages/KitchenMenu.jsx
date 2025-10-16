@@ -322,27 +322,24 @@ function KitchenMenu() {
     );
   };
 
-  // Handle dish selection change - add dish to array instead of replacing
+  // Xử lý chọn món ăn
   const handleDishChange = (day, group, index, selectedDishId) => {
-    if (!selectedDishId) return; // Don't do anything if no dish selected
+    if (!selectedDishId) return; 
     
     setTempMealData((prev) => {
       const updated = { ...prev };
       const selectedDish = dishList.find(dish => dish.id === selectedDishId);
       
       if (selectedDish) {
-        // Initialize dishes array if not exists
         if (!updated[day][group][index].dishes) {
           updated[day][group][index].dishes = [];
         }
-        
-        // Check if dish already exists in the list
+      
         const existingDishIndex = updated[day][group][index].dishes.findIndex(
           dish => dish.id === selectedDishId
         );
         
         if (existingDishIndex === -1) {
-          // Add new dish to the list
           updated[day][group][index].dishes.push({
             id: selectedDish.id,
             ten_mon_an: selectedDish.ten_mon_an,
@@ -350,7 +347,6 @@ function KitchenMenu() {
             loai_mon_an: selectedDish.loai_mon_an
           });
           
-          // Update combined display text and total calories
           const dishNames = updated[day][group][index].dishes.map(dish => dish.ten_mon_an);
           const totalKcal = updated[day][group][index].dishes.reduce((sum, dish) => 
             sum + (dish.calories_per_serving || 0), 0
@@ -368,29 +364,24 @@ function KitchenMenu() {
     });
   };
 
-  // Save all changes
+  // Lưu thực đơn
   const handleSave = async () => {
     try {
       setLoading(true);
-      // Kiểm tra user đã đăng nhập chưa
       if (!userInfo?.user?.id) {
         console.log('User not logged in or no user ID');
         
-        // Thử fetch user info một lần nữa
         console.log('Trying to fetch user info again...');
         await fetchUserInfo();
         
-        // Nếu vẫn không có, thử decode token trực tiếp
         if (!userInfo?.user?.id) {
-          const token = localStorage.getItem('authToken'); // Sửa từ 'token' thành 'authToken'
+          const token = localStorage.getItem('authToken'); 
           if (token) {
             try {
-              // Decode JWT token để lấy user info
               const payload = JSON.parse(atob(token.split('.')[1]));
               console.log('Token payload:', payload);
               
               if (payload.id) {
-                // Tạm thời set userInfo từ token với cấu trúc đúng
                 setUserInfo({ user: { id: payload.id, username: payload.username, role: payload.role } });
                 console.log('Set userInfo from token:', { id: payload.id, username: payload.username, role: payload.role });
               } else {
@@ -417,9 +408,7 @@ function KitchenMenu() {
         
         Object.keys(dayData).forEach(group => {
           dayData[group].forEach((meal, index) => {
-            // Check if meal has dishes array with at least one dish
             if (meal.dishes && meal.dishes.length > 0) {
-              // More robust mapping with explicit checks
               let nhomLop;
               if (group.trim() === 'Nhà Trẻ') {
                 nhomLop = 'nha_tre';
@@ -472,7 +461,7 @@ function KitchenMenu() {
     }
   };
 
-  // Render table
+  // Hiển thị bảng
   const renderWeekTable = (data) => {
     const currentDayName = getDayOfWeek(selectedDate);
 

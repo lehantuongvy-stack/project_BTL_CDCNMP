@@ -21,17 +21,15 @@ const ChildrenManagement = () => {
     items_per_page: 10
   });
 
-  // For inline editing
+  // Chỉnh sử inline
   const [editingCell, setEditingCell] = useState({ childId: null, field: null });
   const [editingValues, setEditingValues] = useState({});
   const [originalValues, setOriginalValues] = useState({});
 
-  // Load children on component mount and filter change
   useEffect(() => {
     loadChildren();
   }, [filters, pagination.current_page]);
 
-  // Load teachers on component mount
   useEffect(() => {
     loadTeachers();
   }, []);
@@ -40,7 +38,7 @@ const ChildrenManagement = () => {
     try {
       setLoading(true);
       
-      // Build query parameters
+      // Xây dựng query
       const queryParams = new URLSearchParams();
       
       if (filters.searchTerm) {
@@ -66,10 +64,9 @@ const ChildrenManagement = () => {
       const hasFilters = filters.searchTerm || filters.className || filters.gender || filters.hasAllergy !== '' || filters.hasMedicalCondition;
       
       if (hasFilters) {
-        // Use search API when filters are applied
+        // Sử dụng API tìm kiếm khi có bộ lọc
         response = await childService.searchChildren(queryParams.toString());
       } else {
-        // Use regular get all API when no filters
         response = await childService.getAllChildren({
           page: pagination.current_page,
           limit: pagination.items_per_page
@@ -80,16 +77,13 @@ const ChildrenManagement = () => {
         console.log(' Children response data:', response.data);
         console.log(' First child data:', response.data.children?.[0]);
         
-        // Process children data to handle emergency_contact if it's JSON
         const processedChildren = (response.data.children || []).map(child => {
           let processedChild = { ...child };
           
-          // Handle emergency_contact if it's a JSON string
           if (typeof child.emergency_contact === 'string') {
             try {
               processedChild.emergency_contact = JSON.parse(child.emergency_contact);
             } catch (e) {
-              // Keep as string if parsing fails
               processedChild.emergency_contact = child.emergency_contact;
             }
           }
@@ -116,7 +110,6 @@ const ChildrenManagement = () => {
     try {
       const response = await userService.getUsersByRole('teacher');
       if (response.success) {
-        // Extract users array from response data
         const teachersData = response.data.users || response.data || [];
         setTeachers(teachersData);
       }
@@ -130,7 +123,6 @@ const ChildrenManagement = () => {
       ...prev,
       [filterName]: value
     }));
-    // Reset to first page when filter changes
     setPagination(prev => ({
       ...prev,
       current_page: 1
@@ -174,14 +166,13 @@ const ChildrenManagement = () => {
     return new Date(dateString).toLocaleDateString('vi-VN');
   };
 
-  // Handle inline edit start
+  // xử lý click cell để chỉnh sửa
   const handleCellClick = (childId, field, currentValue) => {
     setEditingCell({ childId, field });
     setEditingValues({ [`${childId}_${field}`]: currentValue || '' });
     setOriginalValues({ [`${childId}_${field}`]: currentValue || '' });
   };
 
-  // Handle input change during inline edit
   const handleInlineInputChange = (childId, field, value) => {
     setEditingValues(prev => ({
       ...prev,
@@ -189,19 +180,16 @@ const ChildrenManagement = () => {
     }));
   };
 
-  // Handle save inline edit
   const handleInlineSave = async (childId, field) => {
     const key = `${childId}_${field}`;
     const newValue = editingValues[key];
     const originalValue = originalValues[key];
 
-    // Don't save if value hasn't changed
     if (newValue === originalValues[key]) {
       handleInlineCancel(childId, field);
       return;
     }
     
-    // Validate that we have a valid field (allow empty values for some fields)
     if (!field) {
       console.log(' Invalid field, canceling save');
       handleInlineCancel(childId, field);
@@ -211,20 +199,15 @@ const ChildrenManagement = () => {
     try {
       setLoading(true);
       
-      // Prepare update data with proper type conversion
       let processedValue = newValue;
       
-      // Handle special cases for different field types
       if (field === 'height' || field === 'weight') {
         processedValue = newValue ? parseFloat(newValue) : null;
       } else if (field === 'date_of_birth') {
-        // Ensure date is in proper format
         processedValue = newValue || null;
       } else if (field === 'gender') {
-        // Ensure gender is 'male' or 'female'
         processedValue = newValue === 'male' || newValue === 'female' ? newValue : 'male';
       } else if (field === 'allergies' || field === 'medical_conditions') {
-        // Handle JSON fields
         if (newValue && newValue.trim()) {
           processedValue = newValue.trim();
         } else {
@@ -239,19 +222,15 @@ const ChildrenManagement = () => {
       const response = await childService.updateChild(childId, updateData);
 
       if (response.success) {
-        // Update local state
         setChildren(prev => prev.map(child => {
           if (child.id === childId) {
             const updatedChild = { ...child, [field]: newValue };
-            
-            // Special handling for teacher_id to also update teacher_name
             if (field === 'teacher_id' && newValue) {
               const selectedTeacher = teachers.find(teacher => teacher.id === newValue);
               if (selectedTeacher) {
                 updatedChild.teacher_name = selectedTeacher.full_name || selectedTeacher.name || selectedTeacher.username;
               }
             } else if (field === 'teacher_id' && !newValue) {
-              // Clear teacher_name if teacher_id is cleared
               updatedChild.teacher_name = null;
             }
             
@@ -260,7 +239,6 @@ const ChildrenManagement = () => {
           return child;
         }));
         
-        // Clear editing state
         setEditingCell({ childId: null, field: null });
         setEditingValues({});
         setOriginalValues({});
@@ -272,8 +250,7 @@ const ChildrenManagement = () => {
     } catch (error) {
       console.error('Error updating child:', error);
       alert('Cập nhật thất bại: ' + (error.message || 'Unknown error'));
-      
-      // Restore original value
+
       const originalKey = `${childId}_${field}`;
       setEditingValues(prev => ({
         ...prev,
@@ -284,20 +261,17 @@ const ChildrenManagement = () => {
     }
   };
 
-  // Handle cancel inline edit
   const handleInlineCancel = (childId, field) => {
     const key = `${childId}_${field}`;
     const originalKey = `${childId}_${field}`;
     const searchKey = `${childId}_teacher_search`;
     
-    // Restore original value
     setEditingValues(prev => {
       const newValues = {
         ...prev,
         [key]: originalValues[originalKey]
       };
       
-      // Clear search value for teacher field
       if (field === 'teacher_id') {
         delete newValues[searchKey];
       }
@@ -305,13 +279,11 @@ const ChildrenManagement = () => {
       return newValues;
     });
     
-    // Clear editing state
     setEditingCell({ childId: null, field: null });
     setEditingValues({});
     setOriginalValues({});
   };
 
-  // Handle Enter key press
   const handleKeyPress = (e, childId, field) => {
     if (e.key === 'Enter') {
       handleInlineSave(childId, field);
@@ -320,7 +292,6 @@ const ChildrenManagement = () => {
     }
   };
 
-  // Handle delete child
   const handleDelete = async (child) => {
     if (!confirm(`Bạn có chắc chắn muốn xóa "${child.full_name}"?`)) {
       return;
@@ -332,7 +303,7 @@ const ChildrenManagement = () => {
       
       if (response.success) {
         alert('Xóa thành công!');
-        loadChildren(); // Reload list
+        loadChildren(); 
       }
     } catch (error) {
       console.error('Error deleting child:', error);
@@ -342,7 +313,6 @@ const ChildrenManagement = () => {
     }
   };
 
-  // Render editable cell
   const renderEditableCell = (child, field, displayValue, inputType = 'text') => {
     const isEditing = editingCell.childId === child.id && editingCell.field === field;
     const key = `${child.id}_${field}`;
@@ -365,13 +335,13 @@ const ChildrenManagement = () => {
               className="inline-save-btn"
               disabled={loading}
             >
-              ✓
+              V
             </button>
             <button 
               onClick={() => handleInlineCancel(child.id, field)}
               className="inline-cancel-btn"
             >
-              ✕
+              X
             </button>
           </div>
         </div>
@@ -389,7 +359,6 @@ const ChildrenManagement = () => {
     );
   };
 
-  // Render select editable cell (for gender, class)
   const renderSelectCell = (child, field, displayValue, options) => {
     const isEditing = editingCell.childId === child.id && editingCell.field === field;
     const key = `${child.id}_${field}`;
@@ -416,20 +385,19 @@ const ChildrenManagement = () => {
               className="inline-save-btn"
               disabled={loading}
             >
-              ✓
+              V
             </button>
             <button 
               onClick={() => handleInlineCancel(child.id, field)}
               className="inline-cancel-btn"
             >
-              ✕
+              X
             </button>
           </div>
         </div>
       );
     }
-    
-    // Find the label for display
+
     const selectedOption = options.find(opt => opt.value === displayValue);
     const displayLabel = selectedOption ? selectedOption.label : displayValue;
     
@@ -445,25 +413,20 @@ const ChildrenManagement = () => {
   };
 
   const renderTeacherCell = (child) => {
-    // Teachers should now be an array since we fixed loadTeachers
     const teachersList = Array.isArray(teachers) ? teachers : [];
 
-    // Custom render for teacher select with search
     const isEditing = editingCell.childId === child.id && editingCell.field === 'teacher_id';
     const key = `${child.id}_teacher_id`;
     const searchKey = `${child.id}_teacher_search`;
     
     if (isEditing) {
-      // Get search value
       const searchValue = editingValues[searchKey] || '';
       
-      // Filter teachers based on search
       const filteredTeachers = teachersList.filter(teacher => {
         const teacherName = (teacher.full_name || teacher.name || teacher.username || '').toLowerCase();
         return teacherName.includes(searchValue.toLowerCase());
       });
       
-      // Find current teacher for display
       const currentTeacher = teachersList.find(teacher => teacher.id === child.teacher_id);
       const currentTeacherName = currentTeacher ? 
         (currentTeacher.full_name || currentTeacher.name || currentTeacher.username) : '';
@@ -478,7 +441,6 @@ const ChildrenManagement = () => {
               handleInlineInputChange(child.id, 'teacher_search', e.target.value);
             }}
             onFocus={() => {
-              // Set initial search to current teacher name when focusing
               if (!searchValue && currentTeacherName) {
                 handleInlineInputChange(child.id, 'teacher_search', currentTeacherName);
               }
@@ -495,19 +457,16 @@ const ChildrenManagement = () => {
               className="teacher-dropdown-item"
               onClick={() => {
                 
-                // Force update by clearing editing state first
                 setEditingCell({ childId: null, field: null });
                 setEditingValues({});
                 setOriginalValues({});
                 
-                // Update child directly
                 setChildren(prev => prev.map(c => 
                   c.id === child.id 
                     ? { ...c, teacher_id: null, teacher_name: null }
                     : c
                 ));
                 
-                // Also call API to save
                 (async () => {
                   try {
                     const response = await childService.updateChild(child.id, { teacher_id: null });
@@ -537,12 +496,10 @@ const ChildrenManagement = () => {
                   key={teacher.id}
                   className={`teacher-dropdown-item ${teacher.id === child.teacher_id ? 'selected' : ''}`}
                   onClick={() => {
-                    // Force update by clearing editing state first
                     setEditingCell({ childId: null, field: null });
                     setEditingValues({});
                     setOriginalValues({});
                     
-                    // Then update the child directly
                     const selectedTeacher = teacher;
                     setChildren(prev => prev.map(c => 
                       c.id === child.id 
@@ -554,7 +511,6 @@ const ChildrenManagement = () => {
                         : c
                     ));
                     
-                    // Also call API to save
                     (async () => {
                       try {
                         const response = await childService.updateChild(child.id, { teacher_id: selectedTeacher.id });
@@ -593,7 +549,6 @@ const ChildrenManagement = () => {
       );
     }
 
-    // Find current teacher name to display
     const currentTeacher = teachersList.find(teacher => teacher.id === child.teacher_id);
     const displayValue = currentTeacher ? 
       (currentTeacher.full_name || currentTeacher.name || currentTeacher.username) : 

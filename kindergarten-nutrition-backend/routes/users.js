@@ -15,20 +15,16 @@ class UserRoutes {
     // Xử lý các user routes
     async handleUserRoutes(req, res, path, method) {
         try {
-            // Apply authentication middleware
             const isAuthenticated = await this.applyAuthMiddleware(req, res, this.authController);
             if (!isAuthenticated) return;
 
-            // Parse request body cho POST/PUT requests
             if (['POST', 'PUT', 'PATCH'].includes(method)) {
                 req.body = await this.parseRequestBody(req);
             }
 
-            // Parse URL parameters
             const pathParts = path.split('/').filter(Boolean);
             const userId = pathParts[0];
 
-            // Route mapping
             switch (true) {
                 // GET /api/users - Lấy danh sách users
                 case (path === '' || path === '/') && method === 'GET':
@@ -112,7 +108,6 @@ class UserRoutes {
         }
     }
 
-    // Parse request body
     async parseRequestBody(req) {
         return new Promise((resolve, reject) => {
             let body = '';
@@ -137,13 +132,11 @@ class UserRoutes {
         });
     }
 
-    // Send response helper
     sendResponse(res, statusCode, data) {
         res.writeHead(statusCode, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(data));
     }
 
-    // Apply authentication middleware
     async applyAuthMiddleware(req, res, authController) {
         try {
             const authHeader = req.headers.authorization;
@@ -180,7 +173,6 @@ class UserRoutes {
         }
     }
 
-    // Parse request body
     async parseRequestBody(req) {
         return new Promise((resolve, reject) => {
             let body = '';
@@ -202,13 +194,11 @@ class UserRoutes {
         });
     }
 
-    // Send JSON response
     sendResponse(res, statusCode, data) {
         res.writeHead(statusCode, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(data));
     }
 
-    // Helper method to validate UUID format
     isValidUUID(uuid) {
         const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
         return uuidRegex.test(uuid);

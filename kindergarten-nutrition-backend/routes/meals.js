@@ -18,7 +18,6 @@ class MealsRoutes {
 
             const pathParts = path.split('/').filter(Boolean);
             
-            // Test endpoint không cần auth - bypass tất cả
             if (pathParts[0] === 'test' && method === 'GET') {
                 console.log(' Test endpoint - no auth required');
                 this.sendResponse(res, 200, {
@@ -30,16 +29,13 @@ class MealsRoutes {
                 return;
             }
             
-            // Apply authentication middleware
             const isAuthenticated = await this.applyAuthMiddleware(req, res, this.authController);
             if (!isAuthenticated) return;
 
-            // Parse request body cho POST/PUT requests
             if (['POST', 'PUT', 'PATCH'].includes(method)) {
                 req.body = await this.parseRequestBody(req);
             }
 
-            // Route mapping
             switch (true) {
                 // GET /api/meals - Lấy danh sách meals
                 case (path === '' || path === '/') && method === 'GET':
@@ -60,31 +56,19 @@ class MealsRoutes {
                     await this.mealController.createMeal(req, res);
                     break;
 
-                // GET /api/meals/weekly - Lấy thực đơn theo tuần (format API chuẩn)
-                case pathParts[0] === 'weekly' && method === 'GET':
-                    console.log(' Matched /api/meals/weekly route');
-                    await this.mealController.getWeeklyMealsForAPI(req, res);
-                    break;
-
-                // GET /api/meals/week - Lấy thực đôn theo tuần (alias)
-                case pathParts[0] === 'week' && method === 'GET':
-                    console.log(' Matched /api/meals/week route');
-                    await this.mealController.getWeeklyMealsForAPI(req, res);
-                    break;
-
-                // GET /api/meals/date - Lấy thực đơn theo ngày (format API chuẩn) - bypass auth cho test
+                // GET /api/meals/date - Lấy thực đơn theo ngày 
                 case pathParts[0] === 'date' && method === 'GET':
                     console.log(' Matched /api/meals/date route - bypass auth for test');
                     req.body = await this.parseRequestBody(req);
                     await this.mealController.getMealsByDateForAPI(req, res);
                     return; // bypass auth for test
 
-                // GET /api/meals/slide-right-home - Lấy thực đơn cho slide-right-home (không cần auth)
+                // GET /api/meals/slide-right-home - Lấy thực đơn cho slide-right-home
                 case pathParts[0] === 'slide-right-home' && method === 'GET':
                     console.log(' Matched /api/meals/slide-right-home route - bypass auth');
                     req.body = await this.parseRequestBody(req);
                     await this.mealController.getSlideRightHomeMeals(req, res);
-                    return; // bypass auth
+                    return; 
 
                 // GET /api/meals/foods - Lấy danh sách món ăn cho dropdown
                 case pathParts[0] === 'foods' && method === 'GET':
@@ -94,7 +78,7 @@ class MealsRoutes {
                     await this.mealController.getFoodsForDropdown(req, res);
                     break;
 
-                // GET /api/meals/mon-an - Lấy danh sách món ăn cho dropdown (alias)
+                // GET /api/meals/mon-an - Lấy danh sách món ăn cho dropdown 
                 case pathParts[0] === 'mon-an' && method === 'GET':
                     console.log(' Matched /api/meals/mon-an route');
                     await this.mealController.getFoodsForDropdown(req, res);
@@ -148,8 +132,6 @@ class MealsRoutes {
                         });
                         return;
                     }
-                    
-                    // Thêm menuId vào req.pathParams để controller access được
                     console.log(' PathParts[0]:', pathParts[0]);
                     req.pathParams = { id: pathParts[0] };
                     console.log(' req.pathParams:', req.pathParams);
@@ -182,7 +164,6 @@ class MealsRoutes {
         }
     }
 
-    // Apply authentication middleware
     async applyAuthMiddleware(req, res, authController) {
         const authHeader = req.headers.authorization;
         
@@ -201,7 +182,6 @@ class MealsRoutes {
             const decoded = await authController.verifyToken(token);
             console.log(' Token decoded successfully:', decoded);
             
-            // Lấy thông tin user từ database
             const user = await authController.userModel.findById(decoded.id);
             if (!user) {
                 this.sendResponse(res, 401, {
@@ -225,7 +205,6 @@ class MealsRoutes {
         }
     }
 
-    // Parse request body
     async parseRequestBody(req) {
         return new Promise((resolve, reject) => {
             let body = '';

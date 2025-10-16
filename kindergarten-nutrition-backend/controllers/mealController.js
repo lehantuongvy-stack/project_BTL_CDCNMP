@@ -13,10 +13,46 @@ class MealController extends BaseController {
     }
 
     /**
-     * Lấy danh sách thực đơn với pagination
-     */
+    * Tạo thực đơn mới
+    * POST /api/meals
+    */
+    async createMeal(req, res) {
+  try {
+    // Validate quyền
+    if (!['admin', 'teacher'].includes(req.user.role)) {
+      return this.sendResponse(res, 403, {
+        success: false,
+        message: 'Không có quyền tạo thực đơn'
+      });
+    }
+
+    const menuData = {
+      ...req.body,
+      created_by: req.user.id
+    };
+
+    const result = await this.mealModel.createMenuWithDetails(menuData);
+    
+    this.sendResponse(res, 201, {
+      success: true,
+      data: result,
+      message: 'Tạo thực đơn thành công'
+    });
+
+  } catch (error) {
+    console.error('Create meal error:', error);
+    this.sendResponse(res, 500, {
+      success: false,
+      message: 'Lỗi khi tạo thực đơn: ' + error.message
+    });
+  }
+    }
+
+    /**
+    * Lấy danh sách thực đơn với pagination
+    */
     async getMeals(req, res) {
-        try {
+    try {
             const { page = 1, limit = 50, date, class_id, session } = req.query;
             const offset = (page - 1) * limit;
 

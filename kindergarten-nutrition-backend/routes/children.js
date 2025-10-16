@@ -18,7 +18,6 @@ class ChildrenRoutes {
             console.log('CHILDREN ROUTES CALLED:', method, path);
             console.log('ChildrenRoutes handling:', method, path);
             
-            // Apply authentication middleware
             const isAuthenticated = await this.applyAuthMiddleware(req, res, this.authController);
             if (!isAuthenticated) {
                 console.log('Authentication failed');
@@ -26,17 +25,13 @@ class ChildrenRoutes {
             }
             console.log('Authentication passed');
 
-            // Parse request body cho POST/PUT requests
             if (['POST', 'PUT', 'PATCH'].includes(method)) {
                 req.body = await this.parseRequestBody(req);
                 console.log('Parsed body:', req.body);
             }
 
-            // Parse URL parameters
             const pathParts = path.split('/').filter(Boolean);
             const childId = pathParts[0];
-
-            console.log('Route matching - path:', path, 'method:', method);
 
             // Route mapping
             switch (true) {
@@ -48,7 +43,7 @@ class ChildrenRoutes {
 
                 // GET /api/children/basic-info - Lấy thông tin cơ bản cho parent filtering
                 case path === '/basic-info' && method === 'GET':
-                    console.log('🔍 Calling getBasicInfo');
+                    console.log(' Calling getBasicInfo');
                     await this.childController.getBasicInfo(req, res);
                     break;
 
@@ -96,7 +91,6 @@ class ChildrenRoutes {
                 // GET /api/children/search - Tìm kiếm children
                 case path === '/search' && method === 'GET':
                     console.log(' Children search route matched');
-                    // Apply authentication middleware
                     const authSearch = await this.applyAuthMiddleware(req, res, this.authController);
                     if (!authSearch) return;
                     await this.childController.searchChildrenHandler(req, res);
@@ -111,8 +105,8 @@ class ChildrenRoutes {
 
                 // PUT /api/children/:id - Cập nhật child
                 case childId && this.isValidUUID(childId) && method === 'PUT':
-                    console.log('🔧 Route PUT - childId:', childId);
-                    console.log('🔧 Route PUT - req.body before controller:', req.body);
+                    console.log(' Route PUT - childId:', childId);
+                    console.log(' Route PUT - req.body before controller:', req.body);
                     req.params = { id: childId };
                     await this.childController.updateChild(req, res);
                     break;
@@ -154,8 +148,6 @@ class ChildrenRoutes {
             });
         }
     }
-
-    // Parse request body
     async parseRequestBody(req) {
         return new Promise((resolve, reject) => {
             let body = '';
@@ -165,36 +157,35 @@ class ChildrenRoutes {
             req.on('end', () => {
                 try {
                     const contentType = req.headers['content-type'] || '';
-                    console.log('🔧 parseRequestBody - contentType:', contentType);
-                    console.log('🔧 parseRequestBody - raw body:', body);
+                    console.log(' parseRequestBody - contentType:', contentType);
+                    console.log(' parseRequestBody - raw body:', body);
                     
                     if (contentType.includes('application/json')) {
                         const parsed = JSON.parse(body);
-                        console.log('🔧 parseRequestBody - parsed JSON:', parsed);
+                        console.log(' parseRequestBody - parsed JSON:', parsed);
                         resolve(parsed);
                     } else if (contentType.includes('application/x-www-form-urlencoded')) {
                         const parsed = querystring.parse(body);
-                        console.log('🔧 parseRequestBody - parsed form:', parsed);
+                        console.log(' parseRequestBody - parsed form:', parsed);
                         resolve(parsed);
                     } else {
-                        // Try to parse as JSON even if content-type is wrong
-                        console.log('🔧 parseRequestBody - unknown content type, trying JSON parse...');
+                        console.log(' parseRequestBody - unknown content type, trying JSON parse...');
                         try {
                             if (body.trim().startsWith('{') || body.trim().startsWith('[')) {
                                 const parsed = JSON.parse(body);
-                                console.log('🔧 parseRequestBody - successfully parsed as JSON:', parsed);
+                                console.log(' parseRequestBody - successfully parsed as JSON:', parsed);
                                 resolve(parsed);
                             } else {
-                                console.log('🔧 parseRequestBody - not JSON format, returning empty object');
+                                console.log(' parseRequestBody - not JSON format, returning empty object');
                                 resolve({});
                             }
                         } catch (jsonError) {
-                            console.log('🔧 parseRequestBody - JSON parse failed, returning empty object');
+                            console.log(' parseRequestBody - JSON parse failed, returning empty object');
                             resolve({});
                         }
                     }
                 } catch (error) {
-                    console.log('🔧 parseRequestBody - parse error:', error);
+                    console.log(' parseRequestBody - parse error:', error);
                     reject(error);
                 }
             });
@@ -208,7 +199,6 @@ class ChildrenRoutes {
         res.end(JSON.stringify(data));
     }
 
-    // Apply authentication middleware
     async applyAuthMiddleware(req, res, authController) {
         try {
             const authHeader = req.headers.authorization;
@@ -245,7 +235,6 @@ class ChildrenRoutes {
         }
     }
 
-    // Helper method to validate UUID format
     isValidUUID(uuid) {
         const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
         return uuidRegex.test(uuid);

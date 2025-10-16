@@ -40,8 +40,8 @@ const handleSearch = async () => {
     const res = await reportService.getAllReports();
     let allReports = res.data || [];
     
-    console.log('🔍 Search criteria:', search);
-    console.log('📊 Total reports before filter:', allReports.length);
+    console.log(' Search criteria:', search);
+    console.log(' Total reports before filter:', allReports.length);
     
     // Filter theo các tiêu chí
     let filteredReports = allReports.filter(report => {
@@ -60,7 +60,7 @@ const handleSearch = async () => {
         const reportDate = new Date(report.report_date);
         const searchDate = new Date(search.month + "-01");
         
-        console.log('📅 Comparing dates:', {
+        console.log(' Comparing dates:', {
           reportDate: report.report_date,
           parsedReportDate: reportDate,
           searchMonthInput: search.month,
@@ -74,7 +74,7 @@ const handleSearch = async () => {
         matchMonth = reportDate.getFullYear() === searchDate.getFullYear() &&
                     reportDate.getMonth() === searchDate.getMonth();
         
-        console.log('📅 Month match result:', matchMonth);
+        console.log(' Month match result:', matchMonth);
       }
       
       // Filter theo người tạo
@@ -84,7 +84,7 @@ const handleSearch = async () => {
       }
       
       const finalMatch = matchName && matchMonth && matchCreatedBy;
-      console.log('🔍 Report filter result:', {
+      console.log(' Report filter result:', {
         reportName: report.report_name,
         reportDate: report.report_date,
         matchName,
@@ -97,7 +97,7 @@ const handleSearch = async () => {
     });
     
     setReports(filteredReports);
-    console.log('✅ Search results:', filteredReports.length, 'reports found');
+    console.log(' Search results:', filteredReports.length, 'reports found');
   } catch (err) {
     console.error("Error searching reports:", err);
     alert('Có lỗi khi tìm kiếm báo cáo!');
