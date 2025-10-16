@@ -66,7 +66,7 @@ class KindergartenServer {
         this.mealsRoutes = new MealsRoutes(this.mealController, this.authController);
         this.nutritionRoutes = new NutritionRoutes(this.nutritionController, this.authController);
         this.classRoutes = new ClassRoutes(this.classController);
-        this.nutritionRpRoutes = new NutritionRpRoutes(this.db);
+        this.nutritionRpRoutes = new NutritionRpRoutes(this.db, this.authController);
         this.parentFeedbackRoutes = new ParentFeedbackRoutes(this.parentFeedbackController, this.authController);
         
         // Initialize Services (for complex business logic)
@@ -88,6 +88,67 @@ class KindergartenServer {
         this.setCorsHeaders(res);
         res.writeHead(statusCode, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(data));
+    }
+
+    // Parse request body
+    parseRequestBody(req) {
+        return new Promise((resolve, reject) => {
+            let body = '';
+            req.on('data', chunk => {
+                body += chunk.toString();
+            });
+            req.on('end', () => {
+                try {
+                    console.log('🔧 parseRequestBody - raw body:', body);
+                    console.log('🔧 parseRequestBody - body length:', body.length);
+                    console.log('🔧 parseRequestBody - body type:', typeof body);
+                    
+                    const contentType = req.headers['content-type'] || '';
+                    
+                    if (contentType.includes('application/json')) {
+                        // Parse JSON
+                        req.body = body ? JSON.parse(body) : {};
+                        console.log('🔧 parseRequestBody - parsed as JSON:', req.body);
+                    } else if (contentType.includes('application/x-www-form-urlencoded')) {
+                        // Parse URL-encoded form data
+                        req.body = this.parseUrlEncoded(body);
+                        console.log('🔧 parseRequestBody - parsed as form data:', req.body);
+                    } else {
+                        // Try to parse as JSON first, then fallback to URL-encoded
+                        try {
+                            req.body = body ? JSON.parse(body) : {};
+                            console.log('🔧 parseRequestBody - fallback JSON success:', req.body);
+                        } catch (jsonError) {
+                            console.log('🔧 parseRequestBody - JSON parse error:', jsonError.message);
+                            console.log('🔧 parseRequestBody - problematic body:', body);
+                            // Fallback to URL-encoded parsing
+                            req.body = this.parseUrlEncoded(body);
+                            console.log('🔧 parseRequestBody - fallback to URL-encoded:', req.body);
+                        }
+                    }
+                    resolve();
+                } catch (error) {
+                    console.error('🔧 Error parsing request body:', error);
+                    req.body = {};
+                    resolve(); // Don't reject, just set empty body
+                }
+            });
+            req.on('error', (error) => {
+                console.error('🔧 Error reading request body:', error);
+                req.body = {};
+                resolve(); // Don't reject, just set empty body
+            });
+        });
+    }
+
+    // Parse URL-encoded form data
+    parseUrlEncoded(body) {
+        const params = new URLSearchParams(body);
+        const result = {};
+        for (const [key, value] of params) {
+            result[key] = value;
+        }
+        return result;
     }
 
     // Serve static files
@@ -171,6 +232,8 @@ class KindergartenServer {
                 console.log('POST /api/nutrition/records');
                 console.log('GET  /api/feedback');
                 console.log('POST /api/feedback');
+                console.log('GET  /api/warehouse');
+                console.log('POST /api/warehouse');
                 console.log('GET  /api/reports');
                 console.log('Static files: /public/*');
             });
@@ -201,6 +264,11 @@ class KindergartenServer {
 
             // Add query to request object
             req.query = query;
+
+            // Parse body for POST/PUT requests (except auth routes which handle their own parsing)
+            if (['POST', 'PUT', 'PATCH'].includes(method) && !pathname.startsWith('/api/auth')) {
+                req.body = await this.parseRequestBody(req);
+            }
 
             console.log(`${method} ${pathname}`);
 
@@ -242,6 +310,8 @@ class KindergartenServer {
                 await this.nutritionRoutes.handleNutritionRoutes(req, res);
             } else if (pathname.startsWith('/api/feedback')) {
                 await this.parentFeedbackRoutes.handleFeedbackRoutes(req, res, pathname.replace('/api/feedback', ''), method);
+            } else if (pathname.startsWith('/api/warehouse')) {
+                await this.handleWarehouseRoutes(req, res, pathname.replace('/api/warehouse', ''), method);
             } else if (pathname.startsWith('/api/reports')) {
                 await this.handleReports(req, res, pathname.replace('/api/reports', ''), method, query);
             } else if (pathname.startsWith('/public/') || pathname.startsWith('/api/docs')) {
@@ -537,6 +607,48 @@ class KindergartenServer {
                 message: 'Lỗi khi tạo báo cáo',
                 error: error.message
             });
+        }
+    }
+
+    // Handle Warehouse Routes
+    async handleWarehouseRoutes(req, res, path, method) {
+        try {
+            console.log(`🏪 Warehouse route: ${method} ${path}`);
+
+            if (method === 'GET' && (path === '' || path === '/')) {
+                // GET /api/warehouse - Lấy tất cả kho hàng
+                await this.warehouseController.getAllWarehouseRecords(req, res);
+                return;
+            }
+
+            if (method === 'POST' && (path === '' || path === '/')) {
+                
+                await this.warehouseController.createWarehouseRecord(req, res);
+                return;
+            }
+
+            if (method === 'DELETE' && path.match(/^\/\d+$/)) {
+                // DELETE /api/warehouse/:id - Xóa kho hàng
+                const id = path.substring(1); // Loại bỏ dấu '/' đầu tiên
+                req.params = { id };
+                await this.warehouseController.deleteWarehouseRecord(req, res);
+                return;
+            }
+
+            // Route không tìm thấy
+            this.sendResponse(res, 404, { 
+                success: false, 
+                message: 'Warehouse route not found',
+                available_routes: [
+                    'GET /api/warehouse - Get all warehouse records',
+                    'POST /api/warehouse - Create new warehouse record',
+                    'DELETE /api/warehouse/:id - Delete warehouse record'
+                ]
+            });
+
+        } catch (error) {
+            console.error(' Error in handleWarehouseRoutes:', error);
+            this.sendResponse(res, 500, { success: false, error: error.message });
         }
     }
 

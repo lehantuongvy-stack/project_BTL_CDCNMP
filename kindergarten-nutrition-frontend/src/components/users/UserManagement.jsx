@@ -27,19 +27,10 @@ const UserManagement = ({ role, title }) => {
     try {
       setLoading(true);
       const response = await apiService.get(`/api/users?role=${role}`);
-      
-      console.log(' Full API response:', response);
-      console.log(' Response data:', response.data);
-      console.log(' Response data users:', response.data?.users);
-      console.log(' Users is array?', Array.isArray(response.data?.users));
-      
+
       if (response.success) {
         const usersData = response.data?.users || [];
-        console.log(' Setting users to:', usersData);
-        console.log(' Users is array?', Array.isArray(usersData));
-        console.log(' Users length:', usersData.length);
-        console.log(' First user:', usersData[0]);
-        
+
         // Ensure we always set an array
         const usersArray = Array.isArray(usersData) ? usersData : [];
         setUsers(usersArray);
@@ -69,12 +60,6 @@ const UserManagement = ({ role, title }) => {
     return matchesSearch && matchesPhone && matchesEmail;
   });
 
-  // Debug filtered results
-  console.log(' Users array:', users);
-  console.log(' Users length:', users?.length);
-  console.log(' Filtered users:', filteredUsers);
-  console.log(' Filtered users length:', filteredUsers?.length);
-
   // Handle inline edit start
   const handleCellClick = (userId, field, currentValue) => {
     setEditingCell({ userId, field });
@@ -102,11 +87,6 @@ const UserManagement = ({ role, title }) => {
       const updateData = {
         [field]: newValue
       };
-
-      console.log(' Frontend sending updateData:', updateData);
-      console.log(' Field being updated:', field);
-      console.log(' New value:', newValue);
-      console.log(' User current data:', users.find(u => u.id === userId));
 
       const response = await apiService.put(`/api/users/${userId}`, updateData);
       

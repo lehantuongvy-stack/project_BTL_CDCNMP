@@ -1,27 +1,45 @@
-// src/services/warehouseService.js
-import apiService from './api.js';
+const API_URL = 'http://localhost:3002/api/warehouse';
 
-class WarehouseService {
-  getAll() {
-    return apiService.get('/api/warehouse');
+const warehouseService = {
+  getAll: async () => {
+    const response = await fetch(API_URL);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  },
+  
+  getById: async (id) => {
+    const response = await fetch(`${API_URL}/${id}`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  },
+  
+  create: async (data) => {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  },
+  
+  delete: async (id) => {
+    const response = await fetch(`${API_URL}/${id}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
   }
+};
 
-  getById(id) {
-    return apiService.get(`/api/warehouse/${id}`);
-  }
-
-  create(data) {
-    return apiService.post('/api/warehouse', data);
-  }
-
-  update(id, data) {
-    return apiService.put(`/api/warehouse/${id}`, data);
-  }
-
-  delete(id) {
-    return apiService.delete(`/api/warehouse/${id}`);
-  }
-}
-
-const warehouseService = new WarehouseService();
 export default warehouseService;

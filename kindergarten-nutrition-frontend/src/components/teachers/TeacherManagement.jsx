@@ -131,11 +131,6 @@ const TeacherManagement = () => {
         [field]: field === 'class_id' && newValue === '' ? null : newValue
       };
 
-      console.log(' Frontend sending updateData:', updateData);
-      console.log(' Field being updated:', field);
-      console.log(' New value:', newValue);
-      console.log(' Teacher current data:', teacher);
-
       const response = await apiService.put(`/api/users/${teacherId}`, updateData);
       
       if (response.success) {

@@ -1,15 +1,27 @@
 
+.home {
+  
+  height: 100vh;   /* cao full màn hình */
+  width: 100vw;        /* rộng full màn hình */
+   background-color: #ffced2; 
+  /* fixed */
+  background-size: cover;
+  margin: 0;
+  padding: 0;
+       /* chặn tràn trong div này */
+}
 
   .home {
     position: relative;
-    height: 100vh;   
-    width: 100vw;      
-    background-color: #ffeef1; 
+    min-height: 100vh;   /* min-height thay vì height để tránh overflow */
+    width: 100vw;        /* rộng full màn hình */
+    background-color: #ffced2; 
     background-size: cover;
     margin: 0;
     padding: 0;
-    overflow: hidden;
-    z-index: 0;     
+    padding-top: 200px;  /* Tăng padding để nội dung không bị header che (header + khoảng cách an toàn) */
+    overflow-x: hidden;  
+
   }
 
   html, body {
@@ -17,6 +29,6 @@
     padding: 0;
     height: 100%;
     width: 100%;
-    overflow-x: hidden;  
+    overflow-x: hidden;  /* chặn thanh trượt ngang */
     
   }  

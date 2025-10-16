@@ -25,13 +25,13 @@
 }
 
 .header {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  align-items: center;
-  margin-bottom: 20px;
-  border-radius: 6px;
-  background: #fabbb9 !important;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    /* khoảng cách giữa các khối */
+    flex-wrap: wrap;
+    /* cho phép tự xuống hàng khi màn hình nhỏ */
 }
 
 .title-box {
@@ -74,8 +74,11 @@
 .info-box {
   flex: 1;
   min-width: 200px;
-  background-color: #ffccd4;
-  padding: 8px;
+  margin: 0 10px;
+  font-size: 14px;
+  background-color: #f3bebe;
+  color: black;
+  padding: 8px;          
   border-radius: 10px;
   line-height: 1.3;      
 }
@@ -94,14 +97,6 @@
   outline: none;            
   background: #f3bebe;       
   border-radius: 6px;
-  border: none;
-  background: #ffeef1;
-  outline: none;
-  color: #302e2e;
-}
-
-.header-buttons button{
-    background: #4CAF50;
 }
 
 .form-sections {
@@ -112,8 +107,8 @@
 }
 
 .card {
-  background: #fabbb9;
-  padding: 12px;          /* vừa phải */
+  background: #f9a896;
+  padding: 10px;         
   border-radius: 10px;
   font-size: 14px;       /* chữ nhỏ hơn */
   line-height: 1.3;      /* giảm chiều cao dòng */
@@ -138,9 +133,6 @@
   font-size: 13px;
   padding: 6px 10px;     /* nút nhỏ gọn */
   border-radius: 6px;
-  width: 95%;
-  background: #ffeef1;
-  color: black;
 }
 
 
@@ -181,15 +173,9 @@ textarea {
     min-height: 60px;
 }
 
-.card button,
-.btn-group button {
-  font-size: 13px;
-  padding: 6px 10px;
-  border-radius: 6px;
-  background: #ec5a75;
-  color: black;
-  border: none;
-  cursor: pointer;
+.btn-group {
+    display: flex;
+    justify-content: space-between;
 }
 
 .card button {

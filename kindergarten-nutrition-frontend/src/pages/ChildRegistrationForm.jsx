@@ -387,7 +387,25 @@ const ChildRegistrationForm = () => {
         });
       }
     } catch (error) {
-      setErrors({ submit: `Có lỗi khi tạo hồ sơ trẻ: ${error.message}` });
+      // Parse error message to show user-friendly message
+      let errorMessage = error.message || 'Lỗi không xác định';
+      
+      // Check for duplicate student_id error
+      if (errorMessage.includes('Duplicate entry') && errorMessage.includes('student_id')) {
+        const match = errorMessage.match(/Duplicate entry '([^']+)'/);
+        const duplicateId = match ? match[1] : childData.student_id;
+        errorMessage = `Mã học sinh "${duplicateId}" đã tồn tại trong hệ thống. Vui lòng sử dụng mã khác.`;
+      } 
+      // Check for other duplicate errors
+      else if (errorMessage.includes('Duplicate entry')) {
+        errorMessage = `Thông tin đã tồn tại trong hệ thống. Vui lòng kiểm tra lại.`;
+      }
+      // Check for constraint errors
+      else if (errorMessage.includes('constraint') || errorMessage.includes('foreign key')) {
+        errorMessage = `Dữ liệu không hợp lệ. Vui lòng kiểm tra lại thông tin.`;
+      }
+      
+      setErrors({ submit: errorMessage });
     } finally {
       setLoading(false);
     }

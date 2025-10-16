@@ -145,57 +145,57 @@ class Child {
         }
     }
 
-    // // Tìm child theo ID
-    // async findById(id) {
-    //     const query = `
-    //         SELECT c.id, c.student_id, c.full_name, c.date_of_birth, c.gender, 
-    //                c.class_name, c.nhom, c.parent_id, c.teacher_id, c.height, c.weight,
-    //                c.allergies, c.medical_conditions, c.admission_date,
-    //                c.is_active, c.created_at, c.updated_at,
-    //                u.full_name as parent_name,
-    //                u.phone as parent_phone,
-    //                t.full_name as teacher_name,
-    //                FLOOR(DATEDIFF(CURDATE(), c.date_of_birth) / 365.25) as age
-    //         FROM ${this.tableName} c
-    //         LEFT JOIN users u ON c.parent_id = u.id
-    //         LEFT JOIN users t ON c.teacher_id = t.id
-    //         WHERE c.id = ? AND c.is_active = 1
-    //     `;
+    // Tìm child theo ID
+    async findById(id) {
+        const query = `
+            SELECT c.id, c.student_id, c.full_name, c.date_of_birth, c.gender, 
+                   c.class_name, c.nhom, c.parent_id, c.teacher_id, c.height, c.weight,
+                   c.allergies, c.medical_conditions, c.admission_date,
+                   c.is_active, c.created_at, c.updated_at,
+                   u.full_name as parent_name,
+                   u.phone as parent_phone,
+                   t.full_name as teacher_name,
+                   FLOOR(DATEDIFF(CURDATE(), c.date_of_birth) / 365.25) as age
+            FROM ${this.tableName} c
+            LEFT JOIN users u ON c.parent_id = u.id
+            LEFT JOIN users t ON c.teacher_id = t.id
+            WHERE c.id = ? AND c.is_active = 1
+        `;
         
-    //     try {
-    //         // Test direct query first
-    //         const directQuery = `SELECT class_name FROM children WHERE id = ?`;
-    //         const directResult = await this.db.query(directQuery, [id]);
+        try {
+            // Test direct query first
+            const directQuery = `SELECT class_name FROM children WHERE id = ?`;
+            const directResult = await this.db.query(directQuery, [id]);
             
-    //         const result = await this.db.query(query, [id]);
-    //         // Handle different MySQL2 response formats
-    //         if (Array.isArray(result) && result.length > 0) {
-    //             const rows = Array.isArray(result[0]) ? result[0] : result;
-    //             if (Array.isArray(rows) && rows.length > 0) {
-    //                 const child = rows[0];
-    //                 // Parse JSON fields
-    //                 if (child.allergies && typeof child.allergies === 'string') {
-    //                     try {
-    //                         child.allergies = JSON.parse(child.allergies);
-    //                     } catch (e) {
-    //                         child.allergies = [];
-    //                     }
-    //                 }
-    //                 if (child.medical_conditions && typeof child.medical_conditions === 'string') {
-    //                     try {
-    //                         child.medical_conditions = JSON.parse(child.medical_conditions);
-    //                     } catch (e) {
-    //                         child.medical_conditions = [];
-    //                     }
-    //                 }
-    //                 return child;
-    //             }
-    //         }
-    //         return null;
-    //     } catch (error) {
-    //         return null;
-    //     }
-    // }
+            const result = await this.db.query(query, [id]);
+            // Handle different MySQL2 response formats
+            if (Array.isArray(result) && result.length > 0) {
+                const rows = Array.isArray(result[0]) ? result[0] : result;
+                if (Array.isArray(rows) && rows.length > 0) {
+                    const child = rows[0];
+                    // Parse JSON fields
+                    if (child.allergies && typeof child.allergies === 'string') {
+                        try {
+                            child.allergies = JSON.parse(child.allergies);
+                        } catch (e) {
+                            child.allergies = [];
+                        }
+                    }
+                    if (child.medical_conditions && typeof child.medical_conditions === 'string') {
+                        try {
+                            child.medical_conditions = JSON.parse(child.medical_conditions);
+                        } catch (e) {
+                            child.medical_conditions = [];
+                        }
+                    }
+                    return child;
+                }
+            }
+            return null;
+        } catch (error) {
+            return null;
+        }
+    }
 
     // Tìm children theo class_id  
     async findByClassId(classId) {

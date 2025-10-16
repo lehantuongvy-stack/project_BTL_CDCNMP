@@ -26,36 +26,39 @@ function ProtectedRoute({ children, requiredRole = null }) {
   }
 
   // Check role if required
-  if (requiredRole && user?.role !== requiredRole) {
-    return (
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100vh',
-        textAlign: 'center'
-      }}>
-        <h2>Không có quyền truy cập</h2>
-        <p>Bạn không có quyền truy cập vào trang này.</p>
-        <button 
-          onClick={() => window.history.back()}
-          style={{
-            padding: '0.5rem 1rem',
-            background: '#667eea',
-            color: 'white',
-            border: 'none',
-            borderRadius: '0.5rem',
-            cursor: 'pointer'
-          }}
-        >
-          Quay lại
-        </button>
-      </div>
-    );
+  if (requiredRole) {
+    // Support both string and array of roles
+    const allowedRoles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
+    
+    if (!allowedRoles.includes(user?.role)) {
+      return (
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+          textAlign: 'center'
+        }}>
+          <h2>Không có quyền truy cập</h2>
+          <p>Bạn không có quyền truy cập vào trang này.</p>
+          <button 
+            onClick={() => window.history.back()}
+            style={{
+              padding: '0.5rem 1rem',
+              background: '#ffced2',
+              color: 'white',
+              border: 'none',
+              borderRadius: '0.5rem',
+              cursor: 'pointer'
+            }}
+          >
+            Quay lại
+          </button>
+        </div>
+      );
+    }
   }
-
-  // Render children if authenticated and authorized
   return children;
 }
 

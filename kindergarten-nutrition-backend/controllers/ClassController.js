@@ -13,7 +13,7 @@ class ClassController extends BaseController {
         this.classModel = new Class(db);
     }
 
-    // GET /api/classes - Lấy tất cả classes
+    // Lấy tất cả classes
     async getAllClasses(req, res) {
         try {
             console.log(' Getting all classes...');
@@ -37,7 +37,7 @@ class ClassController extends BaseController {
         }
     }
 
-    // GET /api/classes/:id - Lấy class theo ID
+    // Lấy class theo ID
     async getClassById(req, res) {
         try {
             const { id } = req.params;

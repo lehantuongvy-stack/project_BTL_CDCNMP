@@ -83,7 +83,7 @@ function Login() {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Handle form submit
+  // Kiểm tra form submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -102,7 +102,7 @@ function Login() {
         password: formData.password
       });
       
-      // Show success message
+      // Xử lý res
       const userRole = response.data.user.role;
       const roleText = userRole === 'admin' ? 'Quản trị viên' : 
                       userRole === 'teacher' ? 'Giáo viên' :
@@ -110,7 +110,6 @@ function Login() {
       
       setSuccessMessage(`Đăng nhập thành công! Chào mừng ${roleText}: ${response.data.user.full_name}`);
       
-      // Redirect after showing success message
       setTimeout(() => {
         if (userRole === 'admin') {
           navigate("/admin");
@@ -122,21 +121,19 @@ function Login() {
     } catch (error) {
       console.error("Login error:", error);
       
-      // Extract clean message from error
       let errorMessage = "Đăng nhập thất bại. Vui lòng thử lại.";
       
       if (error.message) {
-        // Remove HTTP status code prefix if it exists
         errorMessage = error.message.replace(/^HTTP \d+:\s*/, '');
-        
-        // Try to parse JSON message if it's a JSON string
+ 
+        // Kiểm tra sai định dạng JSON
         try {
           const parsed = JSON.parse(errorMessage);
           if (parsed.message) {
             errorMessage = parsed.message;
           }
         } catch (parseError) {
-          // If not JSON, use the cleaned message as is
+          
         }
       }
       

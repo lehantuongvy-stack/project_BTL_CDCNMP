@@ -42,7 +42,7 @@ class ParentFeedbackController extends BaseController {
     }
   }
 
-  // Lấy tất cả ý kiến (Admin xem)
+  // Lấy tất cả ý kiến 
   async getAllFeedback(req, res) {
     try {
       const result = await this.db.getYKienPhuHuynh();

@@ -90,7 +90,7 @@ class ChildController extends BaseController {
         }
     }
 
-    // API GET /api/children/my-class - Lấy danh sách học sinh của teacher đang đăng nhập
+    // Lấy danh sách học sinh của teacher đang đăng nhập
     async getMyClassChildren(req, res) {
         try {
             console.log(' getMyClassChildren called for teacher:', req.user.id);
@@ -260,7 +260,6 @@ class ChildController extends BaseController {
                 childData.parent_id = req.user.id;
                 console.log('Set parent_id from user:', req.user.id);
             } else if (req.user.role === 'admin' || req.user.role === 'teacher') {
-                // Admin/teacher có thể tạo child cho parent khác
                 if (!childData.parent_id) {
                     console.log('Missing parent_id for admin/teacher');
                     return this.sendResponse(res, 400, {
@@ -289,9 +288,29 @@ class ChildController extends BaseController {
 
         } catch (error) {
             console.error('Create child error:', error);
-            this.sendResponse(res, 500, {
+            
+            let errorMessage = 'Lỗi server khi tạo child';
+            let statusCode = 500;
+
+            if (error.message && error.message.includes('Duplicate entry')) {
+                const match = error.message.match(/Duplicate entry '([^']+)' for key '([^']+)'/);
+                if (match) {
+                    const duplicateValue = match[1];
+                    const keyName = match[2];
+                    
+                    if (keyName.includes('student_id')) {
+                        errorMessage = `Mã học sinh "${duplicateValue}" đã tồn tại trong hệ thống`;
+                        statusCode = 409; // Conflict
+                    } else {
+                        errorMessage = `Giá trị "${duplicateValue}" đã tồn tại trong hệ thống`;
+                        statusCode = 409;
+                    }
+                }
+            }
+            
+            this.sendResponse(res, statusCode, {
                 success: false,
-                message: 'Lỗi server khi tạo child',
+                message: errorMessage,
                 error: error.message
             });
         }
