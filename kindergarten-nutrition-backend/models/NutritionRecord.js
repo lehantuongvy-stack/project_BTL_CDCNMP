@@ -21,7 +21,6 @@ class NutritionRecord {
                 can_nang,
                 bmi,
                 tinh_trang_suc_khoe,  // Thay đổi từ tinh_trang_dinh_duong
-                ket_luan,
                 khuyen_cao,
                 an_uong,
                 hoat_dong,
@@ -39,15 +38,15 @@ class NutritionRecord {
             const query = `
                 INSERT INTO danh_gia_suc_khoe (
                     child_id, teacher_id, ngay_danh_gia, chieu_cao, can_nang,
-                    tinh_trang_suc_khoe, ket_luan, khuyen_cao,
+                    tinh_trang_suc_khoe, khuyen_cao,
                     an_uong, hoat_dong, tinh_than, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
             `;
 
             const values = [
                 child_id, teacher_id, ngay_danh_gia || new Date().toISOString().split('T')[0], 
                 chieu_cao, can_nang,
-                healthStatus, ket_luan || ghi_chu || '', khuyen_cao || '',
+                healthStatus, khuyen_cao || '',
                 an_uong || 'good', hoat_dong || 'normal', tinh_than || 'normal'
             ];
 
@@ -78,7 +77,6 @@ class NutritionRecord {
             const chieu_cao = recordData.chieu_cao;
             const can_nang = recordData.can_nang;
             const tinh_trang_suc_khoe = recordData.tinh_trang_suc_khoe;
-            const ket_luan = recordData.ket_luan || '';
             const khuyen_cao = recordData.khuyen_cao || '';
             const an_uong = recordData.an_uong || 'good';
             const hoat_dong = recordData.hoat_dong || 'normal';
@@ -92,14 +90,14 @@ class NutritionRecord {
             const query = `
                 UPDATE danh_gia_suc_khoe SET 
                     teacher_id = ?, chieu_cao = ?, can_nang = ?,
-                    tinh_trang_suc_khoe = ?, ket_luan = ?, khuyen_cao = ?,
+                    tinh_trang_suc_khoe = ?, khuyen_cao = ?,
                     an_uong = ?, hoat_dong = ?, tinh_than = ?
                 WHERE id = ?
             `;
 
             const values = [
                 teacher_id, chieu_cao, can_nang,
-                tinh_trang_suc_khoe, ket_luan, khuyen_cao,
+                tinh_trang_suc_khoe, khuyen_cao,
                 an_uong, hoat_dong, tinh_than,
                 id
             ];

@@ -400,13 +400,6 @@ const HealthManager = () => {
                                 value={recommendation}
                                 onChange={(e) => setRecommendation(e.target.value)}
                             ></textarea>
-
-                            <button 
-                                style={{ marginTop: "15px" }}
-                                onClick={handleSaveChildDetails}
-                            >
-                                Lưu thông tin
-                            </button>
                         </>
                     ) : (
                         <p className="select-child-message">Vui lòng chọn một trẻ để nhập thông tin</p>

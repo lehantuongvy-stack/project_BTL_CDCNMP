@@ -202,7 +202,6 @@ const HealthStudent = () => {
     fetchData();
   }, [user, token]);
 
-  // Hàm render dropdown chọn con (nếu có nhiều con)
   const renderChildSelector = () => {
     if (allChildren.length <= 1) return null;
     
@@ -212,7 +211,7 @@ const HealthStudent = () => {
     
     return (
       <div className="child-selector-dropdown">
-        <label htmlFor="child-select">Chọn con:</label>
+        <label htmlFor="child-select">Tên của bé:</label>
         <select 
           id="child-select"
           value={selectedChildId || ''}
@@ -360,7 +359,6 @@ const HealthStudent = () => {
                 </div>
               </>
             )}
-            <p><small>Debug: Không tìm thấy detailed_records</small></p>
           </div>
         );
       }
@@ -369,7 +367,6 @@ const HealthStudent = () => {
         <div className="health-info-card">
           <h3>Thông tin sức khỏe của trẻ</h3>
           <p>Chưa có dữ liệu đánh giá sức khỏe</p>
-          <p><small>Debug: {JSON.stringify(Object.keys(healthStats))}</small></p>
         </div>
       );
     }
@@ -402,10 +399,6 @@ const HealthStudent = () => {
             {latestRecord.tinh_trang_suc_khoe === 'binh_thuong' ? 'Bình thường' : 
              (latestRecord.tinh_trang_suc_khoe || 'Chưa đánh giá')}
           </span>
-        </div>
-        <div className="form-row">
-          <label>Kết luận:</label>
-          <span className="info-display">{latestRecord.ket_luan || 'Chưa có kết luận'}</span>
         </div>
         <div className="form-row">
           <label>Khuyến cáo:</label>
