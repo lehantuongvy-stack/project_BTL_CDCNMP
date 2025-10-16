@@ -82,8 +82,6 @@ html, body, #root {
   background: #fafafa;
   padding: 20px;
   overflow-y: auto;  /* cuộn nếu nội dung dài */
-  overflow-x: hidden; /* ngăn cuộn ngang */
-  max-width: 100%; /* đảm bảo không vượt quá width container */
 }
 
 /* Reset-ish */
@@ -289,54 +287,24 @@ a{ color:inherit; text-decoration:none; }
 
 /* ========== Modal ========== */
 .modal-overlay{
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 2000;
+  position:fixed; inset:0; z-index:1100;
+  background: rgba(0,0,0,.35);
+  display:grid; place-items:center;
+  padding:20px;
 }
 .modal-content{
-  max-height: 90vh;       /* không vượt quá chiều cao màn hình */
-  overflow-y: auto;       /* bật cuộn dọc */
-  border-radius: 12px;
-  background: #fff;
-  padding: 20px;
+  width:min(920px, 100%);
+  background:#fff; border-radius:18px; overflow:hidden;
+  box-shadow: 0 30px 60px rgba(0,0,0,.25);
 }
-.modal-header {
-  background: #e91e63;
-  color: white;
-  padding: 1rem 1.5rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.modal-header{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 16px; background:linear-gradient(135deg,var(--pink-300),var(--pink-200));
 }
-
-.modal-header h3 {
-  margin: 0;
-  font-size: 1.25rem;
-}
-.modal-body {
-  padding: 1.5rem;
-  max-height: 60vh;
-  overflow-y: auto;
-}
-
-.modal-close {
-  background: transparent;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  color: #e74c3c;  /* đỏ để dễ nhận */
-  margin-left: auto; /* đẩy sang phải */
-}
-
-.modal-close:hover {
-  background: rgba(255, 255, 255, 0.2);
+.modal-body{ padding:16px; max-height:70vh; overflow:auto; }
+.modal-close{
+  width:36px; height:36px; border-radius:10px; font-size:18px;
+  background:rgba(255,255,255,.6);
 }
 .children-list{ display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:12px; }
 .child-item{ padding:12px; border-radius:12px; background:#fff; border:1px solid rgba(0,0,0,.06); }
@@ -392,129 +360,36 @@ a{ color:inherit; text-decoration:none; }
   border-radius: 12px;
   padding: 1.5rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  overflow: hidden; /* Đảm bảo nội dung không tràn */
-  width: 100%; /* Đảm bảo full width */
-  max-width: 100%; /* Không vượt quá container */
 }
 
 .reports-table-container {
-  width: 100%;
+  overflow-x: auto;
   margin-bottom: 1rem;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  /* Đảm bảo container không vượt quá 100% width */
-  max-width: 100%;
 }
 
-.reports-table,
-.report-table {
+.reports-table {
   width: 100%;
   border-collapse: collapse;
   margin-bottom: 1rem;
-  table-layout: fixed; /* Đảm bảo các cột có kích thước cố định */
 }
 
 .reports-table th,
-.reports-table td,
-.report-table th,
-.report-table td {
-  padding: 0.75rem 0.5rem;
+.reports-table td {
+  padding: 0.75rem;
   text-align: left;
   border-bottom: 1px solid #eee;
-  word-wrap: break-word; /* Cho phép text xuống dòng */
-  overflow-wrap: break-word;
-  hyphens: auto;
-  max-width: 0; /* Tạo điều kiện cho ellipsis hoặc wrap */
-  vertical-align: top; /* Căn text từ trên xuống */
-  line-height: 1.4; /* Tăng line height cho dễ đọc */
 }
 
-.reports-table th,
-.report-table th {
+.reports-table th {
   background: #f8f9fa;
   font-weight: 600;
   color: #2b2b2f;
   position: sticky;
   top: 0;
-  white-space: nowrap; /* Tránh title cột bị xuống dòng */
 }
 
-/* Định nghĩa độ rộng cụ thể cho các cột (7 cột) */
-.reports-table th:nth-child(1),
-.reports-table td:nth-child(1),
-.report-table th:nth-child(1),
-.report-table td:nth-child(1) {
-  width: 20%; /* Cột Tên báo cáo */
-}
-
-.reports-table th:nth-child(2),
-.reports-table td:nth-child(2),
-.report-table th:nth-child(2),
-.report-table td:nth-child(2) {
-  width: 15%; /* Cột Tên trường */
-}
-
-.reports-table th:nth-child(3),
-.reports-table td:nth-child(3),
-.report-table th:nth-child(3),
-.report-table td:nth-child(3) {
-  width: 12%; /* Cột Ngày báo cáo */
-}
-
-.reports-table th:nth-child(4),
-.reports-table td:nth-child(4),
-.report-table th:nth-child(4),
-.report-table td:nth-child(4) {
-  width: 10%; /* Cột Số trẻ */
-}
-
-.reports-table th:nth-child(5),
-.reports-table td:nth-child(5),
-.report-table th:nth-child(5),
-.report-table td:nth-child(5) {
-  width: 13%; /* Cột Số suất/ngày */
-}
-
-.reports-table th:nth-child(6),
-.reports-table td:nth-child(6),
-.report-table th:nth-child(6),
-.report-table td:nth-child(6) {
-  width: 15%; /* Cột Người tạo */
-}
-
-.reports-table th:nth-child(7),
-.reports-table td:nth-child(7),
-.report-table th:nth-child(7),
-.report-table td:nth-child(7) {
-  width: 15%; /* Cột Thao tác */
-  text-align: center;
-}
-
-.reports-table tr:hover,
-.report-table tr:hover {
+.reports-table tr:hover {
   background-color: #fff0f6;
-}
-
-/* ========== Warehouse ========== */
-.warehouse-list-section {
-  background: white;
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  overflow: hidden; /* Đảm bảo nội dung không tràn */
-  width: 100%; /* Đảm bảo full width */
-  max-width: 100%; /* Không vượt quá container */
-}
-
-.warehouse-table-container {
-  width: 100%;
-  margin-bottom: 1rem;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  /* Đảm bảo container không vượt quá 100% width */
-  max-width: 100%;
 }
 
 .loading-cell,
@@ -528,8 +403,6 @@ a{ color:inherit; text-decoration:none; }
 .action-buttons {
   display: flex;
   gap: 0.5rem;
-  justify-content: center;
-  flex-wrap: wrap; /* Cho phép wrap nếu cần */
 }
 
 .btn-action {
@@ -539,8 +412,6 @@ a{ color:inherit; text-decoration:none; }
   font-size: 0.875rem;
   cursor: pointer;
   transition: all 0.2s ease;
-  white-space: nowrap; /* Tránh text trong button bị xuống dòng */
-  min-width: 60px; /* Đảm bảo button có độ rộng tối thiểu */
 }
 
 .btn-view {
@@ -581,6 +452,15 @@ a{ color:inherit; text-decoration:none; }
   .stats-grid{ grid-template-columns:1fr; }
   .children-list{ grid-template-columns: 1fr; }
   
+  .reports-table-container {
+    font-size: 0.875rem;
+  }
+  
+  .reports-table th,
+  .reports-table td {
+    padding: 0.5rem 0.25rem;
+  }
+  
   .action-buttons {
     flex-direction: column;
     gap: 0.25rem;
@@ -590,4 +470,113 @@ a{ color:inherit; text-decoration:none; }
     padding: 0.3rem 0.6rem;
     font-size: 0.75rem;
   }
+}
+
+/* Warehouse styles */
+.warehouse-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--gap);
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: var(--radius);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(233, 30, 99, 0.1);
+}
+
+.warehouse-header h2 {
+  color: var(--text);
+  margin: 0 0 0.5rem 0;
+}
+
+.warehouse-header p {
+  color: var(--muted);
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.create-warehouse-btn {
+  background: linear-gradient(135deg, var(--pink-500), var(--pink-600));
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.create-warehouse-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(233, 30, 99, 0.3);
+}
+
+.warehouse-table-container {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  margin-bottom: var(--gap);
+}
+
+.warehouse-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.warehouse-table th {
+  background: linear-gradient(135deg, var(--pink-500), var(--pink-600));
+  color: white;
+  padding: 1rem 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.warehouse-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid rgba(233, 30, 99, 0.1);
+  transition: background-color 0.2s ease;
+}
+
+.warehouse-table tr:hover td {
+  background-color: rgba(233, 30, 99, 0.05);
+}
+
+.warehouse-summary {
+  background: rgba(255, 255, 255, 0.8);
+  padding: 1rem;
+  border-radius: var(--radius);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--gap);
+}
+
+.warehouse-summary p {
+  margin: 0;
+  color: var(--text);
+}
+
+.warehouse-summary strong {
+  color: var(--pink-600);
+}
+
+.status {
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-good {
+  background: rgba(52, 199, 89, 0.1);
+  color: var(--green);
+}
+
+.btn-edit {
+  background: linear-gradient(135deg, var(--blue), #3b82f6);
+  color: white;
 }

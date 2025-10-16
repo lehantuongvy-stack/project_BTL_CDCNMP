@@ -109,6 +109,7 @@ class DatabaseManager {
         connection.release();
     }
 
+    
     // -------------------- USERS --------------------
     async createUser(userData) {
         const sql = `
@@ -448,9 +449,9 @@ class DatabaseManager {
     async createDanhGiaSucKhoe(data) {
         const sql = `
             INSERT INTO danh_gia_suc_khoe (child_id, teacher_id, chieu_cao, can_nang,
-                                         tinh_trang_suc_khoe, ket_luan, khuyen_cao,
+                                         tinh_trang_suc_khoe, khuyen_cao,
                                          an_uong, hoat_dong, tinh_than, lan_danh_gia_tiep_theo)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
         const params = [
             data.child_id,
@@ -458,7 +459,6 @@ class DatabaseManager {
             data.chieu_cao || null,
             data.can_nang || null,
             data.tinh_trang_suc_khoe || null,
-            data.ket_luan || null,
             data.khuyen_cao || null,
             data.an_uong || 'good',
             data.hoat_dong || 'normal',

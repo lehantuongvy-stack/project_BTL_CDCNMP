@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Header from '../components/common/Header.jsx';
 import '../styles/WarehouseForm.css';
 import '../styles/background.css';
+import warehouseService from '../services/warehouseService.js';
 
 function WarehouseForm({ initialData = {}, readOnly = false, onCancel }) {
   const [form, setForm] = useState({
@@ -43,18 +44,25 @@ function WarehouseForm({ initialData = {}, readOnly = false, onCancel }) {
 
   const handleSave = async () => {
   try {
-    const response = await fetch('http://localhost:3002/api/warehouse', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
-    });
+    // Map frontend field names to backend field names
+    const warehouseData = {
+      nguyen_lieu: form.loaiNguyenLieu,
+      nguyen_lieu_ton: parseInt(form.nguyenLieuConTon) || 0,
+      tinh_trang: form.tinhTrang || 'good',
+      suc_chua_toi_da: parseInt(form.sucChua) || 0,
+      ngay_nhap: form.ngayNhap || null,
+      ngay_xuat: form.ngayRa || null,
+      tong_so_luong: parseInt(form.tongSoLuong) || 0
+    };
 
-    const data = await response.json();
-    if (response.ok) {
-      setMessage( data.message);
+    console.log('Sending warehouse data:', warehouseData);
+    const response = await warehouseService.create(warehouseData);
+
+    if (response && response.success) {
+      setMessage( response.message);
       handleReset();
     } else {
-      setMessage( data.message);
+      setMessage( (response?.message || 'Có lỗi xảy ra'));
     }
   } catch (error) {
     console.error('Lỗi khi gửi dữ liệu:', error);

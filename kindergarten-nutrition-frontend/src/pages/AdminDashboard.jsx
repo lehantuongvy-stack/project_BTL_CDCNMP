@@ -4,10 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import childService from '../services/childService.js';
 import userService from '../services/userService.js';
 import reportService from '../services/nutritionrpService.js';
-import CreateReport from './CreateReport.jsx';
-import WarehouseForm from './WarehouseForm.jsx';
-import warehouseService from '../services/warehouseService.js';
 import parentFeedbackService from '../services/parentFeedbackService.js';
+import warehouseService from '../services/warehouseService.js';
 import ChildrenManagement from '../components/children/ChildrenManagement.jsx';
 import TeacherManagement from '../components/teachers/TeacherManagement.jsx';
 import ParentManagement from '../components/parents/ParentManagement.jsx';
@@ -27,8 +25,12 @@ function AdminDashboard() {
   const [childrenDetails, setChildrenDetails] = useState([]);
   const [showChildrenModal, setShowChildrenModal] = useState(false);
   const [showCreateAccountDropdown, setShowCreateAccountDropdown] = useState(false);
+  const [reports, setReports] = useState([]);
+  const [loadingReports, setLoadingReports] = useState(false);
   const [feedbacks, setFeedbacks] = useState([]);
   const [loadingFeedbacks, setLoadingFeedbacks] = useState(false);
+  const [warehouseItems, setWarehouseItems] = useState([]);
+  const [loadingWarehouse, setLoadingWarehouse] = useState(false);
 
   // Load danh sách ý kiến phụ huynh
   const loadFeedbacks = async () => {
@@ -45,6 +47,24 @@ function AdminDashboard() {
       setFeedbacks([]);
     } finally {
       setLoadingFeedbacks(false);
+    }
+  };
+
+  // Load danh sách warehouse
+  const loadWarehouseItems = async () => {
+    try {
+      setLoadingWarehouse(true);
+      const response = await warehouseService.getAll();
+      console.log('Warehouse data loaded:', response);
+      
+      // Lấy tất cả items từ warehouse
+      const warehouseList = response.data || [];
+      setWarehouseItems(warehouseList);
+    } catch (error) {
+      console.error('Lỗi khi tải dữ liệu kho hàng:', error);
+      setWarehouseItems([]);
+    } finally {
+      setLoadingWarehouse(false);
     }
   };
 
@@ -171,82 +191,48 @@ function AdminDashboard() {
     }
   };
 
-  // phần báo cáo
-  const [reports, setReports] = useState([]);
-  const [loadingReports, setLoadingReports] = useState(false);
-  const [showCreateReport, setShowCreateReport] = useState(false);
-  const [showViewReport, setShowViewReport] = useState(false);
-  const [selectedReport, setSelectedReport] = useState(null);
-
-  // Load báo cáo ngay khi component mount
-  useEffect(() => {
-    loadReports();
-  }, []);
-
-  //hiển thị báo cáo
-  useEffect(() => {
-  if (activeSection === 'reports') {
-    loadReports();
-  }
-  }, [activeSection]);
-
+  // Load reports data
   const loadReports = async () => {
     try {
       setLoadingReports(true);
-      const res = await reportService.getAllReports();
-
-      
-      // Xử lý data - nếu là object thì chuyển thành array
-      let reportsData = res.data || [];
-      if (!Array.isArray(reportsData)) {
-        reportsData = [reportsData]; // Chuyển object thành array
-      }
-      
-      setReports(reportsData);
-    } catch (err) {
-      console.error('Error loading reports:', err);
+      const response = await reportService.getAllReports();
+      setReports(response.data || []);
+    } catch (error) {
+      console.error('Error loading reports:', error);
+      setReports([]);
     } finally {
       setLoadingReports(false);
     }
   };
-  // Tạo báo cáo mới
-  const handleCreateReport = async (reportData) => {
-  try {
-    const result = await reportService.createReport(reportData);
-    setShowCreateReport(false);
-    loadReports(); // refresh danh sách
-  } catch (err) {
-    console.error('Error creating report:', err);
-  }
-};
 
-//kho nguyên liệu
-  const [warehouseData, setWarehouseData] = useState([]);
-  const [loadingWarehouse, setLoadingWarehouse] = useState(false);
-  const [selectedItem, setSelectedItem] = useState(null);
-  const [showWarehouseForm, setShowWarehouseForm] = useState(false);
-
-  const loadWarehouse = async () => {
-  try {
-    setLoadingWarehouse(true);
-    const res = await warehouseService.getAll();
-    setWarehouseData(res.data);
-  } catch (err) {
-    console.error('Lỗi khi tải dữ liệu kho:', err);
-  } finally {
-    setLoadingWarehouse(false);
-  }
-};
-useEffect(() => {
-  if (activeSection === 'warehouse') {
-    loadWarehouse();
-  }
-}, [activeSection]);
+  // Handle delete report
+  const handleDeleteReport = async (reportId) => {
+    if (!window.confirm('Bạn có chắc chắn muốn xóa báo cáo này?')) {
+      return;
+    }
+    
+    try {
+      await reportService.deleteReport(reportId);
+      // Reload reports after successful deletion
+      await loadReports();
+      alert('Xóa báo cáo thành công!');
+    } catch (error) {
+      console.error('Error deleting report:', error);
+      alert('Có lỗi khi xóa báo cáo!');
+    }
+  };
 
   // Load reports when reports section is active
   useEffect(() => {
     if (activeSection === 'reports') {
       loadReports();
+    }
+  }, [activeSection]);
+
+  // Load warehouse when warehouse section is active
+  useEffect(() => {
+    if (activeSection === 'warehouse') {
+      loadWarehouseItems();
     }
   }, [activeSection]);
 
@@ -256,14 +242,12 @@ useEffect(() => {
       title: 'Tổng số trẻ em', 
       value: loading ? '...' : dashboardData.totalChildren, 
       color: 'pink', 
-      description: 'Tăng 5% so với tháng trước',
       moreInfo: true 
     },
     { 
       title: 'Giáo viên', 
       value: loading ? '...' : dashboardData.totalTeachers,  
       color: 'orange', 
-      description: 'Đội ngũ giáo viên',
       moreInfo: true 
     },
     { 
@@ -272,14 +256,6 @@ useEffect(() => {
       color: 'red', 
       description: 'Bữa ăn hôm nay' 
     }
-  ];
-
-  const recentActivities = [
-    { id: 1, action: 'Thêm món ăn mới: Cháo gà với rau củ', user: 'Cô Lan', time: '10 phút trước', type: 'meal' },
-    { id: 2, action: 'Cập nhật thông tin trẻ: Nguyễn Minh An', user: 'Cô Hương', time: '25 phút trước', type: 'child' },
-    { id: 3, action: 'Tạo báo cáo dinh dưỡng tuần 3', user: 'Chuyên viên Minh', time: '1 giờ trước', type: 'report' },
-    { id: 4, action: 'Thêm nguyên liệu: Cà rốt - 10kg', user: 'Admin', time: '2 giờ trước', type: 'ingredient' },
-    { id: 5, action: 'Phê duyệt thực đơn tuần tới', user: 'Hiệu trưởng', time: '3 giờ trước', type: 'menu' }
   ];
 
   const menuItems = [
@@ -422,168 +398,170 @@ useEffect(() => {
 
             <div className="reports-list-section">
               <div className="reports-table-container">
-                {/* Hiển thị danh sách báo cáo */}
-                {loadingReports ? (
-                  <p>Đang tải báo cáo...</p>
-                ) : reports.length > 0 ? (
-                  <table className="reports-table">
-                  <thead>
-                  <tr>
-                    <th>Tên báo cáo</th>
-                    <th>Tên trường</th>
-                    <th>Ngày báo cáo</th>
-                    <th>Số trẻ</th>
-                    <th>Số suất/ngày</th>
-                    <th>Người tạo</th>
-                    <th>Thao tác</th>
-                  </tr>
-                  </thead>
-                  <tbody>
-                {reports.map((r) => (
-                  <tr key={r.id}>
-                    <td>{r.report_name}</td>
-                    <td>{r.school_name}</td>
-                    <td>{r.report_date}</td>
-                    <td>{r.num_children}</td>
-                    <td>{r.meals_per_day}</td>
-                    <td>{r.created_by}</td>
-                    <td>
-                    <button 
-                      onClick={() => {
-                        setSelectedReport(r);
-                        setShowViewReport(true);
-                      }}
-                    > 
-                      Xem
-                    </button>
-                    <button 
-                      onClick={async () => {
-                        if (window.confirm('Bạn có chắc muốn xóa báo cáo này?')) {
-                          try {
-                            await reportService.deleteReport(r.id);
-                            loadReports();
-                          } catch (error) {
-                            alert('Có lỗi khi xóa báo cáo: ' + error.message);
-                          }
-                        }
-                      }}
-                    >
-                      Xóa
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <p>Chưa có báo cáo nào</p>
-        )}
-        </div>
-        </div>
-
-        {/* Modal tạo báo cáo */}
-        {showCreateReport && (
-          <div className="modal-overlay" onClick={() => setShowCreateReport(false)}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <CreateReport
-                onSave={handleCreateReport}
-                onCancel={() => setShowCreateReport(false)}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Modal xem báo cáo */}
-        {showViewReport && selectedReport && (
-          <div className="modal-overlay" onClick={() => setShowViewReport(false)}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <CreateReport
-                reportData={selectedReport}
-                readOnly={true}
-                onCancel={() => setShowViewReport(false)}
-              />
-            </div>
-          </div>
-        )}
-      </div>
-      );
-
-        case 'warehouse':
-          return (
-            <div className="section-content">
-              <h2>Kho hàng</h2>
-              <p>Quản lý nguyên liệu, số lượng và tình trạng kho.</p>
-
-              <div className="warehouse-list-section">
-                <div className="warehouse-table-container">
-              {loadingWarehouse ? (
-                <p>Đang tải dữ liệu...</p>
-              ) : warehouseData.length > 0 ? (
                 <table className="reports-table">
                   <thead>
                     <tr>
-                      <th>Tên nguyên liệu</th>
-                      <th>Tình trạng</th>
-                      <th>Tổng số lượng</th>
-                      <th>Ngày xuất</th>
-                      <th>Thao tác</th>
+                      <th>Tên báo cáo</th>
+                      <th>Tên trường</th>
+                      <th>Ngày báo cáo</th>
+                      <th>Số trẻ</th>
+                      <th>Số suất/ngày</th>
+                      <th>Người tạo</th>
+                      <th>Hành động</th>
                     </tr>
                   </thead>
-                <tbody>
-                {warehouseData.map((item) => (
-                  <tr key={item.id}>
-                    <td>{item.nguyen_lieu}</td>
-                    <td>{item.tinh_trang}</td>
-                    <td>{item.tong_so_luong}</td>
-                    <td>{item.ngay_xuat?.slice(0, 10)}</td>
-                    <td>
-                    <button onClick={() => { 
-                      console.log('Clicked warehouse item:', item);
-                      setSelectedItem(item); 
-                      setShowWarehouseForm(true); 
-                    }}>
-                      Xem
-                    </button>
-                    <button onClick={async () => {
-                      if (window.confirm('Bạn có chắc muốn xóa nguyên liệu này?')) {
-                        try {
-                          const result = await warehouseService.delete(item.id);
-                          alert('Xóa nguyên liệu thành công!');
-                          loadWarehouse();
-                        } catch (error) {
-                          console.error('Error deleting warehouse item:', error);
-                          alert('Lỗi khi xóa nguyên liệu: ' + error.message);
-                        }
-                      }
-                    }}>
-                      Xóa
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <p>Kho hiện chưa có dữ liệu</p>
-        )}
-        </div>
-        </div>
+                  <tbody>
+                    {loadingReports ? (
+                      <tr>
+                        <td colSpan="7" className="loading-cell">
+                          Đang tải báo cáo...
+                        </td>
+                      </tr>
+                    ) : reports.length > 0 ? (
+                      reports.map((report, index) => (
+                        <tr key={report.id || index}>
+                          <td>{report.report_name || 'Không có tên'}</td>
+                          <td>{report.school_name || 'Không có tên trường'}</td>
+                          <td>
+                            {report.report_date ? 
+                              new Date(report.report_date).toLocaleDateString('vi-VN') : 
+                              'Không có ngày'
+                            }
+                          </td>
+                          <td>{report.num_children || 0}</td>
+                          <td>{report.meals_per_day || 0}</td>
+                          <td>{report.created_by || 'Không rõ'}</td>
+                          <td>
+                            <div className="action-buttons">
+                              <button 
+                                className="btn-action btn-view"
+                                onClick={() => navigate(`/reports/${report.id}`)}
+                                title="Xem chi tiết"
+                              >
+                                Xem
+                              </button>
+                              <button 
+                                className="btn-action btn-delete"
+                                onClick={() => handleDeleteReport(report.id)}
+                                title="Xóa báo cáo"
+                              >
+                                Xóa
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="7" className="no-data-cell">
+                          Không có báo cáo nào. Hãy tạo báo cáo đầu tiên!
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
 
-        {/* Modal hiển thị form xem chi tiết */}
-        {showWarehouseForm && selectedItem && (
-          <div className="modal-overlay" onClick={() => setShowWarehouseForm(false)}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <WarehouseForm
-                initialData={selectedItem}
-                readOnly={true}
-                onCancel={() => setShowWarehouseForm(false)}
-              />
+              <div className="reports-summary">
+                <p>Tổng cộng: <strong>{reports.length}</strong> báo cáo</p>
+              </div>
             </div>
           </div>
-        )}
-      </div>
-    );
- 
+        );
+
+      case 'warehouse':
+        return (
+          <div className="section-content">
+            <div className="warehouse-header">
+              <div>
+                <h2>Kho hàng</h2>
+                <p>Quản lý nguyên liệu và kho hàng...</p>
+              </div>
+            </div>
+
+            <div className="warehouse-list-section">
+              <div className="warehouse-table-container">
+                <table className="warehouse-table">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Nguyên liệu</th>
+                      <th>Số lượng tồn</th>
+                      <th>Tình trạng</th>
+                      <th>Sức chứa tối đa</th>
+                      <th>Ngày cập nhật</th>
+                      <th>Ngày xuất</th>
+                      <th>Tổng số lượng</th>
+                      <th>Hành động</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {loadingWarehouse ? (
+                      <tr>
+                        <td colSpan="9" className="loading-cell">
+                          Đang tải dữ liệu kho hàng...
+                        </td>
+                      </tr>
+                    ) : warehouseItems.length > 0 ? (
+                      warehouseItems.map((item) => (
+                        <tr key={item.id}>
+                          <td>{item.id}</td>
+                          <td>{item.nguyen_lieu || 'N/A'}</td>
+                          <td>{item.nguyen_lieu_ton || 0}</td>
+                          <td>{item.tinh_trang || 'N/A'}</td>
+                          <td>{item.suc_chua_toi_da || 0}</td>
+                          <td>
+                            {item.ngay_cap_nhat ? 
+                              new Date(item.ngay_cap_nhat).toLocaleDateString('vi-VN') : 
+                              'N/A'
+                            }
+                          </td>
+                          <td>
+                            {item.ngay_xuat ? 
+                              new Date(item.ngay_xuat).toLocaleDateString('vi-VN') : 
+                              'N/A'
+                            }
+                          </td>
+                          <td>{item.tong_so_luong || 0}</td>
+                          <td>
+                            <div className="action-buttons">
+                              <button 
+                                className="btn-action btn-view"
+                                onClick={() => console.log('View item:', item.id)}
+                                title="Xem chi tiết"
+                              >
+                                Xem
+                              </button>
+                              <button 
+                                className="btn-action btn-delete"
+                                onClick={() => console.log('Delete item:', item.id)}
+                                title="Xóa"
+                              >
+                                Xóa
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="9" className="no-data-cell">
+                          Không có dữ liệu kho hàng. Hãy thêm nguyên liệu đầu tiên!
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="warehouse-summary">
+                <p>Tổng cộng: <strong>{warehouseItems.length}</strong> nguyên liệu trong kho</p>
+                <p>Tổng giá trị kho: <strong>{warehouseItems.reduce((sum, item) => sum + (item.tong_so_luong || 0), 0)}</strong> đơn vị</p>
+              </div>
+            </div>
+          </div>
+        );
+      
       default:
         return (
           <div className="section-content">

@@ -69,7 +69,6 @@ class NutritionController extends BaseController {
                     chieu_cao: recordData.chieu_cao,
                     can_nang: recordData.can_nang,
                     tinh_trang_suc_khoe: recordData.tinh_trang_suc_khoe,
-                    ket_luan: recordData.ket_luan,
                     khuyen_cao: recordData.khuyen_cao,
                     an_uong: recordData.an_uong,
                     hoat_dong: recordData.hoat_dong,

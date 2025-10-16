@@ -21,11 +21,14 @@ class ApiService {
 
     // Add auth token if available
     const token = localStorage.getItem('authToken');
+    console.log('🔑 Token from localStorage:', token ? token.substring(0, 20) + '...' : 'No token found');
     if (token) {
       config.headers = {
         ...config.headers,
         Authorization: `Bearer ${token}`
       };
+    } else {
+      console.log('⚠️ No auth token available for request to:', url);
     }
 
     console.log(' API Request:', {
