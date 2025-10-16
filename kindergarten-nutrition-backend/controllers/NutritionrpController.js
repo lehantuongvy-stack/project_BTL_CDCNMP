@@ -139,20 +139,15 @@ class NutritionReportController {
     async getReportById(req, res) {
         try {
             const { id } = req.params;
-            console.log('🔍 Getting report by ID:', id);
             
             const rows = await this.db.query("SELECT * FROM nutrition_reports WHERE id = ?", [id]);
-            console.log('🔍 Query result:', rows?.length || 0, 'rows');
-            console.log('🔍 Raw query result:', JSON.stringify(rows, null, 2));
             
             if (!rows || !rows.length) {
-                console.log('❌ No report found for ID:', id);
                 return this.sendResponse(res, 404, { success: false, message: "Không tìm thấy báo cáo" });
             }
 
             // Parse JSON strings back to objects
             const report = rows[0];
-            console.log('📊 Raw report data:', report);
             
             try {
                 if (report.nutrition_data && typeof report.nutrition_data === 'string') {
@@ -169,10 +164,8 @@ class NutritionReportController {
                 // Keep original values if parsing fails
             }
 
-            console.log('✅ Parsed report data:', report);
             this.sendResponse(res, 200, { success: true, data: report });
         } catch (err) {
-            console.error('❌ getReportById error:', err);
             this.sendResponse(res, 500, { success: false, message: "Lỗi server", error: err.message });
         }
     }

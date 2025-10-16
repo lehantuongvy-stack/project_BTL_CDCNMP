@@ -21,27 +21,21 @@ export default function CreateReport({ onSave, onCancel, reportData, readOnly = 
 
   // Load report data from API if ID exists
   useEffect(() => {
-    console.log('🔍 CreateReport useEffect - ID:', id, 'reportData:', reportData);
     if (id && !reportData) {
-      console.log('🔍 Loading report data for ID:', id);
       loadReportData(id);
     } else if (reportData) {
-      console.log('🔍 Using provided reportData:', reportData);
+      console.log(' Using provided reportData:', reportData);
     }
   }, [id, reportData]);
 
   const loadReportData = async (reportId) => {
     try {
       setLoading(true);
-      console.log('Loading report with ID:', reportId);
       
       const response = await reportService.getReportById(reportId);
-      console.log('API Response:', response);
       
       if (response.success) {
         const data = response.data;
-        console.log('Report data received:', data);
-        
         // Parse nutrition data safely
         let nutritionData = {};
         if (data.nutrition_data) {
@@ -88,7 +82,7 @@ export default function CreateReport({ onSave, onCancel, reportData, readOnly = 
           growth: growthData
         });
         
-        console.log('📊 Form updated with data:', {
+        console.log('Form updated with data:', {
           tenBaoCao: data.report_name,
           nutritionData,
           growthData
@@ -208,8 +202,8 @@ export default function CreateReport({ onSave, onCancel, reportData, readOnly = 
     },
   ];
   
-  console.log('📊 Chart nutrientData:', nutrientData);
-  console.log('📊 Form values for charts:', {
+  console.log(' Chart nutrientData:', nutrientData);
+  console.log(' Form values for charts:', {
     nangLuong: form.nangLuong,
     protein: form.protein,
     lipid: form.lipid,
@@ -361,12 +355,9 @@ const handleSubmit = async (e) => {
         <button
           className="back"
           onClick={() => {
-            console.log('Back button clicked, onCancel:', onCancel); // Debug log
             if (onCancel) {
-              console.log('Calling onCancel'); // Debug log
               onCancel(); 
             } else {
-              console.log('Calling navigate(-1)'); // Debug log
               navigate(-1); // Quay về trang trước
             }
           }}
