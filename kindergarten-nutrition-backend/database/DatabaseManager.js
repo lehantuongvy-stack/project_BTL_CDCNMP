@@ -109,6 +109,7 @@ class DatabaseManager {
         connection.release();
     }
 
+    
     // -------------------- USERS --------------------
     async createUser(userData) {
         const sql = `

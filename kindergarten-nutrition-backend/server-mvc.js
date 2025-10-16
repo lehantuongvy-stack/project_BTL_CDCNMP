@@ -29,6 +29,7 @@ const DishRoutes = require('./routes/dishes');
 const ClassRoutes = require('./routes/classes');
 const NutritionRpRoutes = require('./routes/nutritionrp');
 const ParentFeedbackRoutes = require('./routes/parentfeedback');
+const WarehouseRoutes = require('./routes/warehouse');
 
 // Services (for backward compatibility)
 const ReportingService = require('./services/ReportingService');
@@ -68,6 +69,7 @@ class KindergartenServer {
         this.classRoutes = new ClassRoutes(this.classController);
         this.nutritionRpRoutes = new NutritionRpRoutes(this.db, this.authController);
         this.parentFeedbackRoutes = new ParentFeedbackRoutes(this.parentFeedbackController, this.authController);
+        this.warehouseRoutes = new WarehouseRoutes(this.warehouseController, this.authController);
         
         // Initialize Services (for complex business logic)
         this.reportingService = new ReportingService(this.db);
@@ -222,7 +224,6 @@ class KindergartenServer {
             } else if (pathname.startsWith('/api/classes')) {
                 await this.classRoutes.handleClassRoutes(req, res, pathname.replace('/api/classes', ''), method);
             } else if (pathname.startsWith('/api/meals')) {
-                // Sử dụng Express router cho các endpoint đơn giản
                 const simplePaths = ['/dishes', '/by-date'];
                 const isSimplePath = simplePaths.some(path => pathname.includes(path)) || 
                                    (pathname === '/api/meals' && ['GET', 'POST'].includes(method)) ||
@@ -240,6 +241,8 @@ class KindergartenServer {
                 await this.nutritionRpRoutes.handleNutritionRpRoutes(req, res, pathname.replace('/api/nutritionrp', ''), method);
             } else if (pathname.startsWith('/api/nutrition')) {
                 await this.nutritionRoutes.handleNutritionRoutes(req, res);
+            } else if (pathname.startsWith('/api/warehouse')) {
+                await this.warehouseRoutes.handleWarehouseRoutes(req, res, pathname.replace('/api/warehouse', ''), method);
             } else if (pathname.startsWith('/api/feedback')) {
                 await this.parentFeedbackRoutes.handleFeedbackRoutes(req, res, pathname.replace('/api/feedback', ''), method);
             } else if (pathname.startsWith('/api/reports')) {
@@ -379,6 +382,13 @@ class KindergartenServer {
                     class_stats: "GET /api/nutrition/stats/class",
                     attention_list: "GET /api/nutrition/stats/attention",
                     calculate_bmi: "POST /api/nutrition/calculate-bmi"
+                },
+                warehouse: {
+                    list: "GET /api/warehouse",
+                    create: "POST /api/warehouse",
+                    detail: "GET /api/warehouse/:id",
+                    update: "PUT /api/warehouse/:id",
+                    delete: "DELETE /api/warehouse/:id"
                 },
                 feedback: {
                     list: "GET /api/feedback",

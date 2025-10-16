@@ -140,7 +140,6 @@ function Login() {
       setErrors({
         general: errorMessage
       });
-      // Reload captcha when login fails
       setCaptcha(generateCaptcha());
       setFormData(prev => ({
         ...prev,

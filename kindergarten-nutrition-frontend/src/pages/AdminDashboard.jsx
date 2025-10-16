@@ -5,6 +5,7 @@ import childService from '../services/childService.js';
 import userService from '../services/userService.js';
 import reportService from '../services/nutritionrpService.js';
 import parentFeedbackService from '../services/parentFeedbackService.js';
+import warehouseService from '../services/warehouseService.js';
 import ChildrenManagement from '../components/children/ChildrenManagement.jsx';
 import TeacherManagement from '../components/teachers/TeacherManagement.jsx';
 import ParentManagement from '../components/parents/ParentManagement.jsx';
@@ -28,6 +29,8 @@ function AdminDashboard() {
   const [loadingReports, setLoadingReports] = useState(false);
   const [feedbacks, setFeedbacks] = useState([]);
   const [loadingFeedbacks, setLoadingFeedbacks] = useState(false);
+  const [warehouseItems, setWarehouseItems] = useState([]);
+  const [loadingWarehouse, setLoadingWarehouse] = useState(false);
 
   // Load danh sách ý kiến phụ huynh
   const loadFeedbacks = async () => {
@@ -44,6 +47,24 @@ function AdminDashboard() {
       setFeedbacks([]);
     } finally {
       setLoadingFeedbacks(false);
+    }
+  };
+
+  // Load danh sách warehouse
+  const loadWarehouseItems = async () => {
+    try {
+      setLoadingWarehouse(true);
+      const response = await warehouseService.getAll();
+      console.log('Warehouse data loaded:', response);
+      
+      // Lấy tất cả items từ warehouse
+      const warehouseList = response.data || [];
+      setWarehouseItems(warehouseList);
+    } catch (error) {
+      console.error('Lỗi khi tải dữ liệu kho hàng:', error);
+      setWarehouseItems([]);
+    } finally {
+      setLoadingWarehouse(false);
     }
   };
 
@@ -208,20 +229,25 @@ function AdminDashboard() {
     }
   }, [activeSection]);
 
+  // Load warehouse when warehouse section is active
+  useEffect(() => {
+    if (activeSection === 'warehouse') {
+      loadWarehouseItems();
+    }
+  }, [activeSection]);
+
   // Dashboard stats with real data
   const dashboardStats = [
     { 
       title: 'Tổng số trẻ em', 
       value: loading ? '...' : dashboardData.totalChildren, 
       color: 'pink', 
-      description: 'Tăng 5% so với tháng trước',
       moreInfo: true 
     },
     { 
       title: 'Giáo viên', 
       value: loading ? '...' : dashboardData.totalTeachers,  
       color: 'orange', 
-      description: 'Đội ngũ giáo viên',
       moreInfo: true 
     },
     { 
@@ -230,14 +256,6 @@ function AdminDashboard() {
       color: 'red', 
       description: 'Bữa ăn hôm nay' 
     }
-  ];
-
-  const recentActivities = [
-    { id: 1, action: 'Thêm món ăn mới: Cháo gà với rau củ', user: 'Cô Lan', time: '10 phút trước', type: 'meal' },
-    { id: 2, action: 'Cập nhật thông tin trẻ: Nguyễn Minh An', user: 'Cô Hương', time: '25 phút trước', type: 'child' },
-    { id: 3, action: 'Tạo báo cáo dinh dưỡng tuần 3', user: 'Chuyên viên Minh', time: '1 giờ trước', type: 'report' },
-    { id: 4, action: 'Thêm nguyên liệu: Cà rốt - 10kg', user: 'Admin', time: '2 giờ trước', type: 'ingredient' },
-    { id: 5, action: 'Phê duyệt thực đơn tuần tới', user: 'Hiệu trưởng', time: '3 giờ trước', type: 'menu' }
   ];
 
   const menuItems = [
@@ -446,6 +464,99 @@ function AdminDashboard() {
 
               <div className="reports-summary">
                 <p>Tổng cộng: <strong>{reports.length}</strong> báo cáo</p>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'warehouse':
+        return (
+          <div className="section-content">
+            <div className="warehouse-header">
+              <div>
+                <h2>Kho hàng</h2>
+                <p>Quản lý nguyên liệu và kho hàng...</p>
+              </div>
+            </div>
+
+            <div className="warehouse-list-section">
+              <div className="warehouse-table-container">
+                <table className="warehouse-table">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Nguyên liệu</th>
+                      <th>Số lượng tồn</th>
+                      <th>Tình trạng</th>
+                      <th>Sức chứa tối đa</th>
+                      <th>Ngày cập nhật</th>
+                      <th>Ngày xuất</th>
+                      <th>Tổng số lượng</th>
+                      <th>Hành động</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {loadingWarehouse ? (
+                      <tr>
+                        <td colSpan="9" className="loading-cell">
+                          Đang tải dữ liệu kho hàng...
+                        </td>
+                      </tr>
+                    ) : warehouseItems.length > 0 ? (
+                      warehouseItems.map((item) => (
+                        <tr key={item.id}>
+                          <td>{item.id}</td>
+                          <td>{item.nguyen_lieu || 'N/A'}</td>
+                          <td>{item.nguyen_lieu_ton || 0}</td>
+                          <td>{item.tinh_trang || 'N/A'}</td>
+                          <td>{item.suc_chua_toi_da || 0}</td>
+                          <td>
+                            {item.ngay_cap_nhat ? 
+                              new Date(item.ngay_cap_nhat).toLocaleDateString('vi-VN') : 
+                              'N/A'
+                            }
+                          </td>
+                          <td>
+                            {item.ngay_xuat ? 
+                              new Date(item.ngay_xuat).toLocaleDateString('vi-VN') : 
+                              'N/A'
+                            }
+                          </td>
+                          <td>{item.tong_so_luong || 0}</td>
+                          <td>
+                            <div className="action-buttons">
+                              <button 
+                                className="btn-action btn-view"
+                                onClick={() => console.log('View item:', item.id)}
+                                title="Xem chi tiết"
+                              >
+                                Xem
+                              </button>
+                              <button 
+                                className="btn-action btn-delete"
+                                onClick={() => console.log('Delete item:', item.id)}
+                                title="Xóa"
+                              >
+                                Xóa
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="9" className="no-data-cell">
+                          Không có dữ liệu kho hàng. Hãy thêm nguyên liệu đầu tiên!
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="warehouse-summary">
+                <p>Tổng cộng: <strong>{warehouseItems.length}</strong> nguyên liệu trong kho</p>
+                <p>Tổng giá trị kho: <strong>{warehouseItems.reduce((sum, item) => sum + (item.tong_so_luong || 0), 0)}</strong> đơn vị</p>
               </div>
             </div>
           </div>

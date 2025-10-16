@@ -63,21 +63,23 @@ class WarehouseRoutes {
 
   async applyAuthMiddleware(req, res, authController) {
     try {
-      const authHeader = req.headers.authorization;
-      if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        this.sendResponse(res, 401, { success: false, message: 'Access token required' });
+      console.log(' Warehouse auth check - ALL headers:', JSON.stringify(req.headers, null, 2));
+      console.log(' Authorization header:', req.headers.authorization);
+      console.log(' Authorization header (lowercase):', req.headers['authorization']);
+      
+      const authResult = await authController.verifyTokenFromRequest(req);
+      if (!authResult.success) {
+        console.log(' Auth failed:', authResult.message);
+        this.sendResponse(res, 401, authResult);
         return false;
       }
-      const token = authHeader.substring(7);
-      const user = await authController.verifyToken(token);
-      if (!user) {
-        this.sendResponse(res, 401, { success: false, message: 'Invalid token' });
-        return false;
-      }
-      req.user = user;
+      
+      console.log(' Auth successful for user:', authResult.user.username);
+      req.user = authResult.user;
       return true;
     } catch (err) {
-      this.sendResponse(res, 401, { success: false, message: 'Authentication failed' });
+      console.log(' Auth error:', err.message);
+      this.sendResponse(res, 401, { success: false, message: 'Authentication failed: ' + err.message });
       return false;
     }
   }
